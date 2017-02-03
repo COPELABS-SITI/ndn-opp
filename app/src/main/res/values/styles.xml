@@ -1,0 +1,49 @@
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar"></style>
+
+    <style name="wrap">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="fill">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="match">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="title" parent="@style/wrap">
+        <item name="android:textColor">@color/black</item>
+         <item name="android:textAllCaps">true</item>
+    </style>
+
+    <style name="field" parent="@style/fill">
+        <item name="android:textColorHint">@color/lightgray</item>
+		<item name="android:gravity">end</item>
+    </style>
+
+	<style name="cell" parent="@style/wrap">
+	    <item name="android:layout_margin">1dp</item>
+	    <item name="android:paddingStart">4dp</item>
+	    <item name="android:paddingEnd">4dp</item>
+	    <item name="android:background">@color/lightgray</item>
+	</style>
+
+	<style name="dCell" parent="@style/cell">
+		<item name="android:layout_weight">1</item>
+	</style>
+
+	<style name="vCell" parent="@style/cell">
+        <item name="android:layout_height">fill_parent</item>
+		<item name="android:gravity">center</item>
+	</style>
+
+	<style name="hCell" parent="@style/cell">
+        <item name="android:layout_width">fill_parent</item>
+	</style>
+</resources>

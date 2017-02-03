@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="createFace">Create Face</string>
+	
+    <string name="protocol">Protocol</string>
+    <string name="host">Host</string>
+    <string name="port">Port number</string>
+    <string name="defaultProtocol">tcp4</string>
+    <string name="defaultHost">127.0.0.1</string>
+    <string name="defaultPort">6363</string>
+
+    <string name="faceId">Face ID</string>
+    <string name="localUri">Local URI</string>
+    <string name="remoteUri">Remote URI</string>
+    <string name="expiresIn">Expires in</string>
+    <string name="scope">Scope</string>
+    <string name="persistency">Persistency</string>
+    <string name="linkType">Link type</string>
+	<string name="state">State</string>
+
+    <string name="none">None</string>
+    
+    <!-- Scope values -->
+    <string name="local">Local</string>
+    <string name="nonLocal">Non-local</string>
+
+    <!-- Persistency values -->
+	<string name="persistent">Persistent</string>
+	<string name="permanent">Permanent</string>
+	<string name="onDemand">On-demand</string>
+
+    <!-- Link type values -->
+	<string name="pointToPoint">Point-to-point</string>
+	<string name="multiAccess">Multi-access</string>
+</resources>

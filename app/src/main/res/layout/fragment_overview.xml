@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="pt.ulusofona.copelabs.ndn.android.ui.Overview"
+    style="@style/match"
+    android:orientation="vertical">
+
+    <FrameLayout android:id="@+id/status" style="@style/match" />
+    <FrameLayout android:id="@+id/peerlist" style="@style/match" />
+    <FrameLayout android:id="@+id/facetable" style="@style/match" />
+    <FrameLayout android:id="@+id/pit" style="@style/match" />
+
+</LinearLayout>

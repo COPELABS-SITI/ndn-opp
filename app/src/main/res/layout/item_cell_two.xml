@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/match">
+
+	<LinearLayout style="@style/hCell" android:orientation="vertical">
+		<TextView android:id="@+id/left" style="@style/fill" android:gravity="start" android:maxLines="1"/>
+		<TextView android:id="@+id/right" style="@style/fill" android:gravity="end" android:maxLines="1"/>
+	</LinearLayout>
+
+</LinearLayout>

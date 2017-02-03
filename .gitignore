@@ -1,0 +1,12 @@
+.gradle
+.idea
+*.iml
+build/
+app/.externalNativeBuild
+app/build/
+app/src/main/libs/
+app/src/main/obj/
+gradle/
+gradlew
+gradlew.bat
+local.properties

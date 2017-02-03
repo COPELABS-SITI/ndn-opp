@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="pt.ulusofona.copelabs.ndn.android.ui.Table"
+    style="@style/match" android:layout_margin="@dimen/fragment_margin" android:orientation="vertical">
+
+    <TextView android:id="@+id/title" style="@style/title"/>
+    <ListView android:id="@+id/contents" style="@style/match"/>
+
+</LinearLayout>

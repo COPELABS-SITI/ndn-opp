@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" style="@style/wrap" android:padding="@dimen/fragment_padding">
+
+    <TextView style="@style/title" android:text="@string/protocol"/>
+    <Spinner  style="@style/field" android:id="@+id/protocol" android:entries="@array/protocols"/>
+
+    <TextView style="@style/title" android:text="@string/host"/>
+    <EditText style="@style/field" android:id="@+id/host" android:hint="@string/defaultHost"/>
+
+    <TextView style="@style/title" android:text="@string/port"/>
+    <EditText style="@style/field" android:id="@+id/port" android:hint="@string/defaultPort"
+        android:inputType="numberDecimal"/>
+
+    <CheckBox style="@style/fill" android:id="@+id/permanent" android:text="@string/permanent" />
+</LinearLayout>

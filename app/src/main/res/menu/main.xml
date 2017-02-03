@@ -1,0 +1,10 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="pt.ulusofona.copelabs.siti.nfd.ui.MainActivity" >
+
+	<item
+        android:id="@+id/createFace"
+        android:orderInCategory="1"
+        android:title="@string/createFace"/>
+
+</menu>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/match" android:orientation="vertical">
+
+	<TextView android:id="@+id/name" style="@style/hCell" android:gravity="center"/>
+	<LinearLayout style="@style/fill">
+		<TextView android:id="@+id/inFaces" style="@style/dCell"/>
+		<TextView android:id="@+id/outFaces" style="@style/dCell" android:gravity="end"/>
+	</LinearLayout>
+
+</LinearLayout>

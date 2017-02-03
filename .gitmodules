@@ -1,0 +1,9 @@
+[submodule "app/src/main/jni/cryptopp"]
+	path = app/src/main/jni/cryptopp
+	url = https://github.com/named-data-mobile/cryptopp.git
+[submodule "app/src/main/jni/ndn-cxx"]
+	path = app/src/main/jni/ndn-cxx
+	url = https://github.com/COPELABS-SITI/ndn-cxx.git
+[submodule "app/src/main/jni/ndn-fwd"]
+	path = app/src/main/jni/ndn-fwd
+	url = https://github.com/COPELABS-SITI/ndn-fwd.git

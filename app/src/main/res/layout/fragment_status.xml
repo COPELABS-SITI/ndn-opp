@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="pt.ulusofona.copelabs.ndn.android.ui.fragment.Status"
+    style="@style/match" android:layout_margin="@dimen/fragment_margin"
+    android:orientation="vertical">
+
+	<TextView style="@style/title" android:text="@string/status" />
+
+	<LinearLayout style="@style/match">
+		<TextView style="@style/wrap" android:text="@string/version"/>
+		<TextView style="@style/field" android:id="@+id/version" android:text="@string/notAvailable"/>
+	</LinearLayout>
+
+	<LinearLayout style="@style/match">
+		<TextView style="@style/wrap" android:text="@string/uptime"/>
+		<TextView style="@style/field" android:id="@+id/uptime" android:text="@string/notAvailable"/>
+	</LinearLayout>
+
+	<LinearLayout style="@style/match">
+		<TextView style="@style/wrap" android:text="@string/ipAddress"/>
+		<TextView style="@style/field" android:id="@+id/ipAddress" android:text="@string/notAvailable"/>
+	</LinearLayout>
+</LinearLayout>
