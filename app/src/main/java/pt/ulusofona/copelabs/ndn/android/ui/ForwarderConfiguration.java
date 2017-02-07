@@ -5,6 +5,7 @@ import java.util.List;
 import android.app.Activity;
 import android.os.Bundle;
 
+import android.support.v4.app.Fragment;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.LayoutInflater;
@@ -26,17 +27,17 @@ public class ForwarderConfiguration extends Refreshable {
 	public ForwarderConfiguration(Activity act, Table<Face> ft) {
 		mFacetable = ft;
 
-		mFib = new Table<FibEntry>(R.string.fib, new FibEntry.Adapter(act), new Table.EntryProvider<FibEntry>() {
+		mFib = new Table<>(R.string.fib, new FibEntry.Adapter(act), new Table.EntryProvider<FibEntry>() {
 			@Override
-			public List<FibEntry> getEntries() {
-				return ForwardingDaemon.getFib();
+			public List<FibEntry> getEntries(ForwardingDaemon fd) {
+				return fd.getForwardingInformationBase();
 			}
 		});
 
-		mSct = new Table<SctEntry>(R.string.sct, new SctEntry.Adapter(act), new Table.EntryProvider<SctEntry>() {
+		mSct = new Table<>(R.string.sct, new SctEntry.Adapter(act), new Table.EntryProvider<SctEntry>() {
 			@Override
-			public List<SctEntry> getEntries() {
-				return ForwardingDaemon.getStrategies();
+			public List<SctEntry> getEntries(ForwardingDaemon fd) {
+				return fd.getStrategyChoiceTable();
 			}
 		});
 	}
@@ -55,18 +56,19 @@ public class ForwarderConfiguration extends Refreshable {
 		return contentStore;
 	}
 
-	@Override
+    @Override
 	public void clear() {
-		mFacetable.clear(); mFib.clear(); mSct.clear();
+		mFacetable.clear();
+		mFib.clear();
+		mSct.clear();
 	}
 
-	@Override
-	public void update() {
-		mFacetable.update(); mFib.update(); mSct.update();
-	}
-
-	@Override
-	public void refresh() {
-		mFacetable.refresh(); mFib.refresh(); mSct.refresh();
+    @Override
+    public void refresh(ForwardingDaemon fd) {
+        if(fd != null) {
+            mFacetable.refresh(fd);
+            mFib.refresh(fd);
+            mSct.refresh(fd);
+        }
 	}
 }

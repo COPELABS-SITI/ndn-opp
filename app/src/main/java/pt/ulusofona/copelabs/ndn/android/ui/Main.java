@@ -1,15 +1,15 @@
 package pt.ulusofona.copelabs.ndn.android.ui;
 
-import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 
-import android.net.wifi.p2p.WifiP2pManager;
-
+import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
 
+import android.os.IBinder;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 
@@ -23,7 +23,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import java.util.List;
 
@@ -34,9 +33,7 @@ import pt.ulusofona.copelabs.ndn.android.Face;
 import pt.ulusofona.copelabs.ndn.android.Name;
 
 import pt.ulusofona.copelabs.ndn.android.Peer;
-import pt.ulusofona.copelabs.ndn.android.service.ContextualManager;
 import pt.ulusofona.copelabs.ndn.android.service.ForwardingDaemon;
-import pt.ulusofona.copelabs.ndn.android.service.Routing;
 
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.CreateFace;
 
@@ -44,9 +41,11 @@ import pt.ulusofona.copelabs.ndn.android.ui.fragment.Refreshable;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
 public class Main extends AppCompatActivity {
-    // BroadcastReceiver
-    private IntentFilter mServiceIntents;
-    private BroadcastReceiver mServiceTracker;
+    // ForwardingDaemon service
+    private Intent mDaemonIntent;
+    private IntentFilter mDaemonBroadcastedIntents;
+    private BroadcastReceiver mReceiver;
+    private ForwardingDaemon mDaemon;
 
     private Switch mNfdSwitch;
 
@@ -70,9 +69,9 @@ public class Main extends AppCompatActivity {
 		@Override
 		public void run() {
             // TODO: this runs all the time. Even when the Daemon is stopped.
-			mCurrent.refresh();
+			mCurrent.refresh(mDaemon);
 			mUpdater.postDelayed(this, UPDATE_DELAY);
-        }
+           }
 	};
 
 	@Override
@@ -80,38 +79,39 @@ public class Main extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-        mServiceIntents = new IntentFilter();
-        mServiceIntents.addAction(ForwardingDaemon.STARTED);
-        mServiceIntents.addAction(ForwardingDaemon.STOPPED);
-        mServiceTracker = new BroadcastReceiver(this);
+        mDaemonIntent = new Intent(getApplicationContext(), ForwardingDaemon.class);
+        mDaemonBroadcastedIntents = new IntentFilter();
+        mDaemonBroadcastedIntents.addAction(ForwardingDaemon.STARTED);
+        mDaemonBroadcastedIntents.addAction(ForwardingDaemon.STOPPED);
+        mReceiver = new BroadcastReceiver();
 
         mNametree = new Table<>(R.string.nametree, new Name.Adapter(this), new Table.EntryProvider<Name>() {
 			@Override
-			public List<Name> getEntries() {
-				return ForwardingDaemon.getNameTree();
+			public List<Name> getEntries(ForwardingDaemon fd) {
+				return fd.getNameTree();
 			}
 		});
 
 		mContentStore = new Table<>(R.string.contentstore, new CsEntry.Adapter(this), new Table.EntryProvider<CsEntry>() {
 			@Override
-			public List<CsEntry> getEntries() {
-				return ForwardingDaemon.getContentStore();
+			public List<CsEntry> getEntries(ForwardingDaemon fd) {
+				return fd.getContentStore();
 			}
 		});
 
 		Table<Face> faceTable = new Table<>(R.string.facetable, new Face.Adapter(this), new Table.EntryProvider<Face>() {
 			@Override
-			public List<Face> getEntries() {
-				return ForwardingDaemon.getFaceTable();
+			public List<Face> getEntries(ForwardingDaemon fd) {
+				return fd.getFaceTable();
 			}
 		});
 
         Table<Peer> peerList = new Table<>(R.string.peers, new Peer.Adapter(this), new Table.EntryProvider<Peer>() {
-            @Override
-            public List<Peer> getEntries() {
-                return ForwardingDaemon.getPeers();
-            }
-        });
+			@Override
+			public List<Peer> getEntries(ForwardingDaemon fd) {
+				return fd.getPeers();
+			}
+		});
 
 		mOverview = new Overview(this, peerList, faceTable);
 		mFwdCfg = new ForwarderConfiguration(this, faceTable);
@@ -120,9 +120,12 @@ public class Main extends AppCompatActivity {
 		mNfdSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 			@Override
 			public void onCheckedChanged(CompoundButton button, boolean isOn) {
-                Intent target = new Intent(getApplicationContext(), ForwardingDaemon.class);
-				if(isOn) startService(target);
-				else stopService(target);
+				if(isOn) startService(mDaemonIntent);
+				else {
+                    if(mConnection != null)
+                        unbindService(mConnection);
+                    stopService(mDaemonIntent);
+                }
 			}
 		});
 
@@ -166,20 +169,20 @@ public class Main extends AppCompatActivity {
 		getSupportActionBar().setTitle(mNavigationEntries[position]);
 	}
 
-	@Override
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(mReceiver, mDaemonBroadcastedIntents);
+        mUpdater.post(mRefresher);
+    }
+
+    @Override
 	protected void onPause() {
-		super.onPause();
-        unregisterReceiver(mServiceTracker);
+        unregisterReceiver(mReceiver);
 		mUpdater.removeCallbacks(mRefresher);
+        super.onPause();
 	}
 
-	@Override
-	protected void onResume() {
-		super.onResume();
-        registerReceiver(mServiceTracker, mServiceIntents);
-		mUpdater.post(mRefresher);
-	}
-	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater mi = getMenuInflater();
@@ -191,7 +194,7 @@ public class Main extends AppCompatActivity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch(item.getItemId()) {
 		    case R.id.createFace:
-			    CreateFace cf = new CreateFace();
+			    CreateFace cf = new CreateFace(mDaemon);
 			    cf.setTargetFragment(mCurrent, 0);
 			    cf.show(getSupportFragmentManager(), cf.getTag());
 			    break;
@@ -199,24 +202,30 @@ public class Main extends AppCompatActivity {
 		return true;
 	}
 
-    private static class BroadcastReceiver extends android.content.BroadcastReceiver {
-        private Main activity;
-
-        public BroadcastReceiver(Main t) {
-            activity = t;
+    private ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            mDaemon = ((ForwardingDaemon.DaemonBinder) iBinder).getService();
         }
 
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            mDaemon = null;
+        }
+    };
+
+    private class BroadcastReceiver extends android.content.BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if(action.equals(ForwardingDaemon.STARTED)) {
-                activity.mCurrent.update();
-                activity.mUpdater.postDelayed(activity.mRefresher, UPDATE_DELAY);
-                activity.mNfdSwitch.setChecked(true);
+                mUpdater.post(mRefresher);
+                mNfdSwitch.setChecked(true);
+                bindService(mDaemonIntent, mConnection, Context.BIND_AUTO_CREATE);
             } else if (action.equals(ForwardingDaemon.STOPPED)) {
-                activity.mUpdater.removeCallbacks(activity.mRefresher);
-                activity.mCurrent.clear();
-                activity.mNfdSwitch.setChecked(false);
+                mUpdater.removeCallbacks(mRefresher);
+                mCurrent.clear();
+                mNfdSwitch.setChecked(false);
             }
         }
     }

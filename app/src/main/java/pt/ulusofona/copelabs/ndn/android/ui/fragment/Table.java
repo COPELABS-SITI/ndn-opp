@@ -2,6 +2,8 @@ package pt.ulusofona.copelabs.ndn.android.ui.fragment;
 
 import android.os.Bundle;
 
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.LayoutInflater;
@@ -13,26 +15,28 @@ import android.widget.ArrayAdapter;
 import java.util.List;
 
 import pt.ulusofona.copelabs.ndn.R;
+import pt.ulusofona.copelabs.ndn.android.service.ForwardingDaemon;
 
 public class Table<E> extends Refreshable {
 	public interface EntryProvider<E> {
-		List<E> getEntries();
+		List<E> getEntries(ForwardingDaemon fd);
 	}
 
 	private View table;
 
+	private int mResIdTitle;
 	private ArrayAdapter<E> mAdapter;
 	private EntryProvider<E> mProvider;
-	private int mResIdTitle;
 
-	public Table(int rid, ArrayAdapter<E> a, EntryProvider<E> p) {
+	public Table(int rid, ArrayAdapter<E> aa, EntryProvider<E> ep) {
 		mResIdTitle = rid;
-		mAdapter = a;
-		mProvider = p;
+		mAdapter = aa;
+		mProvider = ep;
 	}
 
-	@Override
+    @Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
+        super.onCreateView(inflater, parent, savedInstanceState);
 		table = inflater.inflate(R.layout.fragment_table, parent, false);
 
 		((TextView) table.findViewById(R.id.title)).setText(mResIdTitle);
@@ -41,25 +45,10 @@ public class Table<E> extends Refreshable {
 		return table;
 	}
 
-	public void setTitle(String t) {
-		((TextView) table.findViewById(R.id.title)).setText(t);
-	}
-
-	@Override
-	public void clear() {
-		mAdapter.clear();
-	}
-
-	@Override
-	public void update() {
-		List<E> entries = mProvider.getEntries();
-		if(entries != null)
-			mAdapter.addAll(entries);
-	}
-
-	@Override
-	public void refresh() {
-		clear();
-		update();
-	}
+	public void clear() { mAdapter.clear(); }
+	public void refresh(ForwardingDaemon fd) {
+        clear();
+        if(fd != null)
+            mAdapter.addAll(mProvider.getEntries(fd));
+    }
 }

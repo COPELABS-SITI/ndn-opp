@@ -23,12 +23,17 @@ import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.service.ForwardingDaemon;
 
 public class CreateFace extends DialogFragment {
+    private ForwardingDaemon mDaemon;
 	private View mDialog;
 
 	private Spinner mProtocol;
 	private EditText mHost;
 	private EditText mPort;
 	private CheckBox mIsPermanent;
+
+    public CreateFace(ForwardingDaemon fd) {
+        mDaemon = fd;
+    }
 
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -67,7 +72,7 @@ public class CreateFace extends DialogFragment {
 					if(port.isEmpty())
 						port = getString(R.string.defaultPort);
 
-					ForwardingDaemon.createFace(
+					mDaemon.createFace(
 						protocol + "://" + host + ":" + port,
 						mIsPermanent.isChecked() ? 2 : 0,
 						host.equals("127.0.0.1")

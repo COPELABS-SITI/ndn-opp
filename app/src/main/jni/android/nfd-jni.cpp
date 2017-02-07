@@ -64,7 +64,7 @@ void initializeLogging(nfd::ConfigSection& cfg) {
 	config.parse(cfg, false, "JNI");
 }
 
-static void jniInitialize(JNIEnv* env, jclass, jstring homepath, jstring inputConfig) {
+static void jniInitialize(JNIEnv* env, jobject, jstring homepath, jstring inputConfig) {
 	if (g_io == nullptr) {
 
 		std::string home = std::string(env->GetStringUTFChars(homepath, NULL));
@@ -95,7 +95,7 @@ static void jniInitialize(JNIEnv* env, jclass, jstring homepath, jstring inputCo
 	}
 }
 
-static void jniCleanUp(JNIEnv* env, jclass) {
+static void jniCleanUp(JNIEnv* env, jobject) {
 	NFD_LOG_INFO("Cleaning up NFD...");
 	g_nfd.reset(); g_nfd = nullptr;
 	g_nrd.reset(); g_nrd = nullptr;
@@ -103,7 +103,7 @@ static void jniCleanUp(JNIEnv* env, jclass) {
 	nfd::resetGlobalIoService(); g_io = nullptr;
 }
 
-static void jniStart(JNIEnv* env, jclass) {
+static void jniStart(JNIEnv* env, jobject) {
 	boost::thread([] {
 		try {
 			g_io->run();
@@ -117,7 +117,7 @@ static void jniStart(JNIEnv* env, jclass) {
 	});
 }
 
-static void jniStop(JNIEnv* env, jclass) {
+static void jniStop(JNIEnv* env, jobject) {
 	if (g_io != nullptr)
 		g_io->post( [] {
 			NFD_LOG_DEBUG("Stopping I/O service.");
@@ -125,11 +125,11 @@ static void jniStop(JNIEnv* env, jclass) {
 		});
 }
 
-static jstring jniGetVersion(JNIEnv* env, jclass) {
+static jstring jniGetVersion(JNIEnv* env, jobject) {
 	return env->NewStringUTF(NFD_VERSION_BUILD_STRING);
 }
 
-static jobject jniGetNameTree(JNIEnv* env, jclass) {
+static jobject jniGetNameTree(JNIEnv* env, jobject) {
 	jobject nametree = env->NewObject(list, newList);
 
 	if(g_nfd.get() != nullptr) {
@@ -142,7 +142,7 @@ static jobject jniGetNameTree(JNIEnv* env, jclass) {
 	return nametree;
 }
 
-static jobject jniGetFaceTable(JNIEnv* env, jclass) {
+static jobject jniGetFaceTable(JNIEnv* env, jobject) {
 	jobject faceList = env->NewObject(list, newList);
 
 	if (g_nfd.get() != nullptr) {
@@ -164,7 +164,7 @@ static jobject jniGetFaceTable(JNIEnv* env, jclass) {
 	return faceList;
 }
 
-static void jniCreateFace(JNIEnv* env, jclass, jstring uri, jint persistency, jboolean localFields) {
+static void jniCreateFace(JNIEnv* env, jobject, jstring uri, jint persistency, jboolean localFields) {
 	if(g_nfd.get() != nullptr) {
 	    NFD_LOG_INFO("CreateFace: " << uri);
 		std::string faceUri = std::string(env->GetStringUTFChars(uri, NULL));
@@ -172,14 +172,14 @@ static void jniCreateFace(JNIEnv* env, jclass, jstring uri, jint persistency, jb
 	}
 }
 
-static void jniDestroyFace(JNIEnv* env, jclass, jlong faceId) {
+static void jniDestroyFace(JNIEnv* env, jobject, jlong faceId) {
 	if(g_nfd.get() != nullptr) {
 		NFD_LOG_INFO("DestroyFace: " << faceId);
 		g_nfd->destroyFace(faceId);
 	}
 }
 
-static jobject jniGetForwardingInformationBase(JNIEnv* env, jclass) {
+static jobject jniGetForwardingInformationBase(JNIEnv* env, jobject) {
 	jobject fib = env->NewObject(list, newList);
 
 	if(g_nfd.get() != nullptr) {
@@ -196,7 +196,7 @@ static jobject jniGetForwardingInformationBase(JNIEnv* env, jclass) {
 	return fib;
 }
 
-static jobject jniGetPendingInterestTable(JNIEnv* env, jclass) {
+static jobject jniGetPendingInterestTable(JNIEnv* env, jobject) {
 	jobject pit = env->NewObject(list, newList);
 
 	if(g_nfd.get() != nullptr) {
@@ -215,7 +215,7 @@ static jobject jniGetPendingInterestTable(JNIEnv* env, jclass) {
 	return pit;
 }
 
-static jobject jniGetContentStore(JNIEnv* env, jclass) {
+static jobject jniGetContentStore(JNIEnv* env, jobject) {
 	jobject cs = env->NewObject(list, newList);
 
 	if(g_nfd.get() != nullptr) {
@@ -232,7 +232,7 @@ static jobject jniGetContentStore(JNIEnv* env, jclass) {
 	return cs;
 }
 
-static jobject jniGetStrategyChoiceTable(JNIEnv* env, jclass) {
+static jobject jniGetStrategyChoiceTable(JNIEnv* env, jobject) {
 	jobject sct = env->NewObject(list, newList);
 
 	if(g_nfd.get() != nullptr) {
@@ -253,16 +253,16 @@ static JNINativeMethod nativeMethods[] = {
 	{ "jniStart", "()V", (void*) jniStart },
 	{ "jniStop", "()V", (void*) jniStop },
 
-	{ "jniGetVersion", "()Ljava/lang/String;", (void*) jniGetVersion },
-	{ "jniGetNameTree"                  , "()Ljava/util/List;" , (void*) jniGetNameTree },
-	{ "jniGetFaceTable"                 , "()Ljava/util/List;" , (void*) jniGetFaceTable },
-	{ "jniGetPendingInterestTable"      , "()Ljava/util/List;" , (void*) jniGetPendingInterestTable },
-	{ "jniGetForwardingInformationBase" , "()Ljava/util/List;" , (void*) jniGetForwardingInformationBase },
-	{ "jniGetStrategyChoiceTable"       , "()Ljava/util/List;" , (void*) jniGetStrategyChoiceTable },
-	{ "jniGetContentStore"              , "()Ljava/util/List;" , (void*) jniGetContentStore },
+	{ "getVersion", "()Ljava/lang/String;", (void*) jniGetVersion },
+	{ "getNameTree"                  , "()Ljava/util/List;" , (void*) jniGetNameTree },
+	{ "getFaceTable"                 , "()Ljava/util/List;" , (void*) jniGetFaceTable },
+	{ "getPendingInterestTable"      , "()Ljava/util/List;" , (void*) jniGetPendingInterestTable },
+	{ "getForwardingInformationBase" , "()Ljava/util/List;" , (void*) jniGetForwardingInformationBase },
+	{ "getStrategyChoiceTable"       , "()Ljava/util/List;" , (void*) jniGetStrategyChoiceTable },
+	{ "getContentStore"              , "()Ljava/util/List;" , (void*) jniGetContentStore },
 
-	{ "jniCreateFace", "(Ljava/lang/String;IZ)V", (void*) jniCreateFace },
-	{ "jniDestroyFace", "(J)V", (void*) jniDestroyFace }
+	{ "createFace", "(Ljava/lang/String;IZ)V", (void*) jniCreateFace },
+	{ "destroyFace", "(J)V", (void*) jniDestroyFace }
 };
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {

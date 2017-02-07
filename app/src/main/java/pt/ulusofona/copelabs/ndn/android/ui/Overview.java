@@ -5,7 +5,6 @@ import java.util.List;
 import android.app.Activity;
 import android.os.Bundle;
 
-import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +15,6 @@ import pt.ulusofona.copelabs.ndn.android.Face;
 import pt.ulusofona.copelabs.ndn.android.Peer;
 import pt.ulusofona.copelabs.ndn.android.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.service.ForwardingDaemon;
-import pt.ulusofona.copelabs.ndn.android.service.Routing;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Refreshable;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Status;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
@@ -34,8 +32,8 @@ public class Overview extends Refreshable {
 		mFacetable = ft;
 		mPit = new Table<>(R.string.pit, new PitEntry.Adapter(act), new Table.EntryProvider<PitEntry>() {
 			@Override
-			public List<PitEntry> getEntries() {
-				return ForwardingDaemon.getPit();
+			public List<PitEntry> getEntries(ForwardingDaemon fd) {
+				return fd.getPendingInterestTable();
 			}
 		});
 	}
@@ -57,16 +55,19 @@ public class Overview extends Refreshable {
 
 	@Override
 	public void clear() {
-		mStatus.clear(); mPeerList.clear(); mFacetable.clear(); mPit.clear();
+		mStatus.clear();
+        mPeerList.clear();
+        mFacetable.clear();
+        mPit.clear();
 	}
 
 	@Override
-	public void update() {
-		mStatus.update(); mPeerList.update(); mFacetable.update(); mPit.update();
-	}
-
-	@Override
-	public void refresh() {
-		mStatus.refresh(); mPeerList.refresh(); mFacetable.refresh(); mPit.refresh();
+	public void refresh(ForwardingDaemon fd) {
+        if(fd != null) {
+            mStatus.refresh(fd);
+            mPeerList.refresh(fd);
+            mFacetable.refresh(fd);
+            mPit.refresh(fd);
+        }
 	}
 }
