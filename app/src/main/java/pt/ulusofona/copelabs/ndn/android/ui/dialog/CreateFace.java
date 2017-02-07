@@ -63,17 +63,22 @@ public class CreateFace extends DialogFragment {
 				@Override
 				public void onClick(DialogInterface di, int id) {
 					String protocol = mProtocol.getSelectedItem().toString();
-					String host = mHost.getText().toString();
-					String port = mPort.getText().toString();
-					if(protocol.isEmpty())
-						protocol = getString(R.string.defaultProtocol);
-					if(host.isEmpty())
-						host = getString(R.string.defaultHost);
-					if(port.isEmpty())
-						port = getString(R.string.defaultPort);
+                    String host = mHost.getText().toString();
+                    String port = mPort.getText().toString();
+
+                    String faceUri;
+					if(protocol.equals("wfd"))
+						faceUri = "wfd://[" + host + "]";
+                    else {
+                        if (host.isEmpty())
+                            host = getString(R.string.defaultHost);
+                        if (port.isEmpty())
+                            port = getString(R.string.defaultPort);
+                        faceUri = protocol + "://" + host + ":" + port;
+                    }
 
 					mDaemon.createFace(
-						protocol + "://" + host + ":" + port,
+						faceUri,
 						mIsPermanent.isChecked() ? 2 : 0,
 						host.equals("127.0.0.1")
 					);

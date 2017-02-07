@@ -7,9 +7,11 @@ import pt.ulusofona.copelabs.ndn.android.Peer;
 import pt.ulusofona.copelabs.ndn.android.Peer.Status;
 
 public class Routing {
+    private ForwardingDaemon mDaemon;
     private List<Peer> mPeers;
 
-	public Routing() {
+	public Routing(ForwardingDaemon fd) {
+        mDaemon = fd;
         mPeers = new ArrayList<>();
 	}
 
@@ -17,9 +19,10 @@ public class Routing {
     public void add(List<Peer> peers) {
         for(Peer current : peers) {
             int idx = mPeers.indexOf(current);
-            if(idx == -1)
+            if(idx == -1) {
                 mPeers.add(current);
-            else
+                mDaemon.createFace("wfd://[" + current.getAddr() + "]", 0, false);
+            } else
                 mPeers.get(idx).setStatus(Status.AVAILABLE);
         }
     }

@@ -166,8 +166,8 @@ static jobject jniGetFaceTable(JNIEnv* env, jobject) {
 
 static void jniCreateFace(JNIEnv* env, jobject, jstring uri, jint persistency, jboolean localFields) {
 	if(g_nfd.get() != nullptr) {
-	    NFD_LOG_INFO("CreateFace: " << uri);
 		std::string faceUri = std::string(env->GetStringUTFChars(uri, NULL));
+	    NFD_LOG_INFO("CreateFace: " << faceUri);
 		g_nfd->createFace(faceUri, (ndn::nfd::FacePersistency) persistency, (bool) localFields);
 	}
 }

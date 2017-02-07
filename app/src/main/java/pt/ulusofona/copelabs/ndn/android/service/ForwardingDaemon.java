@@ -67,7 +67,7 @@ public class ForwardingDaemon extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        mRouting = new Routing();
+        mRouting = new Routing(this);
         mContextualMgr = new ContextualManager(this, mRouting);
         mContextualMgr.register(this);
         jniInitialize(getFilesDir().getAbsolutePath(), getConfiguration());
@@ -131,26 +131,15 @@ public class ForwardingDaemon extends Service {
     private native void jniStart();
 	private native void jniStop();
 
-	// General information about the running daemon.
 	public native String getVersion();
-
-	// Manipulation of NameTree.
-	public native List<Name> getNameTree();
-
-	// Manipulation of FaceTable.
-	public native List<Face> getFaceTable();
-	public native void createFace(String faceUri, int persistency, boolean localFields);
-	public native void destroyFace(long faceId);
-
-	// Manipulation of the Forwarding Information Base (FIB).
+    public native List<Name> getNameTree();
+    public native List<Face> getFaceTable();
+    public native void createFace(String faceUri, int persistency, boolean localFields);
+    public native void bringUp(long faceId);
+    public native void bringDown(long faceId);
+    public native void destroyFace(long faceId);
 	public native List<FibEntry> getForwardingInformationBase();
-
-	// Manipulation of the Pending Interest Table (PIT).
 	public native List<PitEntry> getPendingInterestTable();
-
-	// Manipulation of the Content Store (CS).
 	public native List<CsEntry> getContentStore();
-
-	// Manipulation of the Strategy Choice Table (SCT).
 	public native List<SctEntry> getStrategyChoiceTable();
 }

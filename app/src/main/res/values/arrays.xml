@@ -9,5 +9,6 @@
     <string-array name="protocols">
         <item>tcp4</item>
         <item>udp4</item>
+        <item>wfd</item>
     </string-array>
 </resources>
