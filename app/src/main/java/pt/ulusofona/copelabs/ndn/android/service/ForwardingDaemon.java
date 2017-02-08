@@ -135,8 +135,6 @@ public class ForwardingDaemon extends Service {
     public native List<Name> getNameTree();
     public native List<Face> getFaceTable();
     public native void createFace(String faceUri, int persistency, boolean localFields);
-    public native void bringUp(long faceId);
-    public native void bringDown(long faceId);
     public native void destroyFace(long faceId);
 	public native List<FibEntry> getForwardingInformationBase();
 	public native List<PitEntry> getPendingInterestTable();

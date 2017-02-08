@@ -15,7 +15,6 @@ public class Name implements Entry, Comparable<Name> {
     static {
         TABLE_ARGUMENTS.putInt(Table.TITLE, R.string.nametree);
         TABLE_ARGUMENTS.putInt(Table.DEFAULT_VIEW, R.layout.item_name);
-        TABLE_ARGUMENTS.putInt(Table.VIEW_TYPE_COUNT, 1);
     }
 
 	private String name;
@@ -30,11 +29,6 @@ public class Name implements Entry, Comparable<Name> {
 	}
 
     @Override
-    public int getItemViewType() {
-        return 0;
-    }
-
-	@Override
 	public View getView(LayoutInflater inflater) {
 		return inflater.inflate(R.layout.item_name, null, false);
 	}

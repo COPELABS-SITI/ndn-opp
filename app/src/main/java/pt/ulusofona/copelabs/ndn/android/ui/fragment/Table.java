@@ -24,12 +24,10 @@ public class Table<E extends Entry> extends Fragment {
 
     public static final String TITLE = "ResourceIdTitle";
     public static final String DEFAULT_VIEW = "ResourceIdViews";
-    public static final String VIEW_TYPE_COUNT = "ViewTypeCount";
 
-	private int mResIdTitle;
+    private int mResIdTitle;
     private int mResIdViews; // Default view to use.
-    private int mViewTypeCount;
-	private EntryAdapter<E> mAdapter;
+    private EntryAdapter<E> mAdapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -40,8 +38,7 @@ public class Table<E extends Entry> extends Fragment {
             if(args != null) {
                 mResIdTitle = args.getInt(TITLE);
                 mResIdViews = args.getInt(DEFAULT_VIEW);
-                mViewTypeCount = args.getInt(VIEW_TYPE_COUNT);
-                mAdapter = new EntryAdapter<>(getContext(), mResIdViews, mViewTypeCount);
+                mAdapter = new EntryAdapter<>(getContext(), mResIdViews);
             } else
                 Log.d(TAG, "Empty argument bundle passed.");
         }
@@ -58,27 +55,15 @@ public class Table<E extends Entry> extends Fragment {
 		return table;
 	}
 
-	public void clear() { mAdapter.clear(); }
-	public void refresh(List<E> entries) { clear(); mAdapter.addAll(entries); }
+	public void clear() { if(mAdapter != null) mAdapter.clear(); }
+	public void refresh(List<E> entries) { clear(); if (mAdapter != null) mAdapter.addAll(entries); }
 
     private class EntryAdapter<E extends Entry> extends ArrayAdapter<E> {
         private LayoutInflater mInflater;
-        private int mViewTypeCount;
 
-        EntryAdapter(Context context, int resourceId, int viewTypeCount) {
+        EntryAdapter(Context context, int resourceId) {
             super(context, resourceId);
             mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            mViewTypeCount = viewTypeCount;
-        }
-
-        @Override
-        public int getItemViewType(int position) {
-            return getItem(position).getItemViewType();
-        }
-
-        @Override
-        public int getViewTypeCount() {
-            return mViewTypeCount;
         }
 
         @Override
@@ -86,10 +71,9 @@ public class Table<E extends Entry> extends Fragment {
             View entry;
             Entry data = getItem(i);
 
-            if(convertView != null)
-                entry = convertView;
-            else
-                entry = data.getView(mInflater);
+            if(convertView != null) entry = convertView;
+            else entry = data.getView(mInflater);
+
             data.setViewContents(entry);
 
             return entry;

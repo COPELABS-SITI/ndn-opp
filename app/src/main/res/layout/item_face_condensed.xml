@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/match" >
-
-	<TextView style="@style/cell" android:id="@+id/faceId" />
-	<TextView style="@style/cell" android:id="@+id/state" android:textAllCaps="true"/>
-	<TextView style="@style/hCell" android:id="@+id/localUri"/>
-</LinearLayout>

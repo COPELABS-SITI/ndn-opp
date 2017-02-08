@@ -5,6 +5,5 @@ import android.view.View;
 
 public interface Entry {
     View getView(LayoutInflater infl);
-    int getItemViewType();
     void setViewContents(View entry);
 }

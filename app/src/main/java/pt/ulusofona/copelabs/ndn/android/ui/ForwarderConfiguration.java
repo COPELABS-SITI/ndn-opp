@@ -53,14 +53,9 @@ public class ForwarderConfiguration extends Fragment {
 	}
 
 	public void clear() {
-        if(mFacetable != null)
-		    mFacetable.clear();
-
-        if(mFib != null)
-            mFib.clear();
-
-        if(mSct != null)
-            mSct.clear();
+        if(mFacetable != null) mFacetable.clear();
+        if(mFib != null) mFib.clear();
+        if(mSct != null) mSct.clear();
 	}
 
     public void refresh(List<Face> faces, List<FibEntry> fib, List<SctEntry> sct) {

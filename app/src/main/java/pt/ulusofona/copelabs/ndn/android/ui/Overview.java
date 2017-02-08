@@ -58,10 +58,10 @@ public class Overview extends Fragment {
 	}
 
 	public void clear() {
-		mStatus.clear();
-        mPeerList.clear();
-        mFacetable.clear();
-        mPit.clear();
+        if(mStatus != null) mStatus.clear();
+        if(mPeerList != null) mPeerList.clear();
+        if(mFacetable != null) mFacetable.clear();
+        if(mPit != null) mPit.clear();
 	}
 
 	public void refresh(String version, long uptimeInMilliseconds, List<Peer> peers, List<Face> faces, List<PitEntry> pit) {

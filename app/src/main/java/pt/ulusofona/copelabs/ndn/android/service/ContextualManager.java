@@ -40,12 +40,12 @@ public class ContextualManager {
         mIntents.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         mIntents.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
         mIntents.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
+        mIntents.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
     }
 
     public void register(Context ctxt) {
         ctxt.registerReceiver(mReceiver, mIntents);
     }
-
     public void unregister(Context ctxt) {
         ctxt.unregisterReceiver(mReceiver);
     }
@@ -103,6 +103,16 @@ public class ContextualManager {
                         mRouting.remove(removed);
                     }
                 });
+            } else if(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION.equals(action)) {
+                int extra = in.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE, WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED);
+                switch(extra) {
+                    case WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED:
+                        Log.d(TAG, "Wifi P2P discovery started.");
+                        break;
+                    case WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED:
+                        Log.d(TAG, "Wifi P2P discovery stopped.");
+                        break;
+                }
             }
         }
     }

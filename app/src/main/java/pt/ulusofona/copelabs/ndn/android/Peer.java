@@ -13,7 +13,6 @@ public class Peer implements Entry {
     static {
         TABLE_ARGUMENTS.putInt(Table.TITLE, R.string.peers);
         TABLE_ARGUMENTS.putInt(Table.DEFAULT_VIEW, R.layout.item_peer);
-        TABLE_ARGUMENTS.putInt(Table.VIEW_TYPE_COUNT, 1);
     }
 
     public enum Status {
@@ -62,11 +61,11 @@ public class Peer implements Entry {
     }
 
     @Override
-    public int getItemViewType() {
-        return 0;
+    public String toString() {
+        return name + ":" + addr;
     }
 
-	@Override
+    @Override
 	public View getView(LayoutInflater inflater) {
         return inflater.inflate(R.layout.item_peer, null, false);
     }

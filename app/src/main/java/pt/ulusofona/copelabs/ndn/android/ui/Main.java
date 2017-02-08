@@ -25,11 +25,18 @@ import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.ListView;
 
+import java.util.Collections;
+import java.util.List;
+
 import pt.ulusofona.copelabs.ndn.R;
 
 import pt.ulusofona.copelabs.ndn.android.CsEntry;
+import pt.ulusofona.copelabs.ndn.android.Face;
+import pt.ulusofona.copelabs.ndn.android.FibEntry;
 import pt.ulusofona.copelabs.ndn.android.Name;
 
+import pt.ulusofona.copelabs.ndn.android.PitEntry;
+import pt.ulusofona.copelabs.ndn.android.SctEntry;
 import pt.ulusofona.copelabs.ndn.android.service.ForwardingDaemon;
 
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.CreateFace;
@@ -121,22 +128,37 @@ public class Main extends AppCompatActivity {
 	}
 
     private void clear() {
-        mOverview.clear(); mFwdCfg.clear(); mNametree.clear(); mContentStore.clear();
+        mOverview.clear();
+        mFwdCfg.clear();
+        mNametree.clear();
+        mContentStore.clear();
     }
 
     private void refresh() {
+        List<Face> faces;
 		if(mDaemon != null) {
 			switch (mSelection) {
 				case 0:
-					mOverview.refresh(mDaemon.getVersion(), mDaemon.getUptime(), mDaemon.getPeers(), mDaemon.getFaceTable(), mDaemon.getPendingInterestTable());
+                    faces = mDaemon.getFaceTable();
+                    List<PitEntry> pit = mDaemon.getPendingInterestTable();
+                    Collections.sort(faces); Collections.sort(pit);
+					mOverview.refresh(mDaemon.getVersion(), mDaemon.getUptime(), mDaemon.getPeers(), faces, pit);
 					break;
 				case 1:
-					mFwdCfg.refresh(mDaemon.getFaceTable(), mDaemon.getForwardingInformationBase(), mDaemon.getStrategyChoiceTable());
+                    faces = mDaemon.getFaceTable();
+                    List<FibEntry> fib = mDaemon.getForwardingInformationBase();
+                    List<SctEntry> sct = mDaemon.getStrategyChoiceTable();
+                    Collections.sort(faces); Collections.sort(fib); Collections.sort(sct);
+					mFwdCfg.refresh(faces, fib, sct);
 					break;
 				case 2:
-					mNametree.refresh(mDaemon.getNameTree());
+                    List<Name> nametree = mDaemon.getNameTree();
+                    Collections.sort(nametree);
+					mNametree.refresh(nametree);
 					break;
 				case 3:
+                    List<CsEntry> contentStore = mDaemon.getContentStore();
+                    Collections.sort(contentStore);
 					mContentStore.refresh(mDaemon.getContentStore());
 					break;
 			}
@@ -145,18 +167,10 @@ public class Main extends AppCompatActivity {
 
 	private void select(int position) {
 		switch(position) {
-		case 0:
-			mCurrent = mOverview;
-			break;
-		case 1:
-			mCurrent = mFwdCfg;
-			break;
-		case 2:
-			mCurrent = mNametree;
-			break;
-		case 3:
-			mCurrent = mContentStore;
-			break;
+		case 0: mCurrent = mOverview; break;
+		case 1: mCurrent = mFwdCfg; break;
+		case 2: mCurrent = mNametree; break;
+		case 3: mCurrent = mContentStore; break;
 		}
 
 		getSupportFragmentManager()

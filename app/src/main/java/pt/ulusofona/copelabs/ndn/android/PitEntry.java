@@ -13,12 +13,11 @@ import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.ui.Entry;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
-public class PitEntry implements Entry {
+public class PitEntry implements Entry, Comparable<PitEntry> {
     public static final Bundle TABLE_ARGUMENTS = new Bundle();
     static {
         TABLE_ARGUMENTS.putInt(Table.TITLE, R.string.pit);
         TABLE_ARGUMENTS.putInt(Table.DEFAULT_VIEW, R.layout.item_pit_entry);
-        TABLE_ARGUMENTS.putInt(Table.VIEW_TYPE_COUNT, 1);
     }
 
     private String name;
@@ -39,11 +38,6 @@ public class PitEntry implements Entry {
 	}
 
     @Override
-    public int getItemViewType() {
-        return 0;
-    }
-
-    @Override
 	public View getView(LayoutInflater inflater) {
 		return inflater.inflate(R.layout.item_pit_entry, null, false);
 	}
@@ -53,5 +47,10 @@ public class PitEntry implements Entry {
         ((TextView) entry.findViewById(R.id.name)).setText(this.name);
         ((TextView) entry.findViewById(R.id.inFaces)).setText(this.inFaces.toString());
         ((TextView) entry.findViewById(R.id.outFaces)).setText(this.outFaces.toString());
+    }
+
+    @Override
+    public int compareTo(PitEntry that) {
+        return this.name.compareTo(that.name);
     }
 }
