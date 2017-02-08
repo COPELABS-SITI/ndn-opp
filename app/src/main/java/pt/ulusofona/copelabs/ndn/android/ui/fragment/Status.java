@@ -1,11 +1,11 @@
 package pt.ulusofona.copelabs.ndn.android.ui.fragment;
 
 import android.content.Context;
-import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -16,7 +16,7 @@ import java.util.Locale;
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.service.ForwardingDaemon;
 
-public class Status extends Refreshable {
+public class Status extends Fragment {
 	// Controls
 	private TextView mVersion;
 	private TextView mUptime;
@@ -42,20 +42,7 @@ public class Status extends Refreshable {
 		return contentStore;
 	}
 
-    @Override
-    public void onResume() {
-        super.onResume();
-
-    }
-
-    @Override
-    public void onPause() {
-
-        super.onPause();
-    }
-
-    @Override
-	public void clear() {
+    public void clear() {
 		mVersion.setText(R.string.notAvailable);
         mUptime.setText(R.string.notAvailable);
         mIpAddress.setText(R.string.notAvailable);
@@ -71,21 +58,18 @@ public class Status extends Refreshable {
         );
     }
 
-	@Override
-	public void refresh(ForwardingDaemon fd) {
-        if(fd != null) {
-            mVersion.setText(fd.getVersion());
+	public void refresh(String version, long uptimeInMilliseconds) {
+        mVersion.setText(version);
 
-            long uptimeInSeconds = fd.getUptime() / 1000L;
-            long s = (uptimeInSeconds % 60);
-            long m = (uptimeInSeconds / 60) % 60;
-            long h = (uptimeInSeconds / 3600) % 60;
-            mUptime.setText(String.format(Locale.getDefault(), "%02d:%02d:%02d", h, m, s));
+        long uptimeInSeconds = uptimeInMilliseconds / 1000L;
+        long s = (uptimeInSeconds % 60);
+        long m = (uptimeInSeconds / 60) % 60;
+        long h = (uptimeInSeconds / 3600) % 60;
+        mUptime.setText(String.format(Locale.getDefault(), "%02d:%02d:%02d", h, m, s));
 
-            int ipv4Addr = mWifiMgr.getConnectionInfo().getIpAddress();
-            if (ipv4Addr != 0)
-                mIpAddress.setText(formatIPv4(ipv4Addr, mWifiMgr.getDhcpInfo().netmask));
-            else mIpAddress.setText(R.string.notAvailable);
-        }
-	}
+        int ipv4Addr = mWifiMgr.getConnectionInfo().getIpAddress();
+        if (ipv4Addr != 0)
+            mIpAddress.setText(formatIPv4(ipv4Addr, mWifiMgr.getDhcpInfo().netmask));
+        else mIpAddress.setText(R.string.notAvailable);
+    }
 }

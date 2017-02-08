@@ -1,17 +1,22 @@
 package pt.ulusofona.copelabs.ndn.android;
 
-import java.util.ArrayList;
-
-import android.app.Activity;
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import pt.ulusofona.copelabs.ndn.R;
+import pt.ulusofona.copelabs.ndn.android.ui.Entry;
+import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
-public class Peer {
-	public enum Status {
+public class Peer implements Entry {
+    public static final Bundle TABLE_ARGUMENTS = new Bundle();
+    static {
+        TABLE_ARGUMENTS.putInt(Table.TITLE, R.string.peers);
+        TABLE_ARGUMENTS.putInt(Table.DEFAULT_VIEW, R.layout.item_peer);
+        TABLE_ARGUMENTS.putInt(Table.VIEW_TYPE_COUNT, 1);
+    }
+
+    public enum Status {
 		CONNECTED("C"),
         AVAILABLE("A"),
 		UNAVAILABLE("U");
@@ -33,7 +38,6 @@ public class Peer {
     public String getName() {
         return name;
     }
-
     public String getAddr() {
         return addr;
     }
@@ -58,32 +62,19 @@ public class Peer {
     }
 
     @Override
-    public String toString() {
-        return name + ":" + addr;
+    public int getItemViewType() {
+        return 0;
     }
 
-    public static class Adapter extends ArrayAdapter<Peer> {
-		LayoutInflater inflater;
+	@Override
+	public View getView(LayoutInflater inflater) {
+        return inflater.inflate(R.layout.item_peer, null, false);
+    }
 
-		public Adapter(Activity act) {
-			super(act, R.layout.item_peer, new ArrayList<Peer>());
-			inflater = act.getLayoutInflater();
-		}
-
-		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
-			View entry;
-
-			if(convertView != null) entry = convertView;
-			else entry = inflater.inflate(R.layout.item_peer, parent, false);
-
-			Peer peer = getItem(position);
-
-			((TextView) entry.findViewById(R.id.status)).setText(peer.currently.getSymbol());
-			((TextView) entry.findViewById(R.id.name)).setText(peer.name);
-			((TextView) entry.findViewById(R.id.addr)).setText(peer.addr);
-
-			return entry;
-		}
-	}
+    @Override
+    public void setViewContents(View entry) {
+        ((TextView) entry.findViewById(R.id.status)).setText(this.currently.getSymbol());
+        ((TextView) entry.findViewById(R.id.name)).setText(this.name);
+        ((TextView) entry.findViewById(R.id.addr)).setText(this.addr);
+    }
 }

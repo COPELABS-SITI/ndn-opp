@@ -1,76 +1,57 @@
 package pt.ulusofona.copelabs.ndn.android;
 
-
-import android.app.Activity;
-
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import pt.ulusofona.copelabs.ndn.R;
+import pt.ulusofona.copelabs.ndn.android.ui.Entry;
+import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
-public class PitEntry {
-	public String name;
-	public List<Long> inFaces;
-	public List<Long> outFaces;
+public class PitEntry implements Entry {
+    public static final Bundle TABLE_ARGUMENTS = new Bundle();
+    static {
+        TABLE_ARGUMENTS.putInt(Table.TITLE, R.string.pit);
+        TABLE_ARGUMENTS.putInt(Table.DEFAULT_VIEW, R.layout.item_pit_entry);
+        TABLE_ARGUMENTS.putInt(Table.VIEW_TYPE_COUNT, 1);
+    }
+
+    private String name;
+	private List<Long> inFaces;
+	private List<Long> outFaces;
 
 	public PitEntry(String n) {
 		name = n;
-		inFaces = new ArrayList<Long>();
-		outFaces = new ArrayList<Long>();
+		inFaces = new ArrayList<>();
+		outFaces = new ArrayList<>();
 	}
 
 	public void addInRecord(long fi) {
 		inFaces.add(fi);
 	}
-
 	public void addOutRecord(long fi) {
 		outFaces.add(fi);
 	}
 
-	private String pretty(List<Long> faceIds) {
-		String str = "";
-		for(int id = 0; id < faceIds.size(); id++)
-			str += faceIds.get(id) + (id < faceIds.size()-1 ? "," : "");
-		return str;
+    @Override
+    public int getItemViewType() {
+        return 0;
+    }
+
+    @Override
+	public View getView(LayoutInflater inflater) {
+		return inflater.inflate(R.layout.item_pit_entry, null, false);
 	}
 
-	public String inFaces() {
-		return pretty(inFaces);
-	}
-
-	public String outFaces() {
-		return pretty(outFaces);
-	}
-
-	public static class Adapter extends ArrayAdapter<PitEntry> {
-		LayoutInflater inflater;
-
-		public Adapter(Activity act) {
-			super(act, R.layout.item_pit_entry, new ArrayList<PitEntry>());
-			inflater = act.getLayoutInflater();
-		}
-
-		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
-			View entry;
-
-			if(convertView != null) entry = convertView;
-			else entry = inflater.inflate(R.layout.item_pit_entry, parent, false);
-
-			PitEntry current = getItem(position);
-
-			((TextView) entry.findViewById(R.id.name)).setText(current.name);
-			((TextView) entry.findViewById(R.id.inFaces)).setText(current.inFaces());
-			((TextView) entry.findViewById(R.id.outFaces)).setText(current.outFaces());
-
-			return entry;
-		}
-	}
+    @Override
+    public void setViewContents(View entry) {
+        ((TextView) entry.findViewById(R.id.name)).setText(this.name);
+        ((TextView) entry.findViewById(R.id.inFaces)).setText(this.inFaces.toString());
+        ((TextView) entry.findViewById(R.id.outFaces)).setText(this.outFaces.toString());
+    }
 }

@@ -1,20 +1,24 @@
 package pt.ulusofona.copelabs.ndn.android;
 
-import android.app.Activity;
-
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-
 import pt.ulusofona.copelabs.ndn.R;
+import pt.ulusofona.copelabs.ndn.android.ui.Entry;
+import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
-public class SctEntry {
-	public String prefix;
+public class SctEntry implements Entry {
+    public static final Bundle TABLE_ARGUMENTS = new Bundle();
+    static {
+        TABLE_ARGUMENTS.putInt(Table.TITLE, R.string.sct);
+        TABLE_ARGUMENTS.putInt(Table.DEFAULT_VIEW, R.layout.item_cell_two);
+        TABLE_ARGUMENTS.putInt(Table.VIEW_TYPE_COUNT, 1);
+    }
+
+    public String prefix;
 	public String strategy;
 
 	public SctEntry(String p, String s) {
@@ -22,27 +26,19 @@ public class SctEntry {
 		strategy = s;
 	}
 
-	public static class Adapter extends ArrayAdapter<SctEntry> {
-		LayoutInflater inflater;
+    @Override
+    public int getItemViewType() {
+        return 0;
+    }
 
-		public Adapter(Activity act) {
-			super(act, R.layout.item_cell_two, new ArrayList<SctEntry>());
-			inflater = act.getLayoutInflater();
-		}
-
-		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
-			View entry;
-
-			if(convertView != null) entry = convertView;
-			else entry = inflater.inflate(R.layout.item_cell_two, parent, false);
-
-			SctEntry current = getItem(position);
-
-			((TextView) entry.findViewById(R.id.left)).setText(current.prefix);
-			((TextView) entry.findViewById(R.id.right)).setText(current.strategy);
-
-			return entry;
-		}
+	@Override
+	public View getView(LayoutInflater inflater) {
+		return inflater.inflate(R.layout.item_cell_two, null, false);
 	}
+
+    @Override
+    public void setViewContents(View entry) {
+        ((TextView) entry.findViewById(R.id.left)).setText(this.prefix);
+        ((TextView) entry.findViewById(R.id.right)).setText(this.strategy);
+    }
 }

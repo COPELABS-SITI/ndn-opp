@@ -1,48 +1,44 @@
 package pt.ulusofona.copelabs.ndn.android.ui;
 
-import java.util.List;
-
-import android.app.Activity;
 import android.os.Bundle;
 
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.LayoutInflater;
+
+import java.util.List;
 
 import pt.ulusofona.copelabs.ndn.R;
 
 import pt.ulusofona.copelabs.ndn.android.Face;
 import pt.ulusofona.copelabs.ndn.android.FibEntry;
 import pt.ulusofona.copelabs.ndn.android.SctEntry;
-import pt.ulusofona.copelabs.ndn.android.service.ForwardingDaemon;
-import pt.ulusofona.copelabs.ndn.android.ui.fragment.Refreshable;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
-public class ForwarderConfiguration extends Refreshable {
+public class ForwarderConfiguration extends Fragment {
 	private Table<Face> mFacetable;
 	private Table<FibEntry> mFib;
 	private Table<SctEntry> mSct;
 
-	public ForwarderConfiguration(Activity act, Table<Face> ft) {
-		mFacetable = ft;
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-		mFib = new Table<>(R.string.fib, new FibEntry.Adapter(act), new Table.EntryProvider<FibEntry>() {
-			@Override
-			public List<FibEntry> getEntries(ForwardingDaemon fd) {
-				return fd.getForwardingInformationBase();
-			}
-		});
+        if(savedInstanceState == null) {
+			mFacetable = new Table<>();
+			mFacetable.setArguments(Face.TABLE_ARGUMENTS);
 
-		mSct = new Table<>(R.string.sct, new SctEntry.Adapter(act), new Table.EntryProvider<SctEntry>() {
-			@Override
-			public List<SctEntry> getEntries(ForwardingDaemon fd) {
-				return fd.getStrategyChoiceTable();
-			}
-		});
-	}
+            mFib = new Table<>();
+            mFib.setArguments(FibEntry.TABLE_ARGUMENTS);
 
-	@Override
+            mSct = new Table<>();
+            mSct.setArguments(SctEntry.TABLE_ARGUMENTS);
+        }
+    }
+
+    @Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
 		View contentStore = inflater.inflate(R.layout.fragment_forwarder_configuration, parent, false);
 
@@ -56,19 +52,18 @@ public class ForwarderConfiguration extends Refreshable {
 		return contentStore;
 	}
 
-    @Override
 	public void clear() {
-		mFacetable.clear();
-		mFib.clear();
-		mSct.clear();
+        if(mFacetable != null)
+		    mFacetable.clear();
+
+        if(mFib != null)
+            mFib.clear();
+
+        if(mSct != null)
+            mSct.clear();
 	}
 
-    @Override
-    public void refresh(ForwardingDaemon fd) {
-        if(fd != null) {
-            mFacetable.refresh(fd);
-            mFib.refresh(fd);
-            mSct.refresh(fd);
-        }
+    public void refresh(List<Face> faces, List<FibEntry> fib, List<SctEntry> sct) {
+        mFacetable.refresh(faces); mFib.refresh(fib); mSct.refresh(sct);
 	}
 }

@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Handler;
 
 import android.os.IBinder;
+import android.support.v4.app.Fragment;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 
@@ -24,20 +25,15 @@ import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.ListView;
 
-import java.util.List;
-
 import pt.ulusofona.copelabs.ndn.R;
 
 import pt.ulusofona.copelabs.ndn.android.CsEntry;
-import pt.ulusofona.copelabs.ndn.android.Face;
 import pt.ulusofona.copelabs.ndn.android.Name;
 
-import pt.ulusofona.copelabs.ndn.android.Peer;
 import pt.ulusofona.copelabs.ndn.android.service.ForwardingDaemon;
 
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.CreateFace;
 
-import pt.ulusofona.copelabs.ndn.android.ui.fragment.Refreshable;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
 public class Main extends AppCompatActivity {
@@ -60,7 +56,8 @@ public class Main extends AppCompatActivity {
 	private ListView mNavigation;
 	private String mNavigationEntries[];
 
-	private Refreshable mCurrent;
+	private Fragment mCurrent;
+    private int mSelection;
 
 	// For automatic refreshing of screen.
 	private static final int UPDATE_DELAY = 1000;
@@ -69,7 +66,7 @@ public class Main extends AppCompatActivity {
 		@Override
 		public void run() {
             // TODO: this runs all the time. Even when the Daemon is stopped.
-			mCurrent.refresh(mDaemon);
+			refresh();
 			mUpdater.postDelayed(this, UPDATE_DELAY);
            }
 	};
@@ -85,36 +82,14 @@ public class Main extends AppCompatActivity {
         mDaemonBroadcastedIntents.addAction(ForwardingDaemon.STOPPED);
         mReceiver = new BroadcastReceiver();
 
-        mNametree = new Table<>(R.string.nametree, new Name.Adapter(this), new Table.EntryProvider<Name>() {
-			@Override
-			public List<Name> getEntries(ForwardingDaemon fd) {
-				return fd.getNameTree();
-			}
-		});
+        mNametree = new Table<>();
+        mNametree.setArguments(Name.TABLE_ARGUMENTS);
 
-		mContentStore = new Table<>(R.string.contentstore, new CsEntry.Adapter(this), new Table.EntryProvider<CsEntry>() {
-			@Override
-			public List<CsEntry> getEntries(ForwardingDaemon fd) {
-				return fd.getContentStore();
-			}
-		});
+		mContentStore = new Table<>();
+        mContentStore.setArguments(CsEntry.TABLE_ARGUMENTS);
 
-		Table<Face> faceTable = new Table<>(R.string.facetable, new Face.Adapter(this), new Table.EntryProvider<Face>() {
-			@Override
-			public List<Face> getEntries(ForwardingDaemon fd) {
-				return fd.getFaceTable();
-			}
-		});
-
-        Table<Peer> peerList = new Table<>(R.string.peers, new Peer.Adapter(this), new Table.EntryProvider<Peer>() {
-			@Override
-			public List<Peer> getEntries(ForwardingDaemon fd) {
-				return fd.getPeers();
-			}
-		});
-
-		mOverview = new Overview(this, peerList, faceTable);
-		mFwdCfg = new ForwarderConfiguration(this, faceTable);
+		mOverview = new Overview();
+		mFwdCfg = new ForwarderConfiguration();
 
 		mNfdSwitch = (Switch) findViewById(R.id.nfdSwitch);
 		mNfdSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -144,7 +119,30 @@ public class Main extends AppCompatActivity {
 
 		select(0);
 	}
-	
+
+    private void clear() {
+        mOverview.clear(); mFwdCfg.clear(); mNametree.clear(); mContentStore.clear();
+    }
+
+    private void refresh() {
+		if(mDaemon != null) {
+			switch (mSelection) {
+				case 0:
+					mOverview.refresh(mDaemon.getVersion(), mDaemon.getUptime(), mDaemon.getPeers(), mDaemon.getFaceTable(), mDaemon.getPendingInterestTable());
+					break;
+				case 1:
+					mFwdCfg.refresh(mDaemon.getFaceTable(), mDaemon.getForwardingInformationBase(), mDaemon.getStrategyChoiceTable());
+					break;
+				case 2:
+					mNametree.refresh(mDaemon.getNameTree());
+					break;
+				case 3:
+					mContentStore.refresh(mDaemon.getContentStore());
+					break;
+			}
+		}
+    }
+
 	private void select(int position) {
 		switch(position) {
 		case 0:
@@ -165,6 +163,7 @@ public class Main extends AppCompatActivity {
 			.beginTransaction()
 			.replace(R.id.container, mCurrent)
 			.commit();
+        mSelection = position;
 
 		getSupportActionBar().setTitle(mNavigationEntries[position]);
 	}
@@ -224,7 +223,7 @@ public class Main extends AppCompatActivity {
                 bindService(mDaemonIntent, mConnection, Context.BIND_AUTO_CREATE);
             } else if (action.equals(ForwardingDaemon.STOPPED)) {
                 mUpdater.removeCallbacks(mRefresher);
-                mCurrent.clear();
+                clear();
                 mNfdSwitch.setChecked(false);
             }
         }

@@ -1,32 +1,38 @@
 package pt.ulusofona.copelabs.ndn.android;
 
-import java.util.ArrayList;
-
-import android.app.Activity;
-
+import android.os.Bundle;
 import android.util.SparseArray;
 
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 
 import android.widget.TextView;
-import android.widget.ArrayAdapter;
+
+import java.util.Locale;
 
 import pt.ulusofona.copelabs.ndn.R;
+import pt.ulusofona.copelabs.ndn.android.ui.Entry;
+import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
-public class Face {
-	private static final int CONDENSED = 0;
-	private static final int DETAILED = 1;
+public class Face implements Entry {
+    public static final Bundle TABLE_ARGUMENTS = new Bundle();
+    static {
+        TABLE_ARGUMENTS.putInt(Table.TITLE, R.string.facetable);
+        TABLE_ARGUMENTS.putInt(Table.DEFAULT_VIEW, R.layout.item_face_detailed);
+        TABLE_ARGUMENTS.putInt(Table.VIEW_TYPE_COUNT, 2);
+    }
 
-	public long id;
-	public String localURI;
-	public String remoteURI;
-	public int scope;
-	public int persistency;
-	public int linkType;
-	public int state;
-	public long expiresIn;
+    private static final int DETAILED = 0;
+    private static final int CONDENSED = 1;
+
+	private long id;
+    private String localURI;
+    private String remoteURI;
+    private int scope;
+    private int persistency;
+    private int linkType;
+    private int state;
+    private long expiresIn;
 
 	public Face(long fId, String lu, String ru, int sc, int p, int lt, int st) {
 		id = fId;
@@ -63,63 +69,47 @@ public class Face {
 		State.put(5, "C"); // CLOSED
 	}
 
-	public static class Adapter extends ArrayAdapter<Face> {
-		LayoutInflater inflater;
+    private static void setTextView(View face, int rid, String content) {
+        ((TextView) face.findViewById(rid)).setText(content);
+    }
 
-		public Adapter(Activity act) {
-			super(act, R.layout.item_face, new ArrayList<Face>());
-			inflater = act.getLayoutInflater();
-		}
+    private boolean useCondensedView() {
+        return id <= 255 || remoteURI.startsWith("wfd://");
+    }
 
-		private static void setTextView(View face, int rid, String content) {
-			((TextView) face.findViewById(rid)).setText(content);
-		}
+    @Override
+    public int getItemViewType() {
+        int type;
+        if(useCondensedView()) type = CONDENSED;
+        else type = DETAILED;
+        return type;
+    }
 
-		@Override
-		public int getItemViewType(int position) {
-			Face current = getItem(position);
-			int type;
+    @Override
+    public View getView(LayoutInflater inflater) {
+        View entry;
 
-			if(current.id <= 255 || current.remoteURI.startsWith("wfd://"))
-				type = CONDENSED;
-			else
-				type = DETAILED;
+        if(useCondensedView())
+            entry = inflater.inflate(R.layout.item_face_condensed, null, false);
+        else
+            entry = inflater.inflate(R.layout.item_face_detailed, null, false);
 
-			return type;
-		}
-
-		@Override
-		public int getViewTypeCount() {
-			return 2;
-		}
-
-		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
-			View face;
-
-			Face current = getItem(position);
-
-			if(convertView != null)
-				face = convertView;
-			else if(getItemViewType(position) == DETAILED)
-                    face = inflater.inflate(R.layout.item_face, parent, false);
-				 else
-                    face = inflater.inflate(R.layout.item_face_reserved, parent, false);
-
-			// Fields common to both entry_face and entry_face_short
-			setTextView(face, R.id.faceId, String.format("%03d", current.id));
-			setTextView(face, R.id.state, State.get(current.state));
-			setTextView(face, R.id.localUri, current.localURI);
-
-			if(current.id > 255 && !current.remoteURI.startsWith("wfd://")) {
-				setTextView(face, R.id.remoteUri, current.remoteURI);
-				setTextView(face, R.id.scope, Scope.get(current.scope));
-				setTextView(face, R.id.persistency, Persistency.get(current.persistency));
-				setTextView(face, R.id.linkType, LinkType.get(current.linkType));
-				setTextView(face, R.id.expiresIn, Long.toString(current.expiresIn));
-			}
-
-			return face;
-		}
+        return entry;
 	}
+
+    @Override
+    public void setViewContents(View entry) {
+        if(!useCondensedView()) {
+            setTextView(entry, R.id.remoteUri, this.remoteURI);
+            setTextView(entry, R.id.scope, Scope.get(this.scope));
+            setTextView(entry, R.id.persistency, Persistency.get(this.persistency));
+            setTextView(entry, R.id.linkType, LinkType.get(this.linkType));
+            setTextView(entry, R.id.expiresIn, Long.toString(this.expiresIn));
+        }
+
+        // Fields common to both entry_face and entry_face_short
+        setTextView(entry, R.id.faceId, String.format(Locale.getDefault(), "%03d", this.id));
+        setTextView(entry, R.id.state, State.get(this.state));
+        setTextView(entry, R.id.localUri, this.localURI);
+    }
 }
