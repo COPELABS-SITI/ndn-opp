@@ -3,10 +3,10 @@
     style="@style/match">
 
 	<TextView style="@style/cell" android:id="@+id/faceId" />
-	<TextView style="@style/cell" android:fontFamily="monospace" android:id="@+id/state"/>
-	<TextView style="@style/cell" android:fontFamily="monospace" android:id="@+id/scope" />
-	<TextView style="@style/cell" android:fontFamily="monospace" android:id="@+id/persistency" />
-	<TextView style="@style/cell" android:fontFamily="monospace" android:id="@+id/linkType" />
-    <TextView style="@style/hCell" android:id="@+id/remoteUri"/>
+	<TextView style="@style/cell" android:id="@+id/state" />
+	<TextView style="@style/cell" android:id="@+id/scope" />
+	<TextView style="@style/cell" android:id="@+id/persistency" />
+	<TextView style="@style/cell" android:id="@+id/linkType" />
+    <TextView style="@style/hCell" android:id="@+id/remoteUri" android:fontFamily="sans-serif" android:maxLines="1" />
 
 </LinearLayout>

@@ -2,10 +2,7 @@ package pt.ulusofona.copelabs.ndn.android.ui.dialog;
 
 import android.app.Dialog;
 
-import android.content.Context;
 import android.content.DialogInterface;
-
-import android.net.wifi.WifiManager;
 
 import android.os.Bundle;
 
@@ -46,7 +43,7 @@ public class CreateFace extends DialogFragment {
 		mPort = (EditText) mDialog.findViewById(R.id.port);
 		mIsPermanent = (CheckBox) mDialog.findViewById(R.id.permanent);
 
-		WifiManager wifiMgr = (WifiManager) getActivity().getSystemService(Context.WIFI_SERVICE);
+		/*WifiManager wifiMgr = (WifiManager) getActivity().getSystemService(Context.WIFI_SERVICE);
 		int ipAddr = wifiMgr.getConnectionInfo().getIpAddress() & wifiMgr.getDhcpInfo().netmask;
 		if(ipAddr != 0)
 			mHost.setText(String.format("%d.%d.%d.%d",
@@ -55,7 +52,7 @@ public class CreateFace extends DialogFragment {
 				ipAddr >> 16 & 0xff,
 				ipAddr >> 24 & 0xff
 			));
-		else mHost.setText("");
+		else mHost.setText("");*/
 
 		return builder
 			.setView(mDialog)
@@ -67,8 +64,8 @@ public class CreateFace extends DialogFragment {
                     String port = mPort.getText().toString();
 
                     String faceUri;
-					if(protocol.equals("wfd"))
-						faceUri = "wfd://[" + host + "]";
+					if(protocol.equals(R.string.opp))
+						faceUri = getString(R.string.opp) + "://[" + host + "]";
                     else {
                         if (host.isEmpty())
                             host = getString(R.string.defaultHost);

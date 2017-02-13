@@ -6,7 +6,7 @@
     <string name="host">Host</string>
     <string name="port">Port number</string>
     <string name="defaultProtocol">tcp4</string>
-    <string name="defaultHost">127.0.0.1</string>
+    <string name="defaultHost">193.137.75.171</string>
     <string name="defaultPort">6363</string>
 
     <string name="faceId">Face ID</string>

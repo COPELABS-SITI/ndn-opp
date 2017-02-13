@@ -24,6 +24,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +40,7 @@ import pt.ulusofona.copelabs.ndn.android.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.SctEntry;
 import pt.ulusofona.copelabs.ndn.android.service.ForwardingDaemon;
 
+import pt.ulusofona.copelabs.ndn.android.ui.dialog.AddRoute;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.CreateFace;
 
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
@@ -56,7 +58,8 @@ public class Main extends AppCompatActivity {
 	private Table<Name> mNametree;
 	private Table<CsEntry> mContentStore;
 
-	private Overview mOverview;
+    private WifiP2p mWifiP2p;
+    private Overview mOverview;
 	private ForwarderConfiguration mFwdCfg;
 
 	// Navigation
@@ -95,6 +98,7 @@ public class Main extends AppCompatActivity {
 		mContentStore = new Table<>();
         mContentStore.setArguments(CsEntry.TABLE_ARGUMENTS);
 
+        mWifiP2p = new WifiP2p();
 		mOverview = new Overview();
 		mFwdCfg = new ForwarderConfiguration();
 
@@ -124,10 +128,11 @@ public class Main extends AppCompatActivity {
 			}
 		});
 
-		select(0);
+		select(1);
 	}
 
     private void clear() {
+        mWifiP2p.clear();
         mOverview.clear();
         mFwdCfg.clear();
         mNametree.clear();
@@ -138,25 +143,28 @@ public class Main extends AppCompatActivity {
         List<Face> faces;
 		if(mDaemon != null) {
 			switch (mSelection) {
-				case 0:
+                case 0:
+                    mWifiP2p.refresh(mDaemon.getPeers());
+                    break;
+				case 1:
                     faces = mDaemon.getFaceTable();
                     List<PitEntry> pit = mDaemon.getPendingInterestTable();
                     Collections.sort(faces); Collections.sort(pit);
-					mOverview.refresh(mDaemon.getVersion(), mDaemon.getUptime(), mDaemon.getPeers(), faces, pit);
+					mOverview.refresh(mDaemon.getVersion(), mDaemon.getUptime(), faces, pit);
 					break;
-				case 1:
+				case 2:
                     faces = mDaemon.getFaceTable();
                     List<FibEntry> fib = mDaemon.getForwardingInformationBase();
                     List<SctEntry> sct = mDaemon.getStrategyChoiceTable();
                     Collections.sort(faces); Collections.sort(fib); Collections.sort(sct);
 					mFwdCfg.refresh(faces, fib, sct);
 					break;
-				case 2:
+				case 3:
                     List<Name> nametree = mDaemon.getNameTree();
                     Collections.sort(nametree);
 					mNametree.refresh(nametree);
 					break;
-				case 3:
+				case 4:
                     List<CsEntry> contentStore = mDaemon.getContentStore();
                     Collections.sort(contentStore);
 					mContentStore.refresh(mDaemon.getContentStore());
@@ -167,10 +175,11 @@ public class Main extends AppCompatActivity {
 
 	private void select(int position) {
 		switch(position) {
-		case 0: mCurrent = mOverview; break;
-		case 1: mCurrent = mFwdCfg; break;
-		case 2: mCurrent = mNametree; break;
-		case 3: mCurrent = mContentStore; break;
+            case 0: mCurrent = mWifiP2p; break;
+            case 1: mCurrent = mOverview; break;
+		    case 2: mCurrent = mFwdCfg; break;
+		    case 3: mCurrent = mNametree; break;
+		    case 4: mCurrent = mContentStore; break;
 		}
 
 		getSupportFragmentManager()
@@ -196,7 +205,15 @@ public class Main extends AppCompatActivity {
         super.onPause();
 	}
 
-	@Override
+    @Override
+    protected void onDestroy() {
+        if(mConnection != null)
+            unbindService(mConnection);
+        stopService(mDaemonIntent);
+        super.onDestroy();
+    }
+
+    @Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater mi = getMenuInflater();
 		mi.inflate(R.menu.main, menu);
@@ -211,6 +228,11 @@ public class Main extends AppCompatActivity {
 			    cf.setTargetFragment(mCurrent, 0);
 			    cf.show(getSupportFragmentManager(), cf.getTag());
 			    break;
+            case R.id.addRoute:
+                AddRoute ar = new AddRoute(mDaemon);
+                ar.setTargetFragment(mCurrent, 0);
+                ar.show(getSupportFragmentManager(), ar.getTag());
+                break;
         }
 		return true;
 	}
@@ -231,7 +253,7 @@ public class Main extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if(action.equals(ForwardingDaemon.STARTED)) {
+			if(action.equals(ForwardingDaemon.STARTED)) {
                 mUpdater.post(mRefresher);
                 mNfdSwitch.setChecked(true);
                 bindService(mDaemonIntent, mConnection, Context.BIND_AUTO_CREATE);

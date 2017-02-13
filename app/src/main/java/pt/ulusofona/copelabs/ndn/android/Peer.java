@@ -16,9 +16,11 @@ public class Peer implements Entry {
     }
 
     public enum Status {
-		CONNECTED("C"),
-        AVAILABLE("A"),
-		UNAVAILABLE("U");
+        AVAILABLE("Av"),
+        CONNECTED("Co"),
+        FAILED("Fa"),
+        INVITED("In"),
+		UNAVAILABLE("Un");
 		private String symbol;
 		Status(String s) { symbol = s; }
 		String getSymbol() { return symbol; }

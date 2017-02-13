@@ -7,7 +7,7 @@
 #include "mgmt/general-config-section.hpp"
 #include "mgmt/tables-config-section.hpp"
 
-#include "daemon/face/wfd-factory.hpp"
+#include "daemon/face/wifi-p2p-factory.hpp"
 #include "daemon/face/protocol-factory.hpp"
 
 #include "daemon/mgmt/fib-manager.hpp"
@@ -68,8 +68,8 @@ void Nfd::initialize() {
 	faceTable.addReserved(face::makeNullFace(), face::FACEID_NULL);
 	faceTable.addReserved(face::makeNullFace(FaceUri("contentstore://")), face::FACEID_CONTENT_STORE);
 
-    shared_ptr<WfdFactory> factory = make_shared<WfdFactory>();
-    m_faceManager->m_factories.insert(std::make_pair("wfd", factory));
+    shared_ptr<WifiP2pFactory> factory = make_shared<WifiP2pFactory>();
+    m_faceManager->m_factories.insert(std::make_pair("opp", factory));
 }
 
 void Nfd::createFace(std::string& faceUri, ndn::nfd::FacePersistency persistency, bool localFields) {

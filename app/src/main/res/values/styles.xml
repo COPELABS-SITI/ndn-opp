@@ -32,6 +32,7 @@
 	    <item name="android:paddingStart">4dp</item>
 	    <item name="android:paddingEnd">4dp</item>
 	    <item name="android:background">@color/lightgray</item>
+        <item name="android:fontFamily">monospace</item>
 	</style>
 
 	<style name="dCell" parent="@style/cell">
@@ -45,5 +46,6 @@
 
 	<style name="hCell" parent="@style/cell">
         <item name="android:layout_width">fill_parent</item>
+        <item name="android:fontFamily">sans-serif</item>
 	</style>
 </resources>

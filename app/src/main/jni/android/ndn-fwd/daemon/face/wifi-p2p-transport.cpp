@@ -1,4 +1,4 @@
-#include "wfd-transport.hpp"
+#include "wifi-p2p-transport.hpp"
 
 #include "daemon/face/transport.hpp"
 
@@ -7,7 +7,7 @@
 namespace nfd {
 namespace face {
 
-WfdTransport::WfdTransport(const FaceUri& uri, ndn::nfd::FacePersistency persistency) : Transport() {
+WifiP2pTransport::WifiP2pTransport(const FaceUri& uri, ndn::nfd::FacePersistency persistency) : Transport() {
     this->setLocalUri(uri);
     this->setRemoteUri(uri);
     this->setState(nfd::face::TransportState::DOWN);
@@ -17,11 +17,11 @@ WfdTransport::WfdTransport(const FaceUri& uri, ndn::nfd::FacePersistency persist
     this->setMtu(MTU_UNLIMITED);
 }
 
-void WfdTransport::doClose() {}
+void WifiP2pTransport::doClose() {}
 
-void WfdTransport::doSend(Packet&& packet) {}
+void WifiP2pTransport::doSend(Packet&& packet) {}
 
-void WfdTransport::beforeChangePersistency(ndn::nfd::FacePersistency newP) {}
+void WifiP2pTransport::beforeChangePersistency(ndn::nfd::FacePersistency newP) {}
 
 } // namespace face
 } // namespace nfd

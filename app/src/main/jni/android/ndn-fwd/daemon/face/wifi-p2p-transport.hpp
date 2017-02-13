@@ -1,14 +1,14 @@
-#ifndef COPELABS_NFD_ANDROID_WFD_TRANSPORT_HPP
-#define COPELABS_NFD_ANDROID_WFD_TRANSPORT_HPP
+#ifndef COPELABS_NFD_ANDROID_WIFI_P2P_TRANSPORT_HPP
+#define COPELABS_NFD_ANDROID_WIFI_P2P_TRANSPORT_HPP
 
 #include "daemon/face/transport.hpp"
 
 namespace nfd {
 namespace face {
 
-class WfdTransport : public Transport {
+class WifiP2pTransport : public Transport {
 public:
-    WfdTransport(const FaceUri& uri, ndn::nfd::FacePersistency persistency);
+    WifiP2pTransport(const FaceUri& uri, ndn::nfd::FacePersistency persistency);
 private:
     virtual void doClose() override;
     virtual void doSend(Packet&& packet) override;
@@ -18,4 +18,4 @@ private:
 } // namespace face
 } // namespace nfd
 
-#endif //COPELABS_NFD_ANDROID_WFD_TRANSPORT_HPP
+#endif //COPELABS_NFD_ANDROID_WIFI_P2P_TRANSPORT_HPP

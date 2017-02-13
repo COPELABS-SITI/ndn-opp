@@ -6,7 +6,6 @@
     android:orientation="vertical">
 
     <FrameLayout android:id="@+id/status" style="@style/match" />
-    <FrameLayout android:id="@+id/peerlist" style="@style/match" />
     <FrameLayout android:id="@+id/facetable" style="@style/match" />
     <FrameLayout android:id="@+id/pit" style="@style/match" />
 

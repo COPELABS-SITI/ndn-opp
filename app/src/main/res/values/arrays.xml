@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="navigationEntries">
+        <item>Wifi P2P</item>
         <item>Overview</item>
         <item>Forwarder configuration</item>
         <item>Name Tree</item>
@@ -9,6 +10,6 @@
     <string-array name="protocols">
         <item>tcp4</item>
         <item>udp4</item>
-        <item>wfd</item>
+        <item>@string/opp</item>
     </string-array>
 </resources>

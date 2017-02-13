@@ -15,15 +15,16 @@ public class Routing {
         mPeers = new ArrayList<>();
 	}
 
-    // Callback for the ContextualManager.
+    // Callback for the ContextualManagerWifiP2p.
     public void add(List<Peer> peers) {
         for(Peer current : peers) {
             int idx = mPeers.indexOf(current);
             if(idx == -1) {
                 mPeers.add(current);
-                mDaemon.createFace("wfd://[" + current.getAddr() + "]", 0, false);
+                mDaemon.createFace("opp://[" + current.getAddr() + "]", 0, false);
             } else
                 mPeers.get(idx).setStatus(Status.AVAILABLE);
+            // TODO: Logic of Bringing Up
         }
     }
 

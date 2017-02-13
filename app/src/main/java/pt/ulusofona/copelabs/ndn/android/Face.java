@@ -29,6 +29,10 @@ public class Face implements Entry, Comparable<Face> {
     private int linkType;
     private int state;
 
+	public long getId() {
+		return id;
+	}
+
 	public Face(long fId, String lu, String ru, int sc, int p, int lt, int st) {
 		id = fId;
 		localURI = lu;

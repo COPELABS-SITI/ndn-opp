@@ -41,7 +41,7 @@ public class ForwardingDaemon extends Service {
 
     // Routing & Contextual Manager
     private Routing mRouting;
-    private ContextualManager mContextualMgr;
+    private ContextualManagerWifiP2p mContextualMgr;
 
     private State current = State.STOPPED;
 	private synchronized State getAndSetState(State nextState) {
@@ -68,7 +68,7 @@ public class ForwardingDaemon extends Service {
     public void onCreate() {
         super.onCreate();
         mRouting = new Routing(this);
-        mContextualMgr = new ContextualManager(this, mRouting);
+        mContextualMgr = new ContextualManagerWifiP2p(this, mRouting);
         mContextualMgr.register(this);
         jniInitialize(getFilesDir().getAbsolutePath(), getConfiguration());
     }
@@ -80,9 +80,9 @@ public class ForwardingDaemon extends Service {
 			startTime = System.currentTimeMillis();
 			// TODO: Reload NFD and NRD in memory structures (if any)
             Log.d(TAG, STARTED);
-			sendBroadcast(new Intent(STARTED));
+            sendBroadcast(new Intent(STARTED));
 		}
-		return START_STICKY;
+		return START_NOT_STICKY;
 	}
 
 	@Override
@@ -137,6 +137,7 @@ public class ForwardingDaemon extends Service {
     public native void createFace(String faceUri, int persistency, boolean localFields);
     public native void destroyFace(long faceId);
 	public native List<FibEntry> getForwardingInformationBase();
+    public native void addRoute(String prefix, long faceId, long origin, long cost, long flags);
 	public native List<PitEntry> getPendingInterestTable();
 	public native List<CsEntry> getContentStore();
 	public native List<SctEntry> getStrategyChoiceTable();

@@ -1,5 +1,5 @@
-#ifndef COPELABS_NFD_ANDROID_WFD_FACTORY_HPP
-#define COPELABS_NFD_ANDROID_WFD_FACTORY_HPP
+#ifndef COPELABS_NFD_ANDROID_WIFI_P2P_FACTORY_HPP
+#define COPELABS_NFD_ANDROID_WIFI_P2P_FACTORY_HPP
 
 #include "daemon/face/face.hpp"
 #include "daemon/face/protocol-factory.hpp"
@@ -8,7 +8,7 @@
 
 namespace nfd {
 
-class WfdFactory : public ProtocolFactory {
+class WifiP2pFactory : public ProtocolFactory {
 public:
     virtual void createFace(
         const FaceUri& uri,
@@ -25,4 +25,4 @@ private:
 
 } // namespace nfd
 
-#endif // COPELABS_NFD_ANDROID_WFD_FACTORY_HPP
+#endif // COPELABS_NFD_ANDROID_WIFI_P2P_FACTORY_HPP

@@ -4,8 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 
-import android.net.wifi.WifiManager;
-
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pManager;
@@ -18,8 +16,8 @@ import java.util.List;
 import pt.ulusofona.copelabs.ndn.android.Peer;
 import pt.ulusofona.copelabs.ndn.android.Peer.Status;
 
-public class ContextualManager {
-    private static final String TAG = ContextualManager.class.getSimpleName();
+public class ContextualManagerWifiP2p {
+    private static final String TAG = ContextualManagerWifiP2p.class.getSimpleName();
 
     private Routing mRouting;
     private WifiP2pManager mWfdMgr;
@@ -28,7 +26,7 @@ public class ContextualManager {
     private WifiP2pBroadcastReceiver mReceiver;
     private IntentFilter mIntents;
 
-    public ContextualManager(Context ctxt, Routing rt) {
+    public ContextualManagerWifiP2p(Context ctxt, Routing rt) {
         mRouting = rt;
 
         mWfdMgr = (WifiP2pManager) ctxt.getSystemService(Context.WIFI_P2P_SERVICE);
@@ -37,7 +35,6 @@ public class ContextualManager {
         mReceiver = new WifiP2pBroadcastReceiver(mRouting, mWfdMgr, mWfdChannel);
 
         mIntents = new IntentFilter();
-        mIntents.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         mIntents.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
         mIntents.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
         mIntents.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
@@ -63,6 +60,17 @@ public class ContextualManager {
             mWfdChannel = wfdChan;
         }
 
+        private static Status convertState(int st) {
+            Status converted;
+            switch(st) {
+                case WifiP2pDevice.CONNECTED: converted = Status.CONNECTED; break;
+                case WifiP2pDevice.INVITED: converted = Status.INVITED; break;
+                case WifiP2pDevice.FAILED: converted = Status.FAILED; break;
+                case WifiP2pDevice.AVAILABLE: converted = Status.AVAILABLE; break;
+                default: converted = Status.UNAVAILABLE; break;
+            }
+            return converted;
+        }
         @Override
         public void onReceive(Context ctxt, Intent in) {
             String action = in.getAction();
@@ -87,7 +95,7 @@ public class ContextualManager {
                     public void onPeersAvailable(WifiP2pDeviceList availablePeers) {
                         List<Peer> newPeerList = new ArrayList<>();
                         for(WifiP2pDevice current : availablePeers.getDeviceList())
-                            newPeerList.add(new Peer(Status.AVAILABLE, current.deviceName, current.deviceAddress));
+                            newPeerList.add(new Peer(convertState(current.status), current.deviceName, current.deviceAddress));
                         Log.d(TAG, "New peer list : " + newPeerList);
 
                         //TODO: if device is already known and its name change we do not update it.

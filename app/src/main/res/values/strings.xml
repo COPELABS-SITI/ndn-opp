@@ -29,4 +29,8 @@
 
     <string name="create">Create</string>
     <string name="cancel">Cancel</string>
+    <string name="group">Wifi P2P Group</string>
+    <string name="opp">opp</string>
+    <string name="defaultPrefix">/ndn</string>
+    <string name="addRoute">Add Route</string>
 </resources>

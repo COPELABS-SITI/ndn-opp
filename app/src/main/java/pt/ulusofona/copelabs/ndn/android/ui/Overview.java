@@ -13,14 +13,12 @@ import android.view.ViewGroup;
 import pt.ulusofona.copelabs.ndn.R;
 
 import pt.ulusofona.copelabs.ndn.android.Face;
-import pt.ulusofona.copelabs.ndn.android.Peer;
 import pt.ulusofona.copelabs.ndn.android.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Status;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
 public class Overview extends Fragment {
     private Status mStatus;
-    private Table<Peer> mPeerList;
 	private Table<Face> mFacetable;
 	private Table<PitEntry> mPit;
 
@@ -30,9 +28,6 @@ public class Overview extends Fragment {
 
         if(savedInstanceState == null) {
             mStatus = new Status();
-
-            mPeerList = new Table<>();
-            mPeerList.setArguments(Peer.TABLE_ARGUMENTS);
 
             mFacetable = new Table<>();
             mFacetable.setArguments(Face.TABLE_ARGUMENTS);
@@ -49,7 +44,6 @@ public class Overview extends Fragment {
 		getChildFragmentManager()
 			.beginTransaction()
 			.replace(R.id.status, mStatus)
-            .replace(R.id.peerlist, mPeerList)
 			.replace(R.id.facetable, mFacetable)
 			.replace(R.id.pit, mPit)
 			.commit();
@@ -59,14 +53,12 @@ public class Overview extends Fragment {
 
 	public void clear() {
         if(mStatus != null) mStatus.clear();
-        if(mPeerList != null) mPeerList.clear();
         if(mFacetable != null) mFacetable.clear();
         if(mPit != null) mPit.clear();
 	}
 
-	public void refresh(String version, long uptimeInMilliseconds, List<Peer> peers, List<Face> faces, List<PitEntry> pit) {
+	public void refresh(String version, long uptimeInMilliseconds, List<Face> faces, List<PitEntry> pit) {
         mStatus.refresh(version, uptimeInMilliseconds);
-        mPeerList.refresh(peers);
         mFacetable.refresh(faces);
         mPit.refresh(pit);
 	}

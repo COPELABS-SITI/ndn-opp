@@ -1,5 +1,9 @@
 #include <jni.h>
+#include <coffeejni.h>
+#include <coffeecatch.h>
 #include <stdlib.h>
+
+#include "name.hpp"
 
 #include "core/logger.hpp"
 #include "core/version.hpp"
@@ -11,7 +15,15 @@
 #include "daemon/nfd-android.hpp"
 #include "daemon/fw/face-table.hpp"
 
+#include "daemon/table/fib.hpp"
+#include "daemon/table/fib-entry.hpp"
+
+#include "rib/route.hpp"
+#include "rib/rib-update.hpp"
+#include "rib/rib-manager.hpp"
 #include "rib/service.hpp"
+
+#include "ndn-cxx/util/time.hpp"
 
 #include <boost/thread.hpp>
 #include <boost/asio/io_service.hpp>
@@ -92,6 +104,8 @@ static void jniInitialize(JNIEnv* env, jobject, jstring homepath, jstring inputC
 		g_nfd->initialize();
 		NFD_LOG_INFO("Initializing NRD.");
 		g_nrd->initialize();
+
+		NFD_LOG_DEBUG("m_registeredFaces address : " << &(g_nrd->m_ribManager->m_registeredFaces));
 	}
 }
 
@@ -196,6 +210,43 @@ static jobject jniGetForwardingInformationBase(JNIEnv* env, jobject) {
 	return fib;
 }
 
+void onRibUpdateSuccess(const nfd::rib::RibUpdate& update) {
+  NFD_LOG_DEBUG("RIB update succeeded " << update);
+}
+
+void onRibUpdateFailure(const nfd::rib::RibUpdate& update, uint32_t code, const std::string& error) {
+  NFD_LOG_DEBUG("RIB update failed for " << update
+                    << " (code: " << code
+                    << ", error: " << error << ")");
+
+  g_nrd->m_ribManager->scheduleActiveFaceFetch(ndn::time::seconds(1));
+}
+
+static void jniAddRoute(JNIEnv* env, jobject, jstring prefix, jlong faceId, jlong origin, jlong cost, jlong flags) {
+    COFFEE_TRY_JNI(env,
+        if(g_nrd.get() != nullptr) {
+            nfd::rib::Route route;
+            route.faceId = faceId; route.origin = origin; route.cost = cost; route.flags = flags;
+            route.expires = ndn::time::steady_clock::TimePoint::max();
+
+            ndn::Name routePrefix = ndn::Name(std::string(env->GetStringUTFChars(prefix, NULL)));
+            NFD_LOG_INFO("Adding route " << routePrefix.toUri()
+                                         << " faceId=" << route.faceId
+                                         << " origin=" << route.origin
+                                         << " cost=" << route.cost);
+
+            nfd::rib::RibUpdate update;
+            update.setAction(nfd::rib::RibUpdate::REGISTER).setName(routePrefix).setRoute(route);
+
+            g_nrd->m_ribManager->m_rib.beginApplyUpdate(update,
+                std::bind(&onRibUpdateSuccess, update),
+                std::bind(&onRibUpdateFailure, update, _1, _2));
+
+            //g_nrd->m_ribManager->m_registeredFaces.insert(42);
+        }
+    );
+}
+
 static jobject jniGetPendingInterestTable(JNIEnv* env, jobject) {
 	jobject pit = env->NewObject(list, newList);
 
@@ -262,7 +313,8 @@ static JNINativeMethod nativeMethods[] = {
 	{ "getContentStore"              , "()Ljava/util/List;" , (void*) jniGetContentStore },
 
 	{ "createFace", "(Ljava/lang/String;IZ)V", (void*) jniCreateFace },
-	{ "destroyFace", "(J)V", (void*) jniDestroyFace }
+	{ "destroyFace", "(J)V", (void*) jniDestroyFace },
+	{ "addRoute", "(Ljava/lang/String;JJJJ)V", (void*) jniAddRoute }
 };
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {
