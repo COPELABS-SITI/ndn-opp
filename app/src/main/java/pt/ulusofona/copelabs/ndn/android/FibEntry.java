@@ -1,3 +1,9 @@
+/**
+ *  @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
+ * Implementation of the Forwarding Information Base entry class.
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ */
 package pt.ulusofona.copelabs.ndn.android;
 
 import android.os.Bundle;
@@ -31,6 +37,17 @@ public class FibEntry implements Entry, Comparable<FibEntry> {
 		nextHops.put(nh, Integer.valueOf(cost));
 	}
 
+    private String nhString() {
+        String res = "";
+        for(int k = 0; k < nextHops.size(); k++) {
+            long key = nextHops.keyAt(k);
+            res += Long.toString(key) + ":" + nextHops.get(key);
+            if(k < nextHops.size() - 1)
+                res += ",";
+        }
+        return res;
+    }
+
     @Override
 	public View getView(LayoutInflater inflater) {
         return inflater.inflate(R.layout.item_cell_two, null, false);
@@ -39,7 +56,7 @@ public class FibEntry implements Entry, Comparable<FibEntry> {
     @Override
     public void setViewContents(View entry) {
         ((TextView) entry.findViewById(R.id.left)).setText(prefix);
-        ((TextView) entry.findViewById(R.id.right)).setText(nextHops.toString());
+        ((TextView) entry.findViewById(R.id.right)).setText(nhString());
     }
 
     @Override

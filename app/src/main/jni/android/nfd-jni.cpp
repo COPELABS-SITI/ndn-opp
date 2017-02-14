@@ -242,7 +242,8 @@ static void jniAddRoute(JNIEnv* env, jobject, jstring prefix, jlong faceId, jlon
                 std::bind(&onRibUpdateSuccess, update),
                 std::bind(&onRibUpdateFailure, update, _1, _2));
 
-            //g_nrd->m_ribManager->m_registeredFaces.insert(42);
+            //TODO: this line causes SIGBUS (code 1: addr. algn.) on Android.
+            //g_nrd->m_ribManager->m_registeredFaces.insert(faceId);
         }
     );
 }

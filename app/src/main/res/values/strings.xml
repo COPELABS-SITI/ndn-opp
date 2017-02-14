@@ -18,7 +18,7 @@
     <string name="contentstore">Content Store</string>
     <string name="sct">Strategy Choice Table</string>
 
-    <string name="peers">Peer List</string>
+    <string name="peers">UMOBILE Peers</string>
     <string name="name">Name</string>
     <string name="prefix">Prefix</string>
     <string name="nexthops">Next hops</string>
@@ -33,4 +33,6 @@
     <string name="opp">opp</string>
     <string name="defaultPrefix">/ndn</string>
     <string name="addRoute">Add Route</string>
+    <string name="macAddress">MAC Address</string>
+    <string name="umobile">UMobile Peers</string>
 </resources>

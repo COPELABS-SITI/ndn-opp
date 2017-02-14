@@ -1,4 +1,9 @@
-package pt.ulusofona.copelabs.ndn.android;
+/**
+ *  @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
+ * Implementation of the Name entry class.
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ */package pt.ulusofona.copelabs.ndn.android;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;

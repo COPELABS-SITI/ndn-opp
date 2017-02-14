@@ -1,3 +1,10 @@
+/**
+ *  @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
+ * The main wrapper in Java of the NDN Forwarding Daemon for use on the Android platform.
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.service;
 
 import android.app.Service;
@@ -41,7 +48,7 @@ public class ForwardingDaemon extends Service {
 
     // Routing & Contextual Manager
     private Routing mRouting;
-    private ContextualManagerWifiP2p mContextualMgr;
+    private ContextualManager mContextualMgr;
 
     private State current = State.STOPPED;
 	private synchronized State getAndSetState(State nextState) {
@@ -68,7 +75,7 @@ public class ForwardingDaemon extends Service {
     public void onCreate() {
         super.onCreate();
         mRouting = new Routing(this);
-        mContextualMgr = new ContextualManagerWifiP2p(this, mRouting);
+        mContextualMgr = new ContextualManager(this, mRouting);
         mContextualMgr.register(this);
         jniInitialize(getFilesDir().getAbsolutePath(), getConfiguration());
     }
@@ -78,7 +85,6 @@ public class ForwardingDaemon extends Service {
 		if(State.STOPPED == getAndSetState(State.STARTED)) {
             jniStart();
 			startTime = System.currentTimeMillis();
-			// TODO: Reload NFD and NRD in memory structures (if any)
             Log.d(TAG, STARTED);
             sendBroadcast(new Intent(STARTED));
 		}
@@ -86,14 +92,13 @@ public class ForwardingDaemon extends Service {
 	}
 
 	@Override
-	public IBinder onBind(Intent in) {
+    public IBinder onBind(Intent in) {
 		return local;
 	}
 
 	@Override
 	public void onDestroy() {
 		if(State.STARTED == getAndSetState(State.STOPPED)) {
-			// TODO: Save NFD and NRD in memory data structures.
 			jniStop();
             jniCleanUp();
             mContextualMgr.unregister(this);
@@ -111,10 +116,10 @@ public class ForwardingDaemon extends Service {
 			return 0L;
 	}
 
-    public List<Peer> getPeers() {
+    public List<Peer> getUmobilePeers() {
         List<Peer> peers;
-        if(mRouting != null)
-            peers = mRouting.getPeers();
+        if(mContextualMgr != null)
+            peers = mContextualMgr.getUmobilePeers();
         else
             peers = new ArrayList<>();
         return peers;

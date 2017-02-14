@@ -1,3 +1,9 @@
+/**
+ *  @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
+ * This class manages the Fragment which displays the Status, FaceTable and PIT of the ForwardingDaemon.
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ */
 package pt.ulusofona.copelabs.ndn.android.ui;
 
 import java.util.List;
@@ -39,7 +45,7 @@ public class Overview extends Fragment {
 
     @Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
-		View contentStore = inflater.inflate(R.layout.fragment_overview, parent, false);
+		View overview = inflater.inflate(R.layout.fragment_overview, parent, false);
 
 		getChildFragmentManager()
 			.beginTransaction()
@@ -48,7 +54,7 @@ public class Overview extends Fragment {
 			.replace(R.id.pit, mPit)
 			.commit();
 
-		return contentStore;
+		return overview;
 	}
 
 	public void clear() {

@@ -1,3 +1,10 @@
+/**
+ *  @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
+ * Fragment which allows to display general information about the device and the ForwardingDaemon.
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.ui.fragment;
 
 import android.content.Context;
@@ -21,6 +28,7 @@ public class Status extends Fragment {
 	private TextView mVersion;
 	private TextView mUptime;
 	private TextView mIpAddress;
+	private TextView mMacAddress;
 
 	private WifiManager mWifiMgr;
 
@@ -33,19 +41,21 @@ public class Status extends Fragment {
 
     @Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
-		View contentStore = inflater.inflate(R.layout.fragment_status, parent, false);
+		View status = inflater.inflate(R.layout.fragment_status, parent, false);
 
-		mVersion = (TextView) contentStore.findViewById(R.id.version);		
-		mUptime = (TextView) contentStore.findViewById(R.id.uptime);
-		mIpAddress = (TextView) contentStore.findViewById(R.id.ipAddress);
+		mVersion = (TextView) status.findViewById(R.id.version);
+		mUptime = (TextView) status.findViewById(R.id.uptime);
+		mIpAddress = (TextView) status.findViewById(R.id.ipAddress);
+		mMacAddress = (TextView) status.findViewById(R.id.macAddress);
 
-		return contentStore;
+		return status;
 	}
 
     public void clear() {
 		mVersion.setText(R.string.notAvailable);
         mUptime.setText(R.string.notAvailable);
         mIpAddress.setText(R.string.notAvailable);
+		mMacAddress.setText(R.string.notAvailable);
 	}
 
     private String formatIPv4(int ipv4Addr, int ipv4Mask) {
@@ -71,5 +81,7 @@ public class Status extends Fragment {
         if (ipv4Addr != 0)
             mIpAddress.setText(formatIPv4(ipv4Addr, mWifiMgr.getDhcpInfo().netmask));
         else mIpAddress.setText(R.string.notAvailable);
-    }
+
+		mMacAddress.setText(mWifiMgr.getConnectionInfo().getMacAddress().toLowerCase(Locale.getDefault()));
+	}
 }

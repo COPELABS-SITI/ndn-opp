@@ -1,5 +1,11 @@
-package pt.ulusofona.copelabs.ndn.android;
+/**
+ *  @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
+ * Implementation of the Peer entry class.
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ */package pt.ulusofona.copelabs.ndn.android;
 
+import android.net.wifi.p2p.WifiP2pDevice;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,6 +30,28 @@ public class Peer implements Entry {
 		private String symbol;
 		Status(String s) { symbol = s; }
 		String getSymbol() { return symbol; }
+
+        public static Status convert(int st) {
+            Status converted;
+            switch (st) {
+                case WifiP2pDevice.CONNECTED:
+                    converted = Peer.Status.CONNECTED;
+                    break;
+                case WifiP2pDevice.INVITED:
+                    converted = Peer.Status.INVITED;
+                    break;
+                case WifiP2pDevice.FAILED:
+                    converted = Peer.Status.FAILED;
+                    break;
+                case WifiP2pDevice.AVAILABLE:
+                    converted = Peer.Status.AVAILABLE;
+                    break;
+                default:
+                    converted = Peer.Status.UNAVAILABLE;
+                    break;
+            }
+            return converted;
+        }
 	}
 
 	private Status currently;
@@ -64,7 +92,7 @@ public class Peer implements Entry {
 
     @Override
     public String toString() {
-        return name + ":" + addr;
+        return "[" + name + "#" + addr + "]";
     }
 
     @Override

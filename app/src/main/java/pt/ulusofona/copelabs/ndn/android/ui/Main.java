@@ -1,3 +1,9 @@
+/**
+ *  @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
+ * Main Activity of the NDN-Opp app.
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ */
 package pt.ulusofona.copelabs.ndn.android.ui;
 
 import android.content.ComponentName;
@@ -75,7 +81,7 @@ public class Main extends AppCompatActivity {
 	private final Runnable mRefresher = new Runnable() {
 		@Override
 		public void run() {
-            // TODO: this runs all the time. Even when the Daemon is stopped.
+            /* @TODO: this runs all the time. Even when the Daemon is stopped. */
 			refresh();
 			mUpdater.postDelayed(this, UPDATE_DELAY);
            }
@@ -144,7 +150,7 @@ public class Main extends AppCompatActivity {
 		if(mDaemon != null) {
 			switch (mSelection) {
                 case 0:
-                    mWifiP2p.refresh(mDaemon.getPeers());
+                    mWifiP2p.refresh(mDaemon.getUmobilePeers());
                     break;
 				case 1:
                     faces = mDaemon.getFaceTable();
@@ -207,8 +213,7 @@ public class Main extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        if(mConnection != null)
-            unbindService(mConnection);
+        if(mConnection != null) unbindService(mConnection);
         stopService(mDaemonIntent);
         super.onDestroy();
     }
@@ -239,12 +244,12 @@ public class Main extends AppCompatActivity {
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
-        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            mDaemon = ((ForwardingDaemon.DaemonBinder) iBinder).getService();
+        public void onServiceConnected(ComponentName cn, IBinder bndr) {
+            mDaemon = ((ForwardingDaemon.DaemonBinder) bndr).getService();
         }
 
         @Override
-        public void onServiceDisconnected(ComponentName componentName) {
+        public void onServiceDisconnected(ComponentName cn) {
             mDaemon = null;
         }
     };

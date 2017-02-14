@@ -1,3 +1,11 @@
+/**
+ *  @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
+ * This class manages the Fragment which displays the FaceTable, FIB & Strategy Choice Table of
+ * the ForwardingDaemon.
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.ui;
 
 import android.os.Bundle;
@@ -40,7 +48,7 @@ public class ForwarderConfiguration extends Fragment {
 
     @Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
-		View contentStore = inflater.inflate(R.layout.fragment_forwarder_configuration, parent, false);
+		View fwdConfig = inflater.inflate(R.layout.fragment_forwarder_configuration, parent, false);
 
 		getChildFragmentManager()
 			.beginTransaction()
@@ -49,7 +57,7 @@ public class ForwarderConfiguration extends Fragment {
 			.replace(R.id.sct, mSct)
 			.commit();
 
-		return contentStore;
+		return fwdConfig;
 	}
 
 	public void clear() {

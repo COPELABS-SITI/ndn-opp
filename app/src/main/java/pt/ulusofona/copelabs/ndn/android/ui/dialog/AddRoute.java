@@ -1,3 +1,10 @@
+/**
+ *  @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
+ * Simple Dialog to Add a route to the ForwardingDaemon's RIB.
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.ui.dialog;
 
 import android.app.Dialog;

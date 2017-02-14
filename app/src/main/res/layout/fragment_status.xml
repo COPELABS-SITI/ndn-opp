@@ -21,4 +21,9 @@
 		<TextView style="@style/wrap" android:text="@string/ipAddress"/>
 		<TextView style="@style/field" android:id="@+id/ipAddress" android:text="@string/notAvailable"/>
 	</LinearLayout>
+
+	<LinearLayout style="@style/match">
+		<TextView style="@style/wrap" android:text="@string/macAddress"/>
+		<TextView style="@style/field" android:id="@+id/macAddress" android:text="@string/notAvailable"/>
+	</LinearLayout>
 </LinearLayout>
