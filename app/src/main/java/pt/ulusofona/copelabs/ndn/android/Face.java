@@ -38,6 +38,7 @@ public class Face implements Entry, Comparable<Face> {
 	public long getId() {
 		return id;
 	}
+	public String getRemoteURI() { return remoteURI; }
 
 	public Face(long fId, String lu, String ru, int sc, int p, int lt, int st) {
 		id = fId;

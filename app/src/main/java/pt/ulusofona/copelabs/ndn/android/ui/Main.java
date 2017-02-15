@@ -150,7 +150,7 @@ public class Main extends AppCompatActivity {
 		if(mDaemon != null) {
 			switch (mSelection) {
                 case 0:
-                    mWifiP2p.refresh(mDaemon.getUmobilePeers());
+                    mWifiP2p.refresh(mDaemon.getUmobilePeers(), mDaemon.getFaceTable());
                     break;
 				case 1:
                     faces = mDaemon.getFaceTable();

@@ -13,6 +13,7 @@ import android.content.IntentFilter;
 import android.net.wifi.p2p.WifiP2pManager;
 
 import java.util.List;
+import java.util.Set;
 
 import pt.ulusofona.copelabs.ndn.android.Peer;
 
@@ -42,8 +43,8 @@ class ContextualManager {
         return mTracker.getUmobilePeers();
     }
 
-    void notifyUmobilePeerChange() {
-        mRouting.notifyUMobilePeersChange(mTracker.getUmobilePeers());
+    void notifyUmobilePeerChange(Set<Peer> changes) {
+        mRouting.notifyUMobilePeersChange(changes);
     }
 
     public void register(Context ctxt) {

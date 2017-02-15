@@ -85,14 +85,19 @@ class UmobileDeviceTracker extends android.content.BroadcastReceiver {
                         newScanResult.put(current.deviceAddress, new Peer(Status.convert(current.status), current.deviceName, current.deviceAddress));
                     Log.d(TAG, "New Scan Result : " + newScanResult);
 
-                    // Add all newly detected devices.
+                    Set<Peer> changes = new HashSet<>();
+                    for(Peer current : newScanResult.values())
+                        if(mDiscoverer.knows(current.getAddr())) changes.add(current);
                     mWifiP2pPeers.putAll(newScanResult);
 
                     for(String deviceAddress : mWifiP2pPeers.keySet())
-                        if(!newScanResult.containsKey(deviceAddress))
-                            mWifiP2pPeers.get(deviceAddress).setStatus(Status.UNAVAILABLE);
+                        if(!newScanResult.containsKey(deviceAddress)) {
+                            Peer current = mWifiP2pPeers.get(deviceAddress);
+                            current.setStatus(Status.UNAVAILABLE);
+                            changes.add(current);
+                        }
 
-                    mCtxtMgr.notifyUmobilePeerChange();
+                    mCtxtMgr.notifyUmobilePeerChange(changes);
                 }
             });
         } else if (WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION.equals(action)) {
@@ -113,7 +118,7 @@ class UmobileDeviceTracker extends android.content.BroadcastReceiver {
         private static final String INSTANCE_NAME = "_umobile";
         private static final String INSTANCE_TYPE = "_ndn._tcp";
 
-        Set<String> mUmobilePeersAddresses;
+        private Set<String> mUmobilePeersAddresses;
 
         private WifiP2pDnsSdServiceInfo mDescriptor;
         private WifiP2pDnsSdServiceRequest mRequest;
@@ -139,6 +144,10 @@ class UmobileDeviceTracker extends android.content.BroadcastReceiver {
 
             mDescriptor = WifiP2pDnsSdServiceInfo.newInstance(INSTANCE_NAME, INSTANCE_TYPE, null);
             mRequest = WifiP2pDnsSdServiceRequest.newInstance();
+        }
+
+        boolean knows(String addr) {
+            return mUmobilePeersAddresses.contains(addr);
         }
 
         void enable() {

@@ -29,7 +29,7 @@ public class Peer implements Entry {
 		UNAVAILABLE("Un");
 		private String symbol;
 		Status(String s) { symbol = s; }
-		String getSymbol() { return symbol; }
+		public String getSymbol() { return symbol; }
 
         public static Status convert(int st) {
             Status converted;
@@ -71,24 +71,19 @@ public class Peer implements Entry {
         return addr;
     }
 
+    public Status getStatus() { return currently; }
 	public void setStatus(Status cs) {
 		currently = cs;
 	}
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
         Peer peer = (Peer) o;
-
-        return addr != null ? addr.equals(peer.addr) : peer.addr == null;
+        return addr.equals(peer.addr);
     }
 
     @Override
-    public int hashCode() {
-        return addr != null ? addr.hashCode() : 0;
-    }
+    public int hashCode() { return addr.hashCode(); }
 
     @Override
     public String toString() {

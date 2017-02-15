@@ -14,14 +14,17 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import pt.ulusofona.copelabs.ndn.R;
+import pt.ulusofona.copelabs.ndn.android.Face;
 import pt.ulusofona.copelabs.ndn.android.Peer;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
 public class WifiP2p extends Fragment {
     private Table<Peer> mPeers;
+    private Table<Face> mFaces;
     private Table<Peer> mGroup;
 
     @Override
@@ -31,6 +34,9 @@ public class WifiP2p extends Fragment {
         if(savedInstanceState == null) {
             mPeers = new Table<>();
             mPeers.setArguments(Peer.TABLE_ARGUMENTS);
+
+            mFaces = new Table<>();
+            mFaces.setArguments(Face.TABLE_ARGUMENTS);
 
             mGroup = new Table<>();
             Bundle args = (Bundle) Peer.TABLE_ARGUMENTS.clone();
@@ -46,6 +52,7 @@ public class WifiP2p extends Fragment {
 		getChildFragmentManager()
             .beginTransaction()
             .replace(R.id.peers, mPeers)
+            .replace(R.id.faces, mFaces)
             .replace(R.id.group, mGroup)
 			.commit();
 
@@ -54,10 +61,17 @@ public class WifiP2p extends Fragment {
 
 	public void clear() {
         if(mPeers != null) mPeers.clear();
-        if(mGroup != null) mGroup.clear();
+        if(mFaces != null) mFaces.clear();
 	}
 
-	public void refresh(List<Peer> peers) {
+	public void refresh(List<Peer> peers, List<Face> faces) {
         mPeers.refresh(peers);
+
+        // Filter out non-opportunistic faces from the input list.
+        List<Face> oppFaces = new ArrayList<>();
+        for(Face current : faces)
+            if(current.getRemoteURI().startsWith(getString(R.string.opp)))
+                oppFaces.add(current);
+        mFaces.refresh(oppFaces);
 	}
 }

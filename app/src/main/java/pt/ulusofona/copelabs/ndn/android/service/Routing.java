@@ -11,47 +11,43 @@
  */
 package pt.ulusofona.copelabs.ndn.android.service;
 
-import java.util.ArrayList;
-import java.util.List;
+import android.util.Log;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import pt.ulusofona.copelabs.ndn.android.Peer;
-import pt.ulusofona.copelabs.ndn.android.Peer.Status;
 
 public class Routing {
+    private static final String TAG = Routing.class.getSimpleName();
+
     private ForwardingDaemon mDaemon;
-    private List<Peer> mUmobilePeers;
+    private Map<String, Peer> mUmobilePeers;
 
 	public Routing(ForwardingDaemon fd) {
         mDaemon = fd;
-        mUmobilePeers = new ArrayList<>();
+        mUmobilePeers = new HashMap<>();
 	}
 
     // Callback for the ContextualManager.
-    public void notifyAddition(List<Peer> peers) {
-        for(Peer current : peers) notifyAddition(current);
-    }
-
-    public void notifyRemoval(List<Peer> peers) {
-        for(Peer current : peers) notifyRemoval(current);
-    }
-
-    void notifyUMobilePeersChange(List<Peer> uPeers) {
-        mUmobilePeers.clear(); mUmobilePeers.addAll(uPeers);
-    }
-
-    private void notifyAddition(Peer current) {
-        int idx = mUmobilePeers.indexOf(current);
-        if(idx == -1) {
-            mUmobilePeers.add(current);
-            mDaemon.createFace("opp://[" + current.getAddr() + "]", 0, false);
-        } else
-            mUmobilePeers.get(idx).setStatus(Status.AVAILABLE);
-        /* @TODO: Logic of Bringing Up */
-    }
-
-    private void notifyRemoval(Peer current) {
-        int idx = mUmobilePeers.indexOf(current);
-        if(idx != -1)
-            mUmobilePeers.get(idx).setStatus(Status.UNAVAILABLE);
+    void notifyUMobilePeersChange(Set<Peer> changes) {
+        for(Peer current : changes) {
+            String currentAddress = current.getAddr();
+            switch(current.getStatus()) {
+                case AVAILABLE:
+                    if(!mUmobilePeers.containsKey(currentAddress))
+                        mDaemon.createFace("opp://[" + current.getAddr() + "]", 0, false);
+                    /* @TODO: Bringing UP logic */
+                    break;
+                case UNAVAILABLE:
+                    /* @TODO: Bringing DOWN logic */
+                    break;
+                default:
+                    Log.w(TAG, "Unhandled status : " + current.getStatus().getSymbol());
+                    break;
+            }
+            mUmobilePeers.put(current.getAddr(), current);
+        }
     }
 }
