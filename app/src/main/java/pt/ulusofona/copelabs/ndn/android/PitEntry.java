@@ -5,7 +5,7 @@
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */package pt.ulusofona.copelabs.ndn.android;
 
-import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 
@@ -15,16 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.ui.Entry;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
-public class PitEntry implements Entry, Comparable<PitEntry> {
-    public static final Bundle TABLE_ARGUMENTS = new Bundle();
-    static {
-        TABLE_ARGUMENTS.putInt(Table.TITLE, R.string.pit);
-        TABLE_ARGUMENTS.putInt(Table.DEFAULT_VIEW, R.layout.item_pit_entry);
-    }
-
+public class PitEntry implements Table.Entry, Comparable<PitEntry> {
     private String name;
 	private List<Long> inFaces;
 	private List<Long> outFaces;
@@ -55,7 +48,7 @@ public class PitEntry implements Entry, Comparable<PitEntry> {
     }
 
     @Override
-    public int compareTo(PitEntry that) {
+    public int compareTo(@NonNull PitEntry that) {
         return this.name.compareTo(that.name);
     }
 }

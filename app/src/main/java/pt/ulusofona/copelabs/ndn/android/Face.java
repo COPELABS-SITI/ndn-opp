@@ -6,7 +6,7 @@
  */
 package pt.ulusofona.copelabs.ndn.android;
 
-import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.util.SparseArray;
 
 import android.view.LayoutInflater;
@@ -17,16 +17,9 @@ import android.widget.TextView;
 import java.util.Locale;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.ui.Entry;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
-public class Face implements Entry, Comparable<Face> {
-    public static final Bundle TABLE_ARGUMENTS = new Bundle();
-    static {
-        TABLE_ARGUMENTS.putInt(Table.TITLE, R.string.facetable);
-        TABLE_ARGUMENTS.putInt(Table.DEFAULT_VIEW, R.layout.item_face);
-    }
-
+public class Face implements Table.Entry, Comparable<Face> {
 	private long id;
     private String localURI;
     private String remoteURI;
@@ -95,7 +88,7 @@ public class Face implements Entry, Comparable<Face> {
     }
 
 	@Override
-	public int compareTo(Face that) {
+	public int compareTo(@NonNull Face that) {
 		return (int) (this.id - that.id);
 	}
 }

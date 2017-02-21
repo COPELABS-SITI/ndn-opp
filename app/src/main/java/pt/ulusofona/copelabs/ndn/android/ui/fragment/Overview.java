@@ -4,12 +4,11 @@
  * This class manages the Fragment which displays the Status, FaceTable and PIT of the ForwardingDaemon.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
-package pt.ulusofona.copelabs.ndn.android.ui;
-
-import java.util.List;
+package pt.ulusofona.copelabs.ndn.android.ui.fragment;
 
 import android.os.Bundle;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -20,27 +19,17 @@ import pt.ulusofona.copelabs.ndn.R;
 
 import pt.ulusofona.copelabs.ndn.android.Face;
 import pt.ulusofona.copelabs.ndn.android.PitEntry;
-import pt.ulusofona.copelabs.ndn.android.ui.fragment.Status;
-import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
+import pt.ulusofona.copelabs.ndn.android.service.ForwardingDaemon;
 
-public class Overview extends Fragment {
+public class Overview extends Fragment implements Refreshable {
     private Status mStatus;
 	private Table<Face> mFacetable;
 	private Table<PitEntry> mPit;
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        if(savedInstanceState == null) {
-            mStatus = new Status();
-
-            mFacetable = new Table<>();
-            mFacetable.setArguments(Face.TABLE_ARGUMENTS);
-
-            mPit = new Table<>();
-            mPit.setArguments(PitEntry.TABLE_ARGUMENTS);
-        }
+    public Overview() {
+        mStatus = new Status();
+        mFacetable = Table.newInstance(R.string.facetable, R.layout.item_face);
+        mPit = Table.newInstance(R.string.pit, R.layout.item_pit_entry);
     }
 
     @Override
@@ -57,15 +46,15 @@ public class Overview extends Fragment {
 		return overview;
 	}
 
-	public void clear() {
-        if(mStatus != null) mStatus.clear();
-        if(mFacetable != null) mFacetable.clear();
-        if(mPit != null) mPit.clear();
-	}
+    @Override
+    public int getTitle() {
+        return R.string.overview;
+    }
 
-	public void refresh(String version, long uptimeInMilliseconds, List<Face> faces, List<PitEntry> pit) {
-        mStatus.refresh(version, uptimeInMilliseconds);
-        mFacetable.refresh(faces);
-        mPit.refresh(pit);
+    @Override
+	public void refresh(@NonNull ForwardingDaemon daemon) {
+		mStatus.refresh(daemon);
+		mFacetable.refresh(daemon.getFaceTable());
+		mPit.refresh(daemon.getPendingInterestTable());
 	}
 }

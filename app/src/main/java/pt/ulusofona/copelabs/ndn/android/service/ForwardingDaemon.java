@@ -2,6 +2,7 @@
  *  @version 1.0
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
  * The main wrapper in Java of the NDN Forwarding Daemon for use on the Android platform.
+ * This class embodies the implementation of the NDN-Opp framework.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
 
@@ -18,9 +19,9 @@ import pt.ulusofona.copelabs.ndn.android.CsEntry;
 import pt.ulusofona.copelabs.ndn.android.Face;
 import pt.ulusofona.copelabs.ndn.android.FibEntry;
 import pt.ulusofona.copelabs.ndn.android.Name;
-import pt.ulusofona.copelabs.ndn.android.Peer;
 import pt.ulusofona.copelabs.ndn.android.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.SctEntry;
+import pt.ulusofona.copelabs.ndn.android.UmobileService;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -32,9 +33,9 @@ public class ForwardingDaemon extends Service {
     private static final String TAG = ForwardingDaemon.class.getSimpleName();
 
 	public static final String STARTED = "pt.ulusofona.copelabs.ndn.android.service.STARTED";
-	public static final String STOPPED = "pt.ulusofona.copelabs.ndn.android.service.STOPPED";
+	public static final String STOPPING = "pt.ulusofona.copelabs.ndn.android.service.STOPPING";
 
-	private enum State { STARTED , STOPPED }
+    private enum State { STARTED , STOPPED }
 
     public class DaemonBinder extends Binder {
         public ForwardingDaemon getService() {
@@ -62,7 +63,7 @@ public class ForwardingDaemon extends Service {
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(getResources().openRawResource(R.raw.nfd_conf)));
             try {
-                while (br.ready()) cfgBuilder.append(br.readLine() + "\n");
+                while (br.ready()) cfgBuilder.append(br.readLine()).append("\n");
             } finally { br.close(); }
         } catch (IOException e) {
             Log.d(TAG, "I/O error while reading configuration : " + e.getMessage());
@@ -74,9 +75,10 @@ public class ForwardingDaemon extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
         mRouting = new Routing(this);
         mContextualMgr = new ContextualManager(this, mRouting);
-        mContextualMgr.register(this);
+
         jniInitialize(getFilesDir().getAbsolutePath(), getConfiguration());
     }
 
@@ -85,6 +87,7 @@ public class ForwardingDaemon extends Service {
 		if(State.STOPPED == getAndSetState(State.STARTED)) {
             jniStart();
 			startTime = System.currentTimeMillis();
+            mContextualMgr.enable();
             Log.d(TAG, STARTED);
             sendBroadcast(new Intent(STARTED));
 		}
@@ -101,8 +104,8 @@ public class ForwardingDaemon extends Service {
 		if(State.STARTED == getAndSetState(State.STOPPED)) {
 			jniStop();
             jniCleanUp();
-            mContextualMgr.unregister(this);
-			sendBroadcast(new Intent(STOPPED));
+            mContextualMgr.disable();
+			sendBroadcast(new Intent(STOPPING));
 			stopSelf();
             super.onDestroy();
 		}
@@ -110,14 +113,17 @@ public class ForwardingDaemon extends Service {
 
     // Uptime of the Forwarding Daemon in milliseconds.
 	public long getUptime() {
-		if(current == State.STARTED)
-			return System.currentTimeMillis() - startTime;
-		else
-			return 0L;
+		return (current == State.STARTED) ? System.currentTimeMillis() - startTime : 0L;
 	}
 
-    public List<Peer> getUmobilePeers() {
-        List<Peer> peers;
+    // UMobile UUID used by the ContextualManager.
+    public String getUmobileUuid() {
+        return (current == State.STARTED) ? mContextualMgr.getUmobileUuid() : getString(R.string.notAvailable);
+    }
+
+    // Currently known UMobile Service Devices.
+    public List<UmobileService> getUmobileServices() {
+        List<UmobileService> peers;
         if(mContextualMgr != null)
             peers = mContextualMgr.getUmobilePeers();
         else
@@ -130,7 +136,7 @@ public class ForwardingDaemon extends Service {
 		System.loadLibrary("nfd-wrapped");
 	}
 
-	// Service related functions.
+	// UmobileService related functions.
 	private native void jniInitialize(String homepath, String config);
     private native void jniCleanUp();
     private native void jniStart();

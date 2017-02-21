@@ -6,7 +6,7 @@
  */
 package pt.ulusofona.copelabs.ndn.android;
 
-import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.util.LongSparseArray;
 
 import android.view.LayoutInflater;
@@ -15,16 +15,9 @@ import android.view.View;
 import android.widget.TextView;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.ui.Entry;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
-public class FibEntry implements Entry, Comparable<FibEntry> {
-    public static final Bundle TABLE_ARGUMENTS = new Bundle();
-    static {
-        TABLE_ARGUMENTS.putInt(Table.TITLE, R.string.fib);
-        TABLE_ARGUMENTS.putInt(Table.DEFAULT_VIEW, R.layout.item_cell_two);
-    }
-
+public class FibEntry implements Table.Entry, Comparable<FibEntry> {
 	private String prefix;
 	private LongSparseArray<Integer> nextHops;
 
@@ -34,7 +27,7 @@ public class FibEntry implements Entry, Comparable<FibEntry> {
 	}
 
 	public void addNextHop(long nh, int cost) {
-		nextHops.put(nh, Integer.valueOf(cost));
+		nextHops.put(nh, cost);
 	}
 
     private String nhString() {
@@ -60,7 +53,7 @@ public class FibEntry implements Entry, Comparable<FibEntry> {
     }
 
     @Override
-    public int compareTo(FibEntry that) {
+    public int compareTo(@NonNull FibEntry that) {
         return this.prefix.compareTo(that.prefix);
     }
 }

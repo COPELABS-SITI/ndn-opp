@@ -6,44 +6,33 @@
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
 
-package pt.ulusofona.copelabs.ndn.android.ui;
+package pt.ulusofona.copelabs.ndn.android.ui.fragment;
 
 import android.os.Bundle;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.LayoutInflater;
 
-import java.util.List;
-
 import pt.ulusofona.copelabs.ndn.R;
 
 import pt.ulusofona.copelabs.ndn.android.Face;
 import pt.ulusofona.copelabs.ndn.android.FibEntry;
 import pt.ulusofona.copelabs.ndn.android.SctEntry;
-import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
+import pt.ulusofona.copelabs.ndn.android.service.ForwardingDaemon;
 
-public class ForwarderConfiguration extends Fragment {
+public class ForwarderConfiguration extends Fragment implements Refreshable {
 	private Table<Face> mFacetable;
 	private Table<FibEntry> mFib;
 	private Table<SctEntry> mSct;
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        if(savedInstanceState == null) {
-			mFacetable = new Table<>();
-			mFacetable.setArguments(Face.TABLE_ARGUMENTS);
-
-            mFib = new Table<>();
-            mFib.setArguments(FibEntry.TABLE_ARGUMENTS);
-
-            mSct = new Table<>();
-            mSct.setArguments(SctEntry.TABLE_ARGUMENTS);
-        }
+    public ForwarderConfiguration() {
+        mFacetable = Table.newInstance(R.string.facetable, R.layout.item_face);
+        mFib = Table.newInstance(R.string.fib, R.layout.item_cell_two);
+        mSct = Table.newInstance(R.string.sct, R.layout.item_cell_two);
     }
 
     @Override
@@ -60,13 +49,15 @@ public class ForwarderConfiguration extends Fragment {
 		return fwdConfig;
 	}
 
-	public void clear() {
-        if(mFacetable != null) mFacetable.clear();
-        if(mFib != null) mFib.clear();
-        if(mSct != null) mSct.clear();
-	}
+    @Override
+    public int getTitle() {
+        return R.string.forwarderConfiguration;
+    }
 
-    public void refresh(List<Face> faces, List<FibEntry> fib, List<SctEntry> sct) {
-        mFacetable.refresh(faces); mFib.refresh(fib); mSct.refresh(sct);
+    @Override
+	public void refresh(@NonNull ForwardingDaemon daemon) {
+		mFacetable.refresh(daemon.getFaceTable());
+		mFib.refresh(daemon.getForwardingInformationBase());
+		mSct.refresh(daemon.getStrategyChoiceTable());
 	}
 }

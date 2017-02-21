@@ -9,9 +9,9 @@ package pt.ulusofona.copelabs.ndn.android.ui.fragment;
 import android.content.Context;
 import android.os.Bundle;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.LayoutInflater;
@@ -23,9 +23,13 @@ import android.widget.ListView;
 import java.util.List;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.ui.Entry;
 
-public class Table<E extends Entry> extends Fragment {
+public class Table<E extends Table.Entry> extends Fragment {
+    public interface Entry {
+        View getView(LayoutInflater infl);
+        void setViewContents(View entry);
+    }
+
     private static final String TAG = Table.class.getSimpleName();
 
     public static final String TITLE = "ResourceIdTitle";
@@ -35,18 +39,24 @@ public class Table<E extends Entry> extends Fragment {
     private int mResIdViews; // Default view to use.
     private EntryAdapter<E> mAdapter;
 
+    public static Table newInstance(int titleId, int viewId) {
+        Table fragment = new Table();
+        Bundle args = new Bundle();
+        args.putInt(TITLE, titleId);
+        args.putInt(DEFAULT_VIEW, viewId);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if(savedInstanceState == null) {
-            Bundle args = getArguments();
-            if(args != null) {
-                mResIdTitle = args.getInt(TITLE);
-                mResIdViews = args.getInt(DEFAULT_VIEW);
-                mAdapter = new EntryAdapter<>(getContext(), mResIdViews);
-            } else
-                Log.d(TAG, "Empty argument bundle passed.");
+        Bundle args = getArguments();
+        if(args != null) {
+            mResIdTitle = args.getInt(TITLE);
+            mResIdViews = args.getInt(DEFAULT_VIEW);
+            mAdapter = new EntryAdapter<>(getContext(), mResIdViews);
         }
     }
 
@@ -72,8 +82,8 @@ public class Table<E extends Entry> extends Fragment {
             mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         }
 
-        @Override
-        public View getView(int i, View convertView, ViewGroup viewGroup) {
+        @Override @NonNull
+        public View getView(int i, View convertView, @NonNull ViewGroup viewGroup) {
             View entry;
             Entry data = getItem(i);
 

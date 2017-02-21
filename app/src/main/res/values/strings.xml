@@ -4,6 +4,8 @@
     <string name="app_name">Forwarding Daemon</string>
     <string name="label">NDN Forwarding Daemon</string>
     <string name="description">Porting of the NDN Forwarding Daemon to the Android platform.</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
 
 	<string name="notAvailable">n/a</string>
     
@@ -35,4 +37,11 @@
     <string name="addRoute">Add Route</string>
     <string name="macAddress">MAC Address</string>
     <string name="umobile">UMobile Peers</string>
+    <string name="servicePeers">Service Peers</string>
+    <string name="serviceTracker">Service Tracker</string>
+    <string name="overview">Overview</string>
+    <string name="forwarderConfiguration">Forwarder Configuration</string>
+    <string name="authorName">Seweryn Dynerowicz</string>
+    <string name="authorEmail">seweryn.dynerowicz@ulusofona.pt</string>
+    <string name="umobileUuid">UMobile UUID</string>
 </resources>

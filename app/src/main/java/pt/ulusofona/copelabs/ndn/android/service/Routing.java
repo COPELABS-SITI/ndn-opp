@@ -5,7 +5,7 @@
  * It fullfills two functions within the App
  * (1) Routing: recomputing the new routes to be installed into the ForwardingDaemon's RIB
  * (2) Face management: translating the changes in neighborhood (i.e. other UMobile nodes availability)
- * into bringing the corresponding Faces UP and DOWN and establishing the connection that those Faces
+ * into bringing the corresponding Faces AVAILABLE and UNAVAILABLE and establishing the connection that those Faces
  * ought to use for communication.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
@@ -17,37 +17,37 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import pt.ulusofona.copelabs.ndn.android.Peer;
+import pt.ulusofona.copelabs.ndn.android.UmobileService;
+import pt.ulusofona.copelabs.ndn.android.UmobileService.Status;
 
-public class Routing {
+class Routing {
     private static final String TAG = Routing.class.getSimpleName();
 
     private ForwardingDaemon mDaemon;
-    private Map<String, Peer> mUmobilePeers;
+    private Map<String, UmobileService> mUmobilePeers;
 
-	public Routing(ForwardingDaemon fd) {
-        mDaemon = fd;
+	Routing(ForwardingDaemon daemon) {
+        mDaemon = daemon;
         mUmobilePeers = new HashMap<>();
 	}
 
-    // Callback for the ContextualManager.
-    void notifyUMobilePeersChange(Set<Peer> changes) {
-        for(Peer current : changes) {
-            String currentAddress = current.getAddr();
-            switch(current.getStatus()) {
-                case AVAILABLE:
-                    if(!mUmobilePeers.containsKey(currentAddress))
-                        mDaemon.createFace("opp://[" + current.getAddr() + "]", 0, false);
-                    /* @TODO: Bringing UP logic */
-                    break;
-                case UNAVAILABLE:
-                    /* @TODO: Bringing DOWN logic */
-                    break;
-                default:
-                    Log.w(TAG, "Unhandled status : " + current.getStatus().getSymbol());
-                    break;
+    private void bringUp(String name) {
+        Log.d(TAG, "Bringing Up : " + name);
+    }
+    private void bringDown(String name) { Log.d(TAG, "Bringing Up : " + name); }
+
+    public void update(Set<UmobileService> changes) {
+        for(UmobileService current : changes) {
+            if(current.status == Status.AVAILABLE) {
+                /* @TODO: Make sure the Faces of the native library are synchronized */
+                if(!mUmobilePeers.containsKey(current.name))
+                    mDaemon.createFace("opp://" + current.name, 0, false);
+                bringUp(current.name);
+            } else if(current.status == Status.UNAVAILABLE) {
+                /* @TODO: Bringing UNAVAILABLE logic */
             }
-            mUmobilePeers.put(current.getAddr(), current);
+
+            mUmobilePeers.put(current.name, current);
         }
     }
 }
