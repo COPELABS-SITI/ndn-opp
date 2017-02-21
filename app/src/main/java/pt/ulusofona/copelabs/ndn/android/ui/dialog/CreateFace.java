@@ -24,7 +24,7 @@ import android.widget.Spinner;
 
 import pt.ulusofona.copelabs.ndn.R;
 
-import pt.ulusofona.copelabs.ndn.android.service.ForwardingDaemon;
+import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
 public class CreateFace extends DialogFragment {
     private ForwardingDaemon mDaemon;

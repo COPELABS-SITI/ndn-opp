@@ -4,7 +4,7 @@
  * A dummy implementation of the ContextualManager that will be provided by Senseption, Lda.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
-package pt.ulusofona.copelabs.ndn.android.service;
+package pt.ulusofona.copelabs.ndn.android.umobile;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import pt.ulusofona.copelabs.ndn.android.UmobileService;
+import pt.ulusofona.copelabs.ndn.android.umobile.tracking.ServiceTracker;
 
 class ContextualManager implements Observer {
     private static final String PROPERTY_UUID_KEY = "UMOBILE_UUID";
@@ -42,7 +43,7 @@ class ContextualManager implements Observer {
         if(!storage.contains(PROPERTY_UUID_KEY)) {
             uuid = UUID.randomUUID().toString();
             SharedPreferences.Editor editor = storage.edit();
-            editor.putString(PROPERTY_UUID_KEY, mUmobileUuid);
+            editor.putString(PROPERTY_UUID_KEY, uuid);
             editor.apply();
         } else
             uuid = storage.getString(PROPERTY_UUID_KEY, null);
@@ -70,7 +71,7 @@ class ContextualManager implements Observer {
         // Construct delta between previous UmobileService list and the new one.
         Set<UmobileService> changes = new HashSet<>();
 
-        Map<String, UmobileService> newServiceList = mTracker.mServices;
+        Map<String, UmobileService> newServiceList = mTracker.getServices();
         for(String svcName : newServiceList.keySet()) {
             UmobileService newEntry = newServiceList.get(svcName);
             UmobileService oldEntry = mServicePeers.containsKey(svcName) ? mServicePeers.get(svcName) : null;

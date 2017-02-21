@@ -6,7 +6,7 @@
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
 
-package pt.ulusofona.copelabs.ndn.android.service;
+package pt.ulusofona.copelabs.ndn.android.umobile;
 
 import android.app.Service;
 import android.content.Intent;

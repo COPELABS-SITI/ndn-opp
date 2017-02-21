@@ -9,23 +9,20 @@ package pt.ulusofona.copelabs.ndn.android.ui.dialog;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
-import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
-import android.widget.SpinnerAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.Face;
-import pt.ulusofona.copelabs.ndn.android.service.ForwardingDaemon;
+import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
 public class AddRoute extends DialogFragment {
     private ForwardingDaemon mDaemon;

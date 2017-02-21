@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.UmobileService;
-import pt.ulusofona.copelabs.ndn.android.service.ForwardingDaemon;
+import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
 public class ServiceTracking extends Fragment implements Refreshable {
     private Table<UmobileService> mServicePeers;

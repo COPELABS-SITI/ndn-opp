@@ -19,7 +19,7 @@ import android.view.LayoutInflater;
 import java.util.Locale;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.service.ForwardingDaemon;
+import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
 public class Status extends Fragment implements Refreshable {
 	// Controls

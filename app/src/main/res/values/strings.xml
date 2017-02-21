@@ -43,5 +43,5 @@
     <string name="forwarderConfiguration">Forwarder Configuration</string>
     <string name="authorName">Seweryn Dynerowicz</string>
     <string name="authorEmail">seweryn.dynerowicz@ulusofona.pt</string>
-    <string name="umobileUuid">UMobile UUID</string>
+    <string name="umobileUuid">UUID</string>
 </resources>

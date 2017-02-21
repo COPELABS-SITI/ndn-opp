@@ -38,7 +38,7 @@ import java.util.TimerTask;
 
 import pt.ulusofona.copelabs.ndn.R;
 
-import pt.ulusofona.copelabs.ndn.android.service.ForwardingDaemon;
+import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.AddRoute;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.CreateFace;
@@ -58,7 +58,6 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
     private DaemonBroadcastReceiver mDaemonListener;
 
     private ForwardingDaemon mDaemon;
-    private boolean mDaemonRunning = false;
     private boolean mDaemonConnected = false;
 
     private Switch mNfdSwitch;
@@ -274,11 +273,9 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
             String action = intent.getAction();
             Log.d(TAG, "ForwardingDaemon : " + action);
 			if(action.equals(ForwardingDaemon.STARTED)) {
-                mDaemonRunning = true;
                 startUpdater();
                 bindService(mDaemonIntent, mConnection, Context.BIND_AUTO_CREATE);
             } else if (action.equals(ForwardingDaemon.STOPPING)) {
-                mDaemonRunning = false;
                 stopUpdater();
                 mCurrentDisplayedFragment.refresh(mDaemon);
             }

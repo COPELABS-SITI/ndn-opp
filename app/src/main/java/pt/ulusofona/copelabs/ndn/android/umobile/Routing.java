@@ -9,7 +9,7 @@
  * ought to use for communication.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
-package pt.ulusofona.copelabs.ndn.android.service;
+package pt.ulusofona.copelabs.ndn.android.umobile;
 
 import android.util.Log;
 
@@ -32,9 +32,14 @@ class Routing {
 	}
 
     private void bringUp(String name) {
-        Log.d(TAG, "Bringing Up : " + name);
+        /* @TODO: Bringing UP logic */
+        Log.d(TAG, "Bringing UP : " + name);
     }
-    private void bringDown(String name) { Log.d(TAG, "Bringing Up : " + name); }
+
+    private void bringDown(String name) {
+        /* @TODO: Bringing DOWN logic */
+        Log.d(TAG, "Bringing DOWN : " + name);
+    }
 
     public void update(Set<UmobileService> changes) {
         for(UmobileService current : changes) {
@@ -43,9 +48,8 @@ class Routing {
                 if(!mUmobilePeers.containsKey(current.name))
                     mDaemon.createFace("opp://" + current.name, 0, false);
                 bringUp(current.name);
-            } else if(current.status == Status.UNAVAILABLE) {
-                /* @TODO: Bringing UNAVAILABLE logic */
-            }
+            } else if(current.status == Status.UNAVAILABLE)
+                bringDown(current.name);
 
             mUmobilePeers.put(current.name, current);
         }
