@@ -10,13 +10,18 @@ import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.util.Log;
 
-class ServiceRegistrationListener implements NsdManager.RegistrationListener {
-    private static final String TAG = ServiceRegistrationListener.class.getSimpleName();
+class ServiceRegistrar implements NsdManager.RegistrationListener {
+    private static final String TAG = ServiceRegistrar.class.getSimpleName();
 
     private ServiceTracker mTracker;
+    private boolean mRegistered;
 
-    ServiceRegistrationListener(ServiceTracker t) {
+    ServiceRegistrar(ServiceTracker t) {
         mTracker = t;
+    }
+
+    boolean isRegistered() {
+        return mRegistered;
     }
 
     @Override
@@ -28,13 +33,13 @@ class ServiceRegistrationListener implements NsdManager.RegistrationListener {
             //TODO: deal with the case where my UUID is already used ...
             Log.w(TAG, "UUID not available for Service registration.");
 
-        mTracker.mRegistered = true;
+        mRegistered = true;
     }
 
     @Override
     public void onServiceUnregistered(NsdServiceInfo nsdServiceInfo) {
         Log.d(TAG, "Unregistration succeeded : " + nsdServiceInfo.getServiceName());
-        mTracker.mRegistered = false;
+        mRegistered = false;
     }
 
     @Override

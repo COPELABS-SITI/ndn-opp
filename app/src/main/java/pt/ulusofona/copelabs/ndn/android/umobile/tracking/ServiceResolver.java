@@ -12,12 +12,12 @@ import android.util.Log;
 
 import pt.ulusofona.copelabs.ndn.android.UmobileService.Status;
 
-class ServiceResolutionListener implements NsdManager.ResolveListener {
-    private static final String TAG = ServiceRegistrationListener.class.getSimpleName();
+class ServiceResolver implements NsdManager.ResolveListener {
+    private static final String TAG = ServiceRegistrar.class.getSimpleName();
 
     private ServiceTracker mTracker;
 
-    ServiceResolutionListener(ServiceTracker t) {
+    ServiceResolver(ServiceTracker t) {
         mTracker = t;
     }
 

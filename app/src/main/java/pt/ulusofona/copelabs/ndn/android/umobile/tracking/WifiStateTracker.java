@@ -1,12 +1,9 @@
-/*
- * *
- *  *  @version 1.0
- *  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-20
- *  * //TODO: Description.
- *  * @author Seweryn Dynerowicz (COPELABS/ULHT)
- *
+/**
+ *  @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-20
+ * //TODO: Description.
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
-
 package pt.ulusofona.copelabs.ndn.android.umobile.tracking;
 
 import android.content.BroadcastReceiver;
@@ -18,25 +15,31 @@ import android.net.wifi.WifiManager;
 
 class WifiStateTracker extends BroadcastReceiver {
     private ServiceTracker mTracker;
+    private NsdManager mNsdManager;
+    private ServiceRegistrar mRegistrar;
+    private ServiceDiscoverer mDiscoverer;
 
-    WifiStateTracker(ServiceTracker serviceTracker) {
+    WifiStateTracker(ServiceTracker serviceTracker, NsdManager nsdManager) {
+        mRegistrar = new ServiceRegistrar(serviceTracker);
+        mDiscoverer = new ServiceDiscoverer(serviceTracker, nsdManager);
+        mNsdManager = nsdManager;
         mTracker = serviceTracker;
     }
 
     private void enable() {
-        if (!mTracker.mRegistered)
-            mTracker.mNsdManager.registerService(mTracker.mDescriptor, NsdManager.PROTOCOL_DNS_SD, mTracker.mRegistrationListener);
+        if (!mRegistrar.isRegistered())
+            mNsdManager.registerService(mTracker.mDescriptor, NsdManager.PROTOCOL_DNS_SD, mRegistrar);
 
-        if (!mTracker.mDiscovering)
-            mTracker.mNsdManager.discoverServices(ServiceTracker.SVC_INSTANCE_TYPE, NsdManager.PROTOCOL_DNS_SD, mTracker.mDiscoveryListener);
+        if (!mDiscoverer.isDiscovering())
+            mNsdManager.discoverServices(ServiceTracker.SVC_INSTANCE_TYPE, NsdManager.PROTOCOL_DNS_SD, mDiscoverer);
     }
 
     public void disable() {
-        if (mTracker.mRegistered)
-            mTracker.mNsdManager.unregisterService(mTracker.mRegistrationListener);
+        if (mRegistrar.isRegistered())
+            mNsdManager.unregisterService(mRegistrar);
 
-        if (mTracker.mDiscovering)
-            mTracker.mNsdManager.stopServiceDiscovery(mTracker.mDiscoveryListener);
+        if (mDiscoverer.isDiscovering())
+            mNsdManager.stopServiceDiscovery(mDiscoverer);
     }
 
     @Override

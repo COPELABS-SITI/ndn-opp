@@ -13,12 +13,21 @@ import android.util.Log;
 
 import pt.ulusofona.copelabs.ndn.android.UmobileService.Status;
 
-class ServiceDiscoveryListener implements NsdManager.DiscoveryListener {
-    private static final String TAG = ServiceDiscoveryListener.class.getSimpleName();
+class ServiceDiscoverer implements NsdManager.DiscoveryListener {
+    private static final String TAG = ServiceDiscoverer.class.getSimpleName();
 
+    private NsdManager mNsdManager;
     private ServiceTracker mTracker;
+    private boolean mDiscovering = false;
 
-    ServiceDiscoveryListener(ServiceTracker o) { mTracker = o; }
+    ServiceDiscoverer(ServiceTracker o, NsdManager n) {
+        mTracker = o;
+        mNsdManager = n;
+    }
+
+    boolean isDiscovering() {
+        return mDiscovering;
+    }
 
     @Override
     public void onStartDiscoveryFailed(String s, int error) {Log.d(TAG, "Start err" + error);}
@@ -29,19 +38,19 @@ class ServiceDiscoveryListener implements NsdManager.DiscoveryListener {
     @Override
     public void onDiscoveryStarted(String regType) {
         Log.d(TAG, "Started : " + regType);
-        mTracker.mDiscovering = true;
+        mDiscovering = true;
     }
 
     @Override
     public void onDiscoveryStopped(String regType) {
         Log.d(TAG, "Stopped : " + regType);
-        mTracker.mDiscovering = false;
+        mDiscovering = false;
     }
 
     @Override
     public void onServiceFound(NsdServiceInfo descriptor) {
         mTracker.addUnresolvedService(descriptor.getServiceName());
-        mTracker.mNsdManager.resolveService(descriptor, new ServiceResolutionListener(mTracker));
+        mNsdManager.resolveService(descriptor, new ServiceResolver(mTracker));
     }
 
     @Override

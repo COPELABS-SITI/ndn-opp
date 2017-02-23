@@ -8,6 +8,7 @@ package pt.ulusofona.copelabs.ndn.android.umobile;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,6 +24,8 @@ import pt.ulusofona.copelabs.ndn.android.UmobileService;
 import pt.ulusofona.copelabs.ndn.android.umobile.tracking.ServiceTracker;
 
 class ContextualManager implements Observer {
+    private static final String TAG = ContextualManager.class.getSimpleName();
+
     private static final String PROPERTY_UUID_KEY = "UMOBILE_UUID";
     private String mUmobileUuid;
 
@@ -73,8 +76,10 @@ class ContextualManager implements Observer {
 
         Map<String, UmobileService> newServiceList = mTracker.getServices();
         for(String svcName : newServiceList.keySet()) {
-            UmobileService newEntry = newServiceList.get(svcName);
+            UmobileService newEntry = new UmobileService(newServiceList.get(svcName));
             UmobileService oldEntry = mServicePeers.containsKey(svcName) ? mServicePeers.get(svcName) : null;
+
+            Log.d(TAG, oldEntry + " -> " + newEntry + " equal? " + newEntry.equals(oldEntry));
 
             if(! newEntry.equals(oldEntry) ) {
                 mServicePeers.put(svcName, newEntry);

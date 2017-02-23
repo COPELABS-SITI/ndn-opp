@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import android.util.LongSparseArray;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.CsEntry;
@@ -47,30 +48,20 @@ public class ForwardingDaemon extends Service {
     // Start time
 	private long startTime;
 
+    // FaceTable
+    private LongSparseArray<Face> mFacetable = new LongSparseArray<>();
+
     // Routing & Contextual Manager
     private Routing mRouting;
     private ContextualManager mContextualMgr;
 
+    // Replace this logic with a lock.
     private State current = State.STOPPED;
 	private synchronized State getAndSetState(State nextState) {
 		State oldValue = current;
 		current = nextState;
 		return oldValue;
 	}
-
-    private String getConfiguration() {
-        StringBuilder cfgBuilder = new StringBuilder();
-        try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(getResources().openRawResource(R.raw.nfd_conf)));
-            try {
-                while (br.ready()) cfgBuilder.append(br.readLine()).append("\n");
-            } finally { br.close(); }
-        } catch (IOException e) {
-            Log.d(TAG, "I/O error while reading configuration : " + e.getMessage());
-        }
-        Log.d(TAG, "Read configuration : " + cfgBuilder.length());
-        return cfgBuilder.toString();
-    }
 
     @Override
     public void onCreate() {
@@ -79,7 +70,19 @@ public class ForwardingDaemon extends Service {
         mRouting = new Routing(this);
         mContextualMgr = new ContextualManager(this, mRouting);
 
-        jniInitialize(getFilesDir().getAbsolutePath(), getConfiguration());
+        // Retrieve the contents of the configuration file to build a String out of it.
+        StringBuilder configuration = new StringBuilder();
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(getResources().openRawResource(R.raw.nfd_conf)));
+            try {
+                while (br.ready()) configuration.append(br.readLine()).append("\n");
+            } finally { br.close(); }
+        } catch (IOException e) {
+            Log.d(TAG, "I/O error while reading configuration : " + e.getMessage());
+        }
+        Log.d(TAG, "Read configuration : " + configuration.length());
+
+        jniInitialize(getFilesDir().getAbsolutePath(), configuration.toString());
     }
 
     @Override
@@ -110,6 +113,26 @@ public class ForwardingDaemon extends Service {
             super.onDestroy();
 		}
 	}
+
+    public Face getFace(long faceId) {
+        return mFacetable.get(faceId);
+    }
+
+    public long getFaceId(String name) {
+        for(int idx = 0; idx < mFacetable.size(); idx++) {
+            Face current = mFacetable.get(mFacetable.keyAt(idx));
+            if(current.getRemoteURI().equals(name))
+                return current.getId();
+        }
+        return -1L;
+    }
+
+    // Called by the C++ daemon when it adds a Face to its FaceTable.
+    private void addFace(Face face) {
+        long faceId = face.getId();
+        mFacetable.put(faceId, face);
+        mRouting.afterFaceAdd(face);
+    }
 
     // Uptime of the Forwarding Daemon in milliseconds.
 	public long getUptime() {
@@ -146,6 +169,8 @@ public class ForwardingDaemon extends Service {
     public native List<Name> getNameTree();
     public native List<Face> getFaceTable();
     public native void createFace(String faceUri, int persistency, boolean localFields);
+    public native void bringUpFace(long id);
+    public native void bringDownFace(long id);
     public native void destroyFace(long faceId);
 	public native List<FibEntry> getForwardingInformationBase();
     public native void addRoute(String prefix, long faceId, long origin, long cost, long flags);

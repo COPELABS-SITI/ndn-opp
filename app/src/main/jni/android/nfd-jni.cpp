@@ -12,6 +12,8 @@
 #include "core/privilege-helper.hpp"
 
 #include "daemon/face/face.hpp"
+#include "daemon/face/transport.hpp"
+#include "daemon/face/opp-transport.hpp"
 #include "daemon/nfd-android.hpp"
 #include "daemon/fw/face-table.hpp"
 
@@ -30,6 +32,7 @@
 #include <boost/property_tree/info_parser.hpp>
 
 NFD_LOG_INIT("NFD-JNI");
+// @TODO: clean memory leaks from GetStrings and stuff.
 
 namespace nfd {
 	namespace scheduler {
@@ -42,6 +45,8 @@ static boost::asio::io_service* g_io;
 static std::unique_ptr<nfd::Nfd> g_nfd;
 static std::unique_ptr<nfd::rib::Service> g_nrd;
 
+JavaVM* g_vm;
+jobject forwardingDaemonInstance;
 // Caching of java.util.ArrayList
 static jclass list;
 static jmethodID newList;
@@ -52,6 +57,9 @@ static jmethodID newName;
 
 static jclass face;
 static jmethodID newFace;
+
+static jclass forwardingDaemon;
+static jmethodID addFace;
 
 static jclass fibEntry;
 static jmethodID newFibEntry;
@@ -76,17 +84,57 @@ void initializeLogging(nfd::ConfigSection& cfg) {
 	config.parse(cfg, false, "JNI");
 }
 
-static void jniInitialize(JNIEnv* env, jobject, jstring homepath, jstring inputConfig) {
-	if (g_io == nullptr) {
+std::string convertString(JNIEnv* env, jstring input) {
+    return std::string(env->GetStringUTFChars(input, NULL));
+}
 
-		std::string home = std::string(env->GetStringUTFChars(homepath, NULL));
-		std::string initialConfig = std::string(env->GetStringUTFChars(inputConfig, NULL));
+jobject constructFace(JNIEnv* env, const nfd::Face& current) {
+    return env->NewObject(face, newFace,
+                                current.getId(),
+                                env->NewStringUTF(current.getLocalUri().toString().c_str()),
+                                env->NewStringUTF(current.getRemoteUri().toString().c_str()),
+                                (int) current.getScope(),
+                                (int) current.getPersistency(),
+                                (int) current.getLinkType(),
+                                (int) current.getState());
+}
+
+void afterFaceAdd(const nfd::Face& current) {
+    JNIEnv* env;
+    int envStatus = g_vm->GetEnv((void **) &env, JNI_VERSION_1_6);
+    bool hadToAttach = false;
+    if(envStatus == JNI_EDETACHED) {
+        NFD_LOG_INFO("JNI Environment not attached");
+        if (g_vm->AttachCurrentThread((JNIEnv **) &env, NULL) != 0)
+            NFD_LOG_INFO("Failed to attach JNI Environment");
+            // @TODO: shouldn't we basically stop at this point ?
+        else
+            hadToAttach = true;
+    } else if (envStatus == JNI_OK) {
+        // Happily attached.
+    } else if (envStatus == JNI_EVERSION)
+        NFD_LOG_INFO("JNI not supported by Java version");
+
+    NFD_LOG_INFO("Face added : " << current.getId() << " faceUri=" << current.getRemoteUri());
+
+    env->CallVoidMethod(forwardingDaemonInstance, addFace, constructFace(env, current));
+
+    if(hadToAttach)
+        g_vm->DetachCurrentThread();
+}
+
+static void jniInitialize(JNIEnv* env, jobject fDaemon, jstring homepath, jstring configuration) {
+	if (g_io == nullptr) {
+        forwardingDaemonInstance = env->NewGlobalRef(fDaemon);
+
+		std::string home = convertString(env, homepath);
+		std::string initialConfig = convertString(env, configuration);
 		::setenv("HOME", home.c_str(), true);
 		NFD_LOG_INFO("Use [" << home << "] as a security storage");
 
 		NFD_LOG_INFO("Parsing configuration...");
 		nfd::ConfigSection config;
-		std::istringstream input(initialConfig);
+		std::istringstream input(convertString(env, configuration));
 		boost::property_tree::read_info(input, config);
 
 		NFD_LOG_INFO("Initializing Logging.");
@@ -99,6 +147,9 @@ static void jniInitialize(JNIEnv* env, jobject, jstring homepath, jstring inputC
 		g_nfd.reset(new nfd::Nfd(config));
 		NFD_LOG_INFO("Setting NRD.");
 		g_nrd.reset(new nfd::rib::Service(config, g_nfd->m_keyChain));
+
+        NFD_LOG_INFO("Connecting FaceTable.afterAdd signal.");
+        g_nfd->getFaceTable().afterAdd.connect(afterFaceAdd);
 
 		NFD_LOG_INFO("Initializing NFD.");
 		g_nfd->initialize();
@@ -159,21 +210,9 @@ static jobject jniGetNameTree(JNIEnv* env, jobject) {
 static jobject jniGetFaceTable(JNIEnv* env, jobject) {
 	jobject faceList = env->NewObject(list, newList);
 
-	if (g_nfd.get() != nullptr) {
-		for(const nfd::Face& current : g_nfd->getFaceTable()) {
-			jobject jface = env->NewObject(face, newFace,
-				current.getId(),
-				env->NewStringUTF(current.getLocalUri().toString().c_str()),
-				env->NewStringUTF(current.getRemoteUri().toString().c_str()),
-				(int) current.getScope(),
-				(int) current.getPersistency(),
-				(int) current.getLinkType(),
-				(int) current.getState()
-			);
-
-			env->CallBooleanMethod(faceList, listAdd, jface);
-		}
-	}
+	if (g_nfd.get() != nullptr)
+		for(const nfd::Face& current : g_nfd->getFaceTable())
+			env->CallBooleanMethod(faceList, listAdd, constructFace(env, current));
 
 	return faceList;
 }
@@ -184,6 +223,26 @@ static void jniCreateFace(JNIEnv* env, jobject, jstring uri, jint persistency, j
 	    NFD_LOG_INFO("CreateFace: " << faceUri);
 		g_nfd->createFace(faceUri, (ndn::nfd::FacePersistency) persistency, (bool) localFields);
 	}
+}
+
+static void jniBringUpFace(JNIEnv* env, jobject, jlong faceId) {
+    if(g_nfd.get() != nullptr) {
+        nfd::Face* current = g_nfd->getFaceTable().get(faceId);
+        if(current != nullptr) {
+            nfd::face::OppTransport* oppT = (nfd::face::OppTransport*) current->getTransport();
+            oppT->commuteState(nfd::face::TransportState::UP);
+        }
+    }
+}
+
+static void jniBringDownFace(JNIEnv* env, jobject, jlong faceId) {
+    if(g_nfd.get() != nullptr) {
+        nfd::Face* current = g_nfd->getFaceTable().get(faceId);
+        if(current != nullptr) {
+            nfd::face::OppTransport* oppT = (nfd::face::OppTransport*) current->getTransport();
+            oppT->commuteState(nfd::face::TransportState::DOWN);
+        }
+    }
 }
 
 static void jniDestroyFace(JNIEnv* env, jobject, jlong faceId) {
@@ -314,20 +373,23 @@ static JNINativeMethod nativeMethods[] = {
 	{ "getContentStore"              , "()Ljava/util/List;" , (void*) jniGetContentStore },
 
 	{ "createFace", "(Ljava/lang/String;IZ)V", (void*) jniCreateFace },
+	{ "bringUpFace", "(J)V", (void*) jniBringUpFace },
+	{ "bringDownFace", "(J)V", (void*) jniBringDownFace },
 	{ "destroyFace", "(J)V", (void*) jniDestroyFace },
 	{ "addRoute", "(Ljava/lang/String;JJJJ)V", (void*) jniAddRoute }
 };
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {
+    g_vm = vm;
 	JNIEnv* env;
 	if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
 		NFD_LOG_DEBUG("JNI version error.");
 		return JNI_ERR;
 	} else {
 		NFD_LOG_DEBUG("Registering Native methods.");
-		jclass forwardingDaemon = env->FindClass("pt/ulusofona/copelabs/ndn/android/umobile/ForwardingDaemon");
+		forwardingDaemon = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/umobile/ForwardingDaemon")));
 		env->RegisterNatives(forwardingDaemon, nativeMethods, sizeof(nativeMethods) / sizeof(JNINativeMethod));
-		env->DeleteLocalRef(forwardingDaemon);
+
 		NFD_LOG_DEBUG("Caching JNI classes.");
 		list = static_cast<jclass>(env->NewGlobalRef(env->FindClass("java/util/ArrayList")));
 
@@ -346,6 +408,8 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 		newSctEntry = env->GetMethodID(sctEntry, "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
 		newCsEntry  = env->GetMethodID(csEntry, "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
 
+        addFace      = env->GetMethodID(forwardingDaemon, "addFace", "(Lpt/ulusofona/copelabs/ndn/android/Face;)V");
+
 		listAdd      = env->GetMethodID(list    , "add"         , "(Ljava/lang/Object;)Z");
 		addNextHop   = env->GetMethodID(fibEntry, "addNextHop"  , "(JI)V");
 		addInRecord  = env->GetMethodID(pitEntry, "addInRecord" , "(J)V");
@@ -360,6 +424,7 @@ void JNI_OnUnload(JavaVM* vm, void *reserved) {
 		return;
 	} else {
 		if (0 != NULL) {
+            env->DeleteGlobalRef(forwardingDaemon);
 			env->DeleteGlobalRef(list);
 			env->DeleteGlobalRef(name);
 			env->DeleteGlobalRef(face);

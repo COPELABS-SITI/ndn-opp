@@ -21,20 +21,31 @@ public class UmobileService implements Table.Entry {
         UNAVAILABLE("Un");
 		private String symbol;
 		Status(String s) { symbol = s; }
-		public String getSymbol() { return symbol; }
+		public String toString() { return symbol; }
     }
 
-	public Status status;
+	public Status currently;
     public String name;
 	public String host;
 	public int port;
 
+    public UmobileService(UmobileService original) {
+        currently = original.currently;
+        name = original.name;
+        host = original.host;
+        port = original.port;
+    }
+
     public UmobileService(Status s, String n, String h, int p) {
-		status = s;
+		currently = s;
         name = n;
 		host = h;
 		port = p;
 	}
+
+    public Status getStatus() {
+        return currently;
+    }
 
     @Override
     public boolean equals(Object other) {
@@ -42,10 +53,20 @@ public class UmobileService implements Table.Entry {
         if (other == null || getClass() != other.getClass()) return false;
 
         UmobileService that = (UmobileService) other;
-        return this.status == that.status
+        return this.currently == that.currently
                 && this.name.equals(that.name)
                 && this.host.equals(that.host)
                 && this.port == that.port;
+    }
+
+    @Override
+    public String toString() {
+        return "UmobileService{" +
+                "currently=" + currently +
+                ", name='" + name + '\'' +
+                ", host='" + host + '\'' +
+                ", port=" + port +
+                '}';
     }
 
     @Override
@@ -62,7 +83,7 @@ public class UmobileService implements Table.Entry {
 
     @Override
     public void setViewContents(View entry) {
-        ((TextView) entry.findViewById(R.id.status)).setText(this.status.getSymbol());
+        ((TextView) entry.findViewById(R.id.status)).setText(this.currently.toString());
         ((TextView) entry.findViewById(R.id.host)).setText(this.host);
         ((TextView) entry.findViewById(R.id.port)).setText(String.format(Locale.getDefault(), "%d", this.port));
         ((TextView) entry.findViewById(R.id.name)).setText(this.name);

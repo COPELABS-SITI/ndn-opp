@@ -24,10 +24,11 @@ import pt.ulusofona.copelabs.ndn.android.UmobileService.Status;
 public class ServiceTracker extends Observable {
     // @TODO: figure out if the observed micro-cuts [LOST =(1-2seconds)= FOUND] can be safely concealed.
     // @TODO: Services are sometimes lost for longer period of time ...
+    // @TODO: assign port dynamically
     private static final String TAG = ServiceTracker.class.getSimpleName();
 
     static final String SVC_INSTANCE_TYPE = "_ndn._tcp";
-    private static final int SVC_INSTANCE_PORT = 6442;
+    private static final int SVC_INSTANCE_PORT = 6364;
 
     static final String UNKNOWN_HOST = "0.0.0.0";
     static final int UNKNOWN_PORT = 0;
@@ -37,18 +38,12 @@ public class ServiceTracker extends Observable {
     NsdServiceInfo mDescriptor = new NsdServiceInfo();
     final String mAssignedUuid;
 
-    NsdManager mNsdManager;
-    ServiceRegistrationListener mRegistrationListener = new ServiceRegistrationListener(this);
-    ServiceDiscoveryListener mDiscoveryListener = new ServiceDiscoveryListener(this);
-
     private boolean mEnabled = false;
-    boolean mRegistered = false;
-    boolean mDiscovering = false;
 
     private Map<String, UmobileService> mServices = new HashMap<>();
 
-    private WifiStateTracker mWifiTracker = new WifiStateTracker(this);
     private IntentFilter mWifiIntents = new IntentFilter();
+    private WifiStateTracker mWifiTracker;
 
     public ServiceTracker(Context context, String uuid) {
         mContext = context;
@@ -57,10 +52,10 @@ public class ServiceTracker extends Observable {
 
         mDescriptor.setServiceName(mAssignedUuid);
         mDescriptor.setServiceType(SVC_INSTANCE_TYPE);
-        // @TODO: assign port dynamically
         mDescriptor.setPort(SVC_INSTANCE_PORT);
 
-        mNsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
+        NsdManager mNsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
+        mWifiTracker = new WifiStateTracker(this, mNsdManager);
 
         mWifiIntents.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
     }
@@ -77,7 +72,7 @@ public class ServiceTracker extends Observable {
             mContext.unregisterReceiver(mWifiTracker);
             mWifiTracker.disable();
 
-            for (UmobileService svc : mServices.values()) svc.status = UmobileService.Status.UNAVAILABLE;
+            for (UmobileService svc : mServices.values()) svc.currently = UmobileService.Status.UNAVAILABLE;
             setChanged(); notifyObservers();
 
             mEnabled = false;
@@ -96,11 +91,11 @@ public class ServiceTracker extends Observable {
     }
 
     void updateService(String svcName, Status newStatus, String svcHost, int svcPort) {
-        Log.d(TAG, "Updating <" + svcName + ">" + " status=" + newStatus + ", host=" + svcHost + ", port=" + svcPort);
+        Log.d(TAG, "Updating <" + svcName + ">" + " status=" + newStatus + ", host=" + svcHost + ", port=" + svcPort + " known=" + mServices.containsKey(svcName));
         if(mServices.containsKey(svcName)) {
             UmobileService svc = mServices.get(svcName);
 
-            svc.status = newStatus;
+            svc.currently = newStatus;
             svc.host = svcHost;
             svc.port = svcPort;
 

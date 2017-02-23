@@ -81,7 +81,12 @@ public class Face implements Table.Entry, Comparable<Face> {
     public void setViewContents(View entry) {
         setTextView(entry, R.id.faceId, String.format(Locale.getDefault(), "%03d", this.id));
         setTextView(entry, R.id.state, State.get(this.state));
-        setTextView(entry, R.id.remoteUri, this.remoteURI);
+
+		if(this.remoteURI.startsWith("opp://"))
+        	setTextView(entry, R.id.remoteUri, this.remoteURI.substring(0, 24));
+		else
+			setTextView(entry, R.id.remoteUri, this.remoteURI);
+
         setTextView(entry, R.id.scope, Scope.get(this.scope));
         setTextView(entry, R.id.persistency, Persistency.get(this.persistency));
         setTextView(entry, R.id.linkType, LinkType.get(this.linkType));
