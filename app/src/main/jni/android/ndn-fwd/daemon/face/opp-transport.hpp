@@ -1,6 +1,8 @@
 #ifndef COPELABS_NFD_ANDROID_OPP_TRANSPORT_HPP
 #define COPELABS_NFD_ANDROID_OPP_TRANSPORT_HPP
 
+#include <queue>
+
 #include "daemon/face/transport.hpp"
 
 namespace nfd {
@@ -14,6 +16,9 @@ private:
     virtual void doClose() override;
     virtual void doSend(Packet&& packet) override;
     virtual void beforeChangePersistency(ndn::nfd::FacePersistency newP) override;
+
+private:
+    std::queue<Block> m_sendQueue;
 };
 
 } // namespace face

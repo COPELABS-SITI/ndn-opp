@@ -118,15 +118,6 @@ public class ForwardingDaemon extends Service {
         return mFacetable.get(faceId);
     }
 
-    public long getFaceId(String name) {
-        for(int idx = 0; idx < mFacetable.size(); idx++) {
-            Face current = mFacetable.get(mFacetable.keyAt(idx));
-            if(current.getRemoteURI().equals(name))
-                return current.getId();
-        }
-        return -1L;
-    }
-
     // Called by the C++ daemon when it adds a Face to its FaceTable.
     private void addFace(Face face) {
         long faceId = face.getId();

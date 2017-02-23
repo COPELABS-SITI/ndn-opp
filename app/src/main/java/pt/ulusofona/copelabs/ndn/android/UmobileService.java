@@ -25,20 +25,22 @@ public class UmobileService implements Table.Entry {
     }
 
 	public Status currently;
-    public String name;
+    public String uuid;
 	public String host;
 	public int port;
 
+    public UmobileService() {}
+
     public UmobileService(UmobileService original) {
         currently = original.currently;
-        name = original.name;
+        uuid = original.uuid;
         host = original.host;
         port = original.port;
     }
 
     public UmobileService(Status s, String n, String h, int p) {
 		currently = s;
-        name = n;
+        uuid = n;
 		host = h;
 		port = p;
 	}
@@ -54,7 +56,7 @@ public class UmobileService implements Table.Entry {
 
         UmobileService that = (UmobileService) other;
         return this.currently == that.currently
-                && this.name.equals(that.name)
+                && this.uuid.equals(that.uuid)
                 && this.host.equals(that.host)
                 && this.port == that.port;
     }
@@ -63,7 +65,7 @@ public class UmobileService implements Table.Entry {
     public String toString() {
         return "UmobileService{" +
                 "currently=" + currently +
-                ", name='" + name + '\'' +
+                ", uuid='" + uuid + '\'' +
                 ", host='" + host + '\'' +
                 ", port=" + port +
                 '}';
@@ -71,7 +73,7 @@ public class UmobileService implements Table.Entry {
 
     @Override
     public int hashCode() {
-        return name.hashCode();
+        return uuid.hashCode();
     }
 
     @Override
@@ -86,6 +88,6 @@ public class UmobileService implements Table.Entry {
         ((TextView) entry.findViewById(R.id.status)).setText(this.currently.toString());
         ((TextView) entry.findViewById(R.id.host)).setText(this.host);
         ((TextView) entry.findViewById(R.id.port)).setText(String.format(Locale.getDefault(), "%d", this.port));
-        ((TextView) entry.findViewById(R.id.name)).setText(this.name);
+        ((TextView) entry.findViewById(R.id.name)).setText(this.uuid);
     }
 }

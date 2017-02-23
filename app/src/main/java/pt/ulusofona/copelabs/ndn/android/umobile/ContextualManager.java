@@ -36,7 +36,7 @@ class ContextualManager implements Observer {
     ContextualManager(Context ctxt, Routing rt) {
         mRouting = rt;
         mUmobileUuid = obtainUmobileUuid(ctxt);
-        mTracker = new ServiceTracker(ctxt, mUmobileUuid);
+        mTracker = new ServiceTracker(ctxt, rt, mUmobileUuid);
         mServicePeers = new HashMap<>();
     }
 
@@ -70,24 +70,34 @@ class ContextualManager implements Observer {
     }
 
     @Override
-    public void update(Observable observable, Object o) {
+    public void update(Observable observable, Object obj) {
         // Construct delta between previous UmobileService list and the new one.
-        Set<UmobileService> changes = new HashSet<>();
+        if(obj != null) {
+            Log.d(TAG, "Received PUNCTUAL update.");
+            UmobileService svc = (UmobileService) obj;
+            mServicePeers.put(svc.uuid, svc);
+            mRouting.update(svc
+            );
+        } else {
+            Log.d(TAG, "Received COMPLETE update.");
 
-        Map<String, UmobileService> newServiceList = mTracker.getServices();
-        for(String svcName : newServiceList.keySet()) {
-            UmobileService newEntry = new UmobileService(newServiceList.get(svcName));
-            UmobileService oldEntry = mServicePeers.containsKey(svcName) ? mServicePeers.get(svcName) : null;
+            Set<UmobileService> changes = new HashSet<>();
 
-            Log.d(TAG, oldEntry + " -> " + newEntry + " equal? " + newEntry.equals(oldEntry));
+            Map<String, UmobileService> newServiceList = mTracker.getServices();
+            for (String svcName : newServiceList.keySet()) {
+                UmobileService newEntry = new UmobileService(newServiceList.get(svcName));
+                UmobileService oldEntry = mServicePeers.containsKey(svcName) ? mServicePeers.get(svcName) : null;
 
-            if(! newEntry.equals(oldEntry) ) {
-                mServicePeers.put(svcName, newEntry);
-                changes.add(newEntry);
+                Log.d(TAG, oldEntry + " -> " + newEntry + " equal? " + newEntry.equals(oldEntry));
+
+                if (!newEntry.equals(oldEntry)) {
+                    mServicePeers.put(svcName, newEntry);
+                    changes.add(newEntry);
+                }
             }
-        }
 
-        // Push changes to Routing.
-        mRouting.update(changes);
+            // Push changes to Routing.
+            mRouting.update(changes);
+        }
     }
 }

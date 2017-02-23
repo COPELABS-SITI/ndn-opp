@@ -19,7 +19,8 @@ OppTransport::OppTransport(const FaceUri& uri) : Transport() {
 
 void OppTransport::commuteState(TransportState newState) {
     this->setState(newState);
-    // This should also assign the Socket (or whatever is used for communications)
+    // This must also assign the Socket (or whatever is used for communications)
+    // Then, should the dequeuing be done here or in response to afterStateChange ?
 }
 
 void OppTransport::doClose() {
@@ -28,11 +29,16 @@ void OppTransport::doClose() {
 }
 
 void OppTransport::doSend(Packet&& packet) {
-    // Pass the packet to the Socket obtained from Java ?
+    TransportState currently = this->getState();
+    if(currently == TransportState::UP) {
+        // Send
+    } else if(currently == TransportState::DOWN) {
+        // Enqueue
+    }
 }
 
 void OppTransport::beforeChangePersistency(ndn::nfd::FacePersistency newP) {
-    // Persistency change ignored.
+    // Persistency changes are ignored.
 }
 
 } // namespace face
