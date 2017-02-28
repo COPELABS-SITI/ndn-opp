@@ -33,8 +33,6 @@ public class ServiceTracker extends Observable {
 
     final String assignedUuid;
 
-    private boolean mEnabled = false;
-
     private Map<String, UmobileService> mServices = new HashMap<>();
 
     private WifiConnectionTracker mWifiTracker;
@@ -62,8 +60,6 @@ public class ServiceTracker extends Observable {
     }
 
     void updateService(String uuid, Status currently, String host, int port) {
-        Log.d(TAG, "Updating <" + uuid + ">" + " status=" + currently + ", host=" + host + ", port=" + port + " known=" + mServices.containsKey(uuid));
-
         UmobileService svc =
             mServices.containsKey(uuid) ? mServices.get(uuid) : new UmobileService();
 
@@ -71,6 +67,8 @@ public class ServiceTracker extends Observable {
         svc.currently = currently;
         svc.host = host;
         svc.port = port;
+
+        Log.d(TAG, "Updating " + svc);
 
         mServices.put(uuid, svc);
 

@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.util.Log;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.Routing;
 
@@ -32,14 +33,14 @@ class WifiConnectionTracker {
         mDiscoverer = new ServiceDiscoverer(tracker);
     }
 
-    public void enable(Context ctxt) {
+    public synchronized void enable(Context ctxt) {
         if(!mEnabled) {
             ctxt.registerReceiver(mConnectionTracker, mWifiEvents);
             mEnabled = true;
         }
     }
 
-    public void disable(Context ctxt) {
+    public synchronized void disable(Context ctxt) {
         ctxt.unregisterReceiver(mConnectionTracker);
         mRegistrar.disable();
         mDiscoverer.disable();
@@ -51,6 +52,7 @@ class WifiConnectionTracker {
             String action = intent.getAction();
             if (WifiManager.NETWORK_STATE_CHANGED_ACTION.equals(action)) {
                 NetworkInfo netInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+                Log.d(TAG, "Network state changed : isConnected() = " + netInfo.isConnected());
                 if (netInfo.isConnected()) {
                     mRegistrar.enable(context);
                     mDiscoverer.enable(context);

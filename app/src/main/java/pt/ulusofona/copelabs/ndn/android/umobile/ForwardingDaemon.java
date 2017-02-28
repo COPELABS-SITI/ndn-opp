@@ -160,8 +160,9 @@ public class ForwardingDaemon extends Service {
     public native List<Name> getNameTree();
     public native List<Face> getFaceTable();
     public native void createFace(String faceUri, int persistency, boolean localFields);
-    public native void bringUpFace(long id);
+    public native void bringUpFace(long id, OpportunisticChannel oc);
     public native void bringDownFace(long id);
+    public native void receiveOnFace(long id, int receivedBytes, byte[] buffer);
     public native void destroyFace(long faceId);
 	public native List<FibEntry> getForwardingInformationBase();
     public native void addRoute(String prefix, long faceId, long origin, long cost, long flags);

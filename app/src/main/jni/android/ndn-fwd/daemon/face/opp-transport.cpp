@@ -1,11 +1,15 @@
 #include "opp-transport.hpp"
 
+#include "daemon/face/face.hpp"
 #include "daemon/face/transport.hpp"
 
+#include "ndn-cxx/encoding/block.hpp"
 #include "ndn-cxx/util/face-uri.hpp"
 
 namespace nfd {
 namespace face {
+
+NFD_LOG_INIT("OppTransport");
 
 OppTransport::OppTransport(const FaceUri& uri) : Transport() {
     this->setLocalUri(uri);
@@ -19,8 +23,7 @@ OppTransport::OppTransport(const FaceUri& uri) : Transport() {
 
 void OppTransport::commuteState(TransportState newState) {
     this->setState(newState);
-    // This must also assign the Socket (or whatever is used for communications)
-    // Then, should the dequeuing be done here or in response to afterStateChange ?
+    // Perform dequeing by sending.
 }
 
 void OppTransport::doClose() {
@@ -29,16 +32,28 @@ void OppTransport::doClose() {
 }
 
 void OppTransport::doSend(Packet&& packet) {
+    NFD_LOG_INFO("doSend " << getFace()->getId());
     TransportState currently = this->getState();
     if(currently == TransportState::UP) {
-        // Send
+        NFD_LOG_INFO("Transport is UP.");
+        performSend(this->getFace()->getId(), packet.packet);
     } else if(currently == TransportState::DOWN) {
-        // Enqueue
+        NFD_LOG_INFO("Transport is DOWN. Queuing.");
+        //m_sendQueue.push(packet.packet);
     }
 }
 
+void OppTransport::handleReceive(const uint8_t *buffer, size_t buf_size) {
+    NFD_LOG_DEBUG("Received: " << buf_size << " bytes");
+
+    bool isOk = true;
+    Block element(buffer, buf_size);
+    NFD_LOG_DEBUG("Performing actual receive of a Block of " << element.size() << " bytes");
+    this->receive(Transport::Packet(std::move(element)));
+}
+
 void OppTransport::beforeChangePersistency(ndn::nfd::FacePersistency newP) {
-    // Persistency changes are ignored.
+    NFD_LOG_INFO("BeforeChangePersistency ignored.");
 }
 
 } // namespace face

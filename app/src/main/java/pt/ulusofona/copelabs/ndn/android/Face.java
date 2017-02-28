@@ -83,7 +83,7 @@ public class Face implements Table.Entry, Comparable<Face> {
         setTextView(entry, R.id.state, State.get(this.state));
 
 		if(this.remoteURI.startsWith("opp://"))
-        	setTextView(entry, R.id.remoteUri, this.remoteURI.substring(0, 24));
+        	setTextView(entry, R.id.remoteUri, "opp://..." + this.remoteURI.substring(30));
 		else
 			setTextView(entry, R.id.remoteUri, this.remoteURI);
 

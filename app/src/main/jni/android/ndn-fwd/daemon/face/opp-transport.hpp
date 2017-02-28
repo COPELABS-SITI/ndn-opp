@@ -5,6 +5,11 @@
 
 #include "daemon/face/transport.hpp"
 
+#include "ndn-cxx/encoding/block.hpp"
+
+// From nfd-jni.cpp
+void performSend(long, ndn::Block);
+
 namespace nfd {
 namespace face {
 
@@ -12,6 +17,8 @@ class OppTransport : public Transport {
 public:
     OppTransport(const FaceUri& uri);
     void commuteState(TransportState newState);
+    void handleReceive(const uint8_t *buffer, size_t buf_size);
+
 private:
     virtual void doClose() override;
     virtual void doSend(Packet&& packet) override;

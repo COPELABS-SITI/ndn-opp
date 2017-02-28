@@ -22,21 +22,26 @@ class ServiceDiscoverer {
 
     private boolean mDiscovering = false;
     private DiscoveryListener mListener = new DiscoveryListener();
+    private ServiceResolver mResolver;
 
-    ServiceDiscoverer(ServiceTracker o) {
-        mTracker = o;
+    ServiceDiscoverer(ServiceTracker tracker) {
+        mTracker = tracker;
+        mResolver = new ServiceResolver(mTracker);
     }
 
     public void enable(Context ctxt) {
         if (!mDiscovering) {
             mNsdManager = (NsdManager) ctxt.getSystemService(Context.NSD_SERVICE);
+            mResolver.enable(mNsdManager);
             mNsdManager.discoverServices(ServiceTracker.SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mListener);
         }
     }
 
     public void disable() {
-        if (mDiscovering)
+        if (mDiscovering) {
             mNsdManager.stopServiceDiscovery(mListener);
+            mResolver.disable();
+        }
     }
 
     private class DiscoveryListener implements NsdManager.DiscoveryListener {
@@ -60,30 +65,21 @@ class ServiceDiscoverer {
 
         @Override
         public void onServiceFound(NsdServiceInfo descriptor) {
-            if( ! mTracker.assignedUuid.equals(descriptor.getServiceName())) {
-                Log.d(TAG, "ServiceFound " + descriptor.getServiceName());
-                mNsdManager.resolveService(descriptor, new ResolveListener());
+            String svcName = descriptor.getServiceName();
+            if( ! mTracker.assignedUuid.equals(svcName)) {
+                Log.d(TAG, "ServiceFound " + svcName);
+                mResolver.resolve(descriptor);
             }
         }
 
         @Override
         public void onServiceLost(NsdServiceInfo descriptor) {
-            Log.d(TAG, "ServiceLost " + descriptor.getServiceName());
-            mTracker.updateService(descriptor.getServiceName(), Status.UNAVAILABLE, ServiceTracker.UNKNOWN_HOST, ServiceTracker.UNKNOWN_PORT);
+            String svcName = descriptor.getServiceName();
+            if( ! mTracker.assignedUuid.equals(svcName)) {
+                Log.d(TAG, "ServiceLost " + svcName);
+                mTracker.updateService(svcName, Status.UNAVAILABLE, ServiceTracker.UNKNOWN_HOST, ServiceTracker.UNKNOWN_PORT);
+            }
         }
     }
 
-    private class ResolveListener implements NsdManager.ResolveListener {
-        @Override
-        public void onServiceResolved(NsdServiceInfo descriptor) {
-            mTracker.updateService(descriptor.getServiceName(), Status.AVAILABLE, descriptor.getHost().getHostAddress(), descriptor.getPort());
-        }
-
-        @Override
-        public void onResolveFailed(NsdServiceInfo nsdServiceInfo, int error) {
-            Log.d(TAG, "Resolution err" + error + " : " + nsdServiceInfo.getServiceName());
-            // TODO: retry logic ?
-        }
-
-    }
 }

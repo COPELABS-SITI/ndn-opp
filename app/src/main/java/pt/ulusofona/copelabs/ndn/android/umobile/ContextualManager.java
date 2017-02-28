@@ -76,8 +76,7 @@ class ContextualManager implements Observer {
             Log.d(TAG, "Received PUNCTUAL update.");
             UmobileService svc = (UmobileService) obj;
             mServicePeers.put(svc.uuid, svc);
-            mRouting.update(svc
-            );
+            mRouting.update(svc);
         } else {
             Log.d(TAG, "Received COMPLETE update.");
 

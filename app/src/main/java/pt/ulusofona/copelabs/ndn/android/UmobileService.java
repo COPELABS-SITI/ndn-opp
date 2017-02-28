@@ -86,8 +86,8 @@ public class UmobileService implements Table.Entry {
     @Override
     public void setViewContents(View entry) {
         ((TextView) entry.findViewById(R.id.status)).setText(this.currently.toString());
-        ((TextView) entry.findViewById(R.id.host)).setText(this.host);
-        ((TextView) entry.findViewById(R.id.port)).setText(String.format(Locale.getDefault(), "%d", this.port));
-        ((TextView) entry.findViewById(R.id.name)).setText(this.uuid);
+        ((TextView) entry.findViewById(R.id.host)).setText(String.format(Locale.getDefault(), "%1$15s", this.host));
+        ((TextView) entry.findViewById(R.id.port)).setText(String.format(Locale.getDefault(), "%1$5d", this.port));
+        ((TextView) entry.findViewById(R.id.name)).setText(this.uuid.substring(24));
     }
 }
