@@ -54,10 +54,11 @@ public class Routing {
     private void bringUpFace(String uuid) {
         Log.d(TAG, "Bringing UP face for " + uuid + " " + mOppFaceIds.containsKey(uuid));
         if(mOppFaceIds.containsKey(uuid)) {
+            long faceId = mOppFaceIds.get(uuid);
             UmobileService svc = mUmobilePeers.get(uuid);
-            OpportunisticChannel oc = new OpportunisticChannel(svc.host, svc.port);
+            OpportunisticChannel oc = new OpportunisticChannel(mDaemon, faceId, svc.host, svc.port);
             mOppChannels.put(uuid, oc);
-            mDaemon.bringUpFace(mOppFaceIds.get(uuid), oc);
+            mDaemon.bringUpFace(faceId, oc);
         }
     }
 
@@ -80,8 +81,10 @@ public class Routing {
             }
             mUmobilePeers.put(current.uuid, current);
             bringUpFace(current.uuid);
-        } else if(current.getStatus() == Status.UNAVAILABLE)
+        } else if(current.getStatus() == Status.UNAVAILABLE) {
+            mUmobilePeers.put(current.uuid, current);
             bringDownFace(current.uuid);
+        }
     }
 
     public void update(Set<UmobileService> serviceChanges) {

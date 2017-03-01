@@ -14,6 +14,8 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
 
+import java.util.Observable;
+
 import pt.ulusofona.copelabs.ndn.android.umobile.Routing;
 
 class WifiConnectionTracker {

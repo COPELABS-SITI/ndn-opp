@@ -90,10 +90,21 @@ void initializeLogging(nfd::ConfigSection& cfg) {
 }
 
 std::string convertString(JNIEnv* env, jstring input) {
-    return std::string(env->GetStringUTFChars(input, NULL));
+    const char* str = env->GetStringUTFChars(input, NULL);
+    std::string result(str);
+    env->ReleaseStringUTFChars(input, str);
+    return result;
 }
 
 jobject constructFace(JNIEnv* env, const nfd::Face& current) {
+    std::string remoteUri = current.getRemoteUri().toString();
+    int queueSize = -1;
+    // If this is an opportunistic face, get the queueSize.
+    if(remoteUri.compare(0, 6, "opp://") == 0) {
+        nfd::face::OppTransport* oppTransport = (nfd::face::OppTransport*) current.getTransport();
+        queueSize = oppTransport->getQueueSize();
+    }
+
     return env->NewObject(face, newFace,
                                 current.getId(),
                                 env->NewStringUTF(current.getLocalUri().toString().c_str()),
@@ -101,29 +112,31 @@ jobject constructFace(JNIEnv* env, const nfd::Face& current) {
                                 (int) current.getScope(),
                                 (int) current.getPersistency(),
                                 (int) current.getLinkType(),
-                                (int) current.getState());
+                                (int) current.getState(),
+                                queueSize);
+}
+
+#define PERFORM_ATTACHED(OPERATIONS) {                            \
+    JNIEnv* env;                                                    \
+    int envStatus = g_vm->GetEnv((void **) &env, JNI_VERSION_1_6);  \
+    bool hadToAttach = false;                                       \
+    if(envStatus == JNI_EDETACHED) {                                \
+        NFD_LOG_INFO("JNI Environment not attached");               \
+        if (g_vm->AttachCurrentThread((JNIEnv **) &env, NULL) != 0) \
+            NFD_LOG_INFO("Failed to attach JNI Environment");       \
+        else                                                        \
+            hadToAttach = true;                                     \
+    } else if (envStatus == JNI_EVERSION)                           \
+        NFD_LOG_INFO("JNI not supported by Java version");          \
+    OPERATIONS;                                                     \
+    if(hadToAttach) g_vm->DetachCurrentThread();                    \
 }
 
 void afterFaceAdd(const nfd::Face& current) {
-    JNIEnv* env;
-    int envStatus = g_vm->GetEnv((void **) &env, JNI_VERSION_1_6);
-    bool hadToAttach = false;
-    if(envStatus == JNI_EDETACHED) {
-        NFD_LOG_INFO("JNI Environment not attached");
-        if (g_vm->AttachCurrentThread((JNIEnv **) &env, NULL) != 0)
-            NFD_LOG_INFO("Failed to attach JNI Environment");
-            // @TODO: shouldn't we basically stop at this point ?
-        else
-            hadToAttach = true;
-    } else if (envStatus == JNI_OK) {
-        // Happily attached.
-    } else if (envStatus == JNI_EVERSION)
-        NFD_LOG_INFO("JNI not supported by Java version");
-
-    NFD_LOG_INFO("Face added : " << current.getId() << " faceUri=" << current.getRemoteUri());
-    env->CallVoidMethod(forwardingDaemonInstance, addFace, constructFace(env, current));
-
-    if(hadToAttach) g_vm->DetachCurrentThread();
+    PERFORM_ATTACHED(
+        NFD_LOG_INFO("Face added : " << current.getId() << " faceUri=" << current.getRemoteUri());
+        env->CallVoidMethod(forwardingDaemonInstance, addFace, constructFace(env, current));
+    );
 }
 
 static void jniInitialize(JNIEnv* env, jobject fDaemon, jstring homepath, jstring configuration) {
@@ -131,7 +144,6 @@ static void jniInitialize(JNIEnv* env, jobject fDaemon, jstring homepath, jstrin
         forwardingDaemonInstance = env->NewGlobalRef(fDaemon);
 
 		std::string home = convertString(env, homepath);
-		std::string initialConfig = convertString(env, configuration);
 		::setenv("HOME", home.c_str(), true);
 		NFD_LOG_INFO("Use [" << home << "] as a security storage");
 
@@ -220,7 +232,7 @@ static jobject jniGetFaceTable(JNIEnv* env, jobject) {
 
 static void jniCreateFace(JNIEnv* env, jobject, jstring uri, jint persistency, jboolean localFields) {
 	if(g_nfd.get() != nullptr) {
-		std::string faceUri = std::string(env->GetStringUTFChars(uri, NULL));
+		std::string faceUri = convertString(env, uri);
 	    NFD_LOG_INFO("CreateFace: " << faceUri);
 		g_nfd->createFace(faceUri, (ndn::nfd::FacePersistency) persistency, (bool) localFields);
 	}
@@ -229,34 +241,33 @@ static void jniCreateFace(JNIEnv* env, jobject, jstring uri, jint persistency, j
 std::map<long, jobject> m_opportunistic_channels;
 
 void performSend(long faceId, ndn::Block bl) {
-    JNIEnv* env;
-    int envStatus = g_vm->GetEnv((void **) &env, JNI_VERSION_1_6);
-    bool hadToAttach = false;
-    if(envStatus == JNI_EDETACHED) {
-        NFD_LOG_INFO("JNI Environment has to be attached.");
-        if (g_vm->AttachCurrentThread((JNIEnv **) &env, NULL) != 0)
-            NFD_LOG_ERROR("Failed to attach JNI Environment");
-            // @TODO: shouldn't we basically stop at this point ?
-        else
-            hadToAttach = true;
-    } else if (envStatus == JNI_OK) {
-        // Happily attached.
-    } else if (envStatus == JNI_EVERSION)
-        NFD_LOG_INFO("JNI not supported by Java version");
+    PERFORM_ATTACHED(
+        NFD_LOG_INFO("Perform Send from Face : " << faceId << " of " << bl.size() << " bytes.");
+        jobject oppChannel = m_opportunistic_channels.find(faceId)->second;
+        jbyteArray packetBytes = env->NewByteArray(bl.size());
+        if(packetBytes != NULL) {
+            NFD_LOG_INFO("Attempting to map ByteArray region.");
+            env->SetByteArrayRegion(packetBytes, 0, bl.size(), (const jbyte*) bl.wire());
+            NFD_LOG_INFO("Calling actual mth_send.");
+            env->CallVoidMethod(oppChannel, mth_send, packetBytes);
+        } else
+            NFD_LOG_WARN("Cannot allocate buffer for sending Block.");
+    );
+}
 
-    NFD_LOG_INFO("Perform Send from Face : " << faceId << " of " << bl.size() << " bytes.");
-    jobject oppChannel = m_opportunistic_channels.find(faceId)->second;
-    jbyteArray packetBytes = env->NewByteArray(bl.size());
-    env->SetByteArrayRegion(packetBytes, 0, bl.size(), (const jbyte*) bl.wire());
-    env->CallVoidMethod(oppChannel, mth_send, packetBytes);
-    // Callback into OpportunisticChannel.send() with the byte[] of bl.
-
-    if(hadToAttach) g_vm->DetachCurrentThread();
+static void jniSendComplete(JNIEnv* env, jobject, jlong faceId, jboolean result) {
+    if(g_nfd.get() != nullptr) {
+        nfd::Face *current = g_nfd->getFaceTable().get(faceId);
+        if(current != nullptr) {
+            nfd::face::OppTransport* oppTransport = (nfd::face::OppTransport*) current->getTransport();
+            oppTransport->onSendComplete(result);
+        } else
+            NFD_LOG_ERROR("Could not retrieve face #" << faceId);
+    }
 }
 
 static void jniReceiveOnFace(JNIEnv* env, jobject, jlong faceId, jint receivedBytes, jbyteArray buffer) {
     NFD_LOG_DEBUG("Receive on Face " << faceId << " buffer=" << buffer << ", receivedBytes=" << (int) receivedBytes);
-    NFD_LOG_DEBUG("jbyteArray size " << env->GetArrayLength(buffer));
     if(g_nfd.get() != nullptr) {
         nfd::Face *current = g_nfd->getFaceTable().get(faceId);
         if(current != nullptr) {
@@ -342,7 +353,7 @@ static void jniAddRoute(JNIEnv* env, jobject, jstring prefix, jlong faceId, jlon
             route.faceId = faceId; route.origin = origin; route.cost = cost; route.flags = flags;
             route.expires = ndn::time::steady_clock::TimePoint::max();
 
-            ndn::Name routePrefix = ndn::Name(std::string(env->GetStringUTFChars(prefix, NULL)));
+            ndn::Name routePrefix = ndn::Name(convertString(env, prefix));
             NFD_LOG_INFO("Adding route " << routePrefix.toUri()
                                          << " faceId=" << route.faceId
                                          << " origin=" << route.origin
@@ -355,7 +366,7 @@ static void jniAddRoute(JNIEnv* env, jobject, jstring prefix, jlong faceId, jlon
                 std::bind(&onRibUpdateSuccess, update),
                 std::bind(&onRibUpdateFailure, update, _1, _2));
 
-            //TODO: this line causes SIGBUS (code 1: addr. algn.) on Android.
+            // @TODO: this causes SIGBUS (code 1: addr. algn.) on Android. [ = std::set::insert(..)]
             //g_nrd->m_ribManager->m_registeredFaces.insert(faceId);
         }
     );
@@ -431,6 +442,7 @@ static JNINativeMethod nativeMethods[] = {
 	{ "bringDownFace", "(J)V", (void*) jniBringDownFace },
 	{ "destroyFace", "(J)V", (void*) jniDestroyFace },
 	{ "receiveOnFace", "(JI[B)V", (void*) jniReceiveOnFace },
+    { "sendComplete", "(JZ)V", (void*) jniSendComplete },
 
 	{ "addRoute", "(Ljava/lang/String;JJJJ)V", (void*) jniAddRoute }
 };
@@ -460,7 +472,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 
 		newList = env->GetMethodID(list, "<init>", "()V");
 		newName = env->GetMethodID(name, "<init>", "(Ljava/lang/String;)V");
-		newFace = env->GetMethodID(face, "<init>", "(JLjava/lang/String;Ljava/lang/String;IIII)V");
+		newFace = env->GetMethodID(face, "<init>", "(JLjava/lang/String;Ljava/lang/String;IIIII)V");
 		newFibEntry = env->GetMethodID(fibEntry, "<init>", "(Ljava/lang/String;)V");
 		newPitEntry = env->GetMethodID(pitEntry, "<init>", "(Ljava/lang/String;)V");
 		newSctEntry = env->GetMethodID(sctEntry, "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");

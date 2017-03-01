@@ -27,13 +27,14 @@ public class Face implements Table.Entry, Comparable<Face> {
     private int persistency;
     private int linkType;
     private int state;
+	private int queueSize;
 
 	public long getId() {
 		return id;
 	}
 	public String getRemoteURI() { return remoteURI; }
 
-	public Face(long fId, String lu, String ru, int sc, int p, int lt, int st) {
+	public Face(long fId, String lu, String ru, int sc, int p, int lt, int st, int qs) {
 		id = fId;
 		localURI = lu;
 		remoteURI = ru;
@@ -41,6 +42,7 @@ public class Face implements Table.Entry, Comparable<Face> {
 		persistency = p;
 		linkType = lt;
 		state = st;
+        queueSize = qs;
 	}
 
 	private static SparseArray<String> Scope = new SparseArray<>();
@@ -83,7 +85,7 @@ public class Face implements Table.Entry, Comparable<Face> {
         setTextView(entry, R.id.state, State.get(this.state));
 
 		if(this.remoteURI.startsWith("opp://"))
-        	setTextView(entry, R.id.remoteUri, "opp://..." + this.remoteURI.substring(30));
+        	setTextView(entry, R.id.remoteUri, "opp://..." + this.remoteURI.substring(30) + (queueSize > 0 ? " [" + queueSize + "]" : ""));
 		else
 			setTextView(entry, R.id.remoteUri, this.remoteURI);
 

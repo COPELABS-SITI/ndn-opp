@@ -23,6 +23,7 @@ import java.util.UUID;
 import pt.ulusofona.copelabs.ndn.android.UmobileService;
 import pt.ulusofona.copelabs.ndn.android.umobile.tracking.ServiceTracker;
 
+// @TODO: weigh the trade-off between swiftness of ServiceTracking vs. cost of the ServiceDiscovery on which it relies.
 class ContextualManager implements Observer {
     private static final String TAG = ContextualManager.class.getSimpleName();
 

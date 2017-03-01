@@ -18,11 +18,15 @@ import java.net.Socket;
 class OpportunisticChannel {
     private static final String TAG = OpportunisticChannel.class.getSimpleName();
 
+    private ForwardingDaemon mDaemon;
+    private final long mFaceId;
     private final String mHost;
     private final int mPort;
 
-    OpportunisticChannel(String host, int port) {
+    OpportunisticChannel(ForwardingDaemon daemon, long faceId, String host, int port) {
         Log.d(TAG, "Creating OpportunisticChannel for " + host + ":" + port);
+        mDaemon = daemon;
+        mFaceId = faceId;
         mHost = host;
         mPort = port;
     }
@@ -34,7 +38,7 @@ class OpportunisticChannel {
         ct.execute();
     }
 
-    private class ConnectionTask extends AsyncTask<Void, Void, Void> {
+    private class ConnectionTask extends AsyncTask<Void, Void, Boolean> {
         private String mHost;
         private int mPort;
         private byte[] mBuffer;
@@ -53,7 +57,8 @@ class OpportunisticChannel {
         }
 
         @Override
-        protected Void doInBackground(Void... voids) {
+        protected Boolean doInBackground(Void... voids) {
+            boolean transferSucceeded;
             try {
                 Socket connection = new Socket();
                 connection.connect(new InetSocketAddress(mHost, mPort));
@@ -63,10 +68,17 @@ class OpportunisticChannel {
                 Log.d(TAG, "Payload: " + hex(mBuffer, mBuffer.length));
                 dos.flush();
                 dos.close();
+                transferSucceeded = true;
             } catch (IOException e) {
                 Log.d(TAG, "Transfer failed.");
+                transferSucceeded = false;
             }
-            return null;
+            return transferSucceeded;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean transferSucceeded) {
+            mDaemon.sendComplete(mFaceId, transferSucceeded);
         }
     }
 }

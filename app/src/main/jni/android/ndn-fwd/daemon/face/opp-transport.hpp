@@ -18,6 +18,10 @@ public:
     OppTransport(const FaceUri& uri);
     void commuteState(TransportState newState);
     void handleReceive(const uint8_t *buffer, size_t buf_size);
+    void sendNextPacket();
+    void onSendComplete(bool succeeded);
+
+    int getQueueSize();
 
 private:
     virtual void doClose() override;

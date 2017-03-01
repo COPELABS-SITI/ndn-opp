@@ -24,7 +24,7 @@ public class ServiceTracker extends Observable {
     // @TODO: assign port dynamically
     private static final String TAG = ServiceTracker.class.getSimpleName();
 
-    static final String SERVICE_TYPE = "_ndn._tcp";
+    static final String SERVICE_TYPE = "_umobile._tcp";
 
     static final String UNKNOWN_HOST = "0.0.0.0";
     static final int UNKNOWN_PORT = 0;

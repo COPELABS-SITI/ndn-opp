@@ -22,25 +22,50 @@ OppTransport::OppTransport(const FaceUri& uri) : Transport() {
 }
 
 void OppTransport::commuteState(TransportState newState) {
+    NFD_LOG_DEBUG("Commuting state.");
     this->setState(newState);
-    // Perform dequeing by sending.
+    if(newState == TransportState::UP)
+        sendNextPacket();
 }
 
 void OppTransport::doClose() {
     // This is the result of an explicit close. Allow current packet transmission to complete ?
     // Disallow new sends to occur through this Face but empty the queue if possible.
+    this->close();
+}
+
+void OppTransport::sendNextPacket() {
+    if(!m_sendQueue.empty())
+        performSend(this->getFace()->getId(), m_sendQueue.front());
+    else
+        NFD_LOG_DEBUG("Queue empty.");
+}
+
+int OppTransport::getQueueSize() {
+    return m_sendQueue.size();
+}
+
+void OppTransport::onSendComplete(bool succeeded) {
+    NFD_LOG_INFO("onSendComplete. Succeeded ? " << succeeded);
+
+    if(succeeded) m_sendQueue.pop();
+    else NFD_LOG_DEBUG("Packet sending failed.");
+
+    if(this->getState() == TransportState::UP) sendNextPacket();
+    else NFD_LOG_DEBUG("Transport is DOWN. Giving up for now.");
 }
 
 void OppTransport::doSend(Packet&& packet) {
     NFD_LOG_INFO("doSend " << getFace()->getId());
+
+    m_sendQueue.push(packet.packet);
+
     TransportState currently = this->getState();
-    if(currently == TransportState::UP) {
-        NFD_LOG_INFO("Transport is UP.");
-        performSend(this->getFace()->getId(), packet.packet);
-    } else if(currently == TransportState::DOWN) {
+    if(currently == TransportState::UP && m_sendQueue.size() == 1) {
+        NFD_LOG_INFO("Transport is UP. Sending.");
+        sendNextPacket();
+    } else if(currently == TransportState::DOWN)
         NFD_LOG_INFO("Transport is DOWN. Queuing.");
-        //m_sendQueue.push(packet.packet);
-    }
 }
 
 void OppTransport::handleReceive(const uint8_t *buffer, size_t buf_size) {
