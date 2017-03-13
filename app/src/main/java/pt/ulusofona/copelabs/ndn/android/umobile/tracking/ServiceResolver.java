@@ -22,7 +22,7 @@ class ServiceResolver {
     private NsdManager mNsdManager;
 
     private boolean mResolving = false;
-    private ResolutionListener mListener = new ResolutionListener();
+    //private ResolutionListener mListener = new ResolutionListener();
 
     private Queue<NsdServiceInfo> mQueue = new LinkedList<>();
 
@@ -43,7 +43,7 @@ class ServiceResolver {
         if(mQueue.isEmpty())
             mResolving = false;
         else
-            mNsdManager.resolveService(mQueue.remove(), mListener);
+            mNsdManager.resolveService(mQueue.remove(), new ResolutionListener());
     }
 
     public synchronized void resolve(NsdServiceInfo descriptor) {
@@ -51,21 +51,22 @@ class ServiceResolver {
             mQueue.add(descriptor);
         else {
             mResolving = true;
-            mNsdManager.resolveService(descriptor, mListener);
+            mNsdManager.resolveService(descriptor, new ResolutionListener());
         }
     }
 
     private class ResolutionListener implements NsdManager.ResolveListener {
         @Override
         public void onServiceResolved(NsdServiceInfo descriptor) {
+            Log.v(TAG, "onServiceResolved : " + descriptor.getServiceName() + " @ " + descriptor.getHost().getHostAddress() + ":" + descriptor.getPort());
             mTracker.updateService(descriptor.getServiceName(), UmobileService.Status.AVAILABLE, descriptor.getHost().getHostAddress(), descriptor.getPort());
             resolveNext();
         }
 
         @Override
         public void onResolveFailed(NsdServiceInfo descriptor, int error) {
-            Log.d(TAG, "Resolution err" + error + " : " + descriptor.getServiceName());
-            // TODO: retry logic ?
+            Log.e(TAG, "Resolution err" + error + " : " + descriptor.getServiceName());
+            mQueue.add(descriptor);
             resolveNext();
         }
     }

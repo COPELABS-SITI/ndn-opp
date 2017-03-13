@@ -243,15 +243,18 @@ std::map<long, jobject> m_opportunistic_channels;
 void performSend(long faceId, ndn::Block bl) {
     PERFORM_ATTACHED(
         NFD_LOG_INFO("Perform Send from Face : " << faceId << " of " << bl.size() << " bytes.");
-        jobject oppChannel = m_opportunistic_channels.find(faceId)->second;
-        jbyteArray packetBytes = env->NewByteArray(bl.size());
-        if(packetBytes != NULL) {
-            NFD_LOG_INFO("Attempting to map ByteArray region.");
-            env->SetByteArrayRegion(packetBytes, 0, bl.size(), (const jbyte*) bl.wire());
-            NFD_LOG_INFO("Calling actual mth_send.");
-            env->CallVoidMethod(oppChannel, mth_send, packetBytes);
-        } else
-            NFD_LOG_WARN("Cannot allocate buffer for sending Block.");
+        nfd::Face *current = g_nfd->getFaceTable().get(faceId);
+        if(current != nullptr && current->getTransport()->getState() == nfd::face::TransportState::UP) {
+            jobject oppChannel = m_opportunistic_channels.find(faceId)->second;
+            jbyteArray packetBytes = env->NewByteArray(bl.size());
+            if(packetBytes != NULL) {
+                NFD_LOG_INFO("Attempting to map ByteArray region.");
+                env->SetByteArrayRegion(packetBytes, 0, bl.size(), (const jbyte*) bl.wire());
+                NFD_LOG_INFO("Calling actual mth_send.");
+                env->CallVoidMethod(oppChannel, mth_send, packetBytes);
+            } else
+                NFD_LOG_WARN("Cannot allocate buffer for sending Block.");
+        }
     );
 }
 
@@ -261,6 +264,7 @@ static void jniSendComplete(JNIEnv* env, jobject, jlong faceId, jboolean result)
         if(current != nullptr) {
             nfd::face::OppTransport* oppTransport = (nfd::face::OppTransport*) current->getTransport();
             oppTransport->onSendComplete(result);
+
         } else
             NFD_LOG_ERROR("Could not retrieve face #" << faceId);
     }
@@ -285,13 +289,15 @@ static void jniBringUpFace(JNIEnv* env, jobject, jlong faceId, jobject oppChanne
     if(g_nfd.get() != nullptr) {
         nfd::Face* current = g_nfd->getFaceTable().get(faceId);
         if(current != nullptr) {
-            // Associate faceId to oppChannel so that it is used when OppTransport sends.
-            // Also when a packet is received it should be passed through that Transport.
-            NFD_LOG_INFO("Associating OppChannel to face #" << faceId);
-            m_opportunistic_channels[faceId] = env->NewGlobalRef(oppChannel);
-            NFD_LOG_INFO("Commuting transport state of face #" << faceId << " to UP.");
             nfd::face::OppTransport* oppT = (nfd::face::OppTransport*) current->getTransport();
-            oppT->commuteState(nfd::face::TransportState::UP);
+            if(oppT->getState() == nfd::face::TransportState::DOWN) {
+                // Associate faceId to oppChannel so that it is used when OppTransport sends.
+                // Also when a packet is received it should be passed through that Transport.
+                NFD_LOG_INFO("Associating OppChannel to face #" << faceId);
+                m_opportunistic_channels[faceId] = env->NewGlobalRef(oppChannel);
+                NFD_LOG_INFO("Commuting transport state of face #" << faceId << " to UP.");
+                oppT->commuteState(nfd::face::TransportState::UP);
+            }
         }
     }
 }
@@ -300,12 +306,14 @@ static void jniBringDownFace(JNIEnv* env, jobject, jlong faceId) {
     if(g_nfd.get() != nullptr) {
         nfd::Face* current = g_nfd->getFaceTable().get(faceId);
         if(current != nullptr) {
-            NFD_LOG_INFO("Commuting transport state of face #" << faceId << " to DOWN.");
             nfd::face::OppTransport* oppT = (nfd::face::OppTransport*) current->getTransport();
-            oppT->commuteState(nfd::face::TransportState::DOWN);
-            NFD_LOG_INFO("Detaching OppChannel from face #" << faceId);
-            jobject oppChannel = m_opportunistic_channels.find(faceId)->second;
-            env->DeleteGlobalRef(oppChannel);
+            if(oppT->getState() == nfd::face::TransportState::UP) {
+                NFD_LOG_INFO("Commuting transport state of face #" << faceId << " to DOWN.");
+                oppT->commuteState(nfd::face::TransportState::DOWN);
+                NFD_LOG_INFO("Detaching OppChannel from face #" << faceId);
+                jobject oppChannel = m_opportunistic_channels.find(faceId)->second;
+                env->DeleteGlobalRef(oppChannel);
+            }
         }
     }
 }

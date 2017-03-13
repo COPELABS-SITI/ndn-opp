@@ -18,22 +18,26 @@ import java.net.Socket;
 class OpportunisticChannel {
     private static final String TAG = OpportunisticChannel.class.getSimpleName();
 
-    private ForwardingDaemon mDaemon;
+    private final ForwardingDaemon mDaemon;
+    private final Routing mRouting;
     private final long mFaceId;
+    private final String mUuid;
     private final String mHost;
     private final int mPort;
 
-    OpportunisticChannel(ForwardingDaemon daemon, long faceId, String host, int port) {
+    OpportunisticChannel(ForwardingDaemon daemon, Routing routing, String uuid, long faceId, String host, int port) {
         Log.d(TAG, "Creating OpportunisticChannel for " + host + ":" + port);
         mDaemon = daemon;
+        mRouting = routing;
         mFaceId = faceId;
+        mUuid = uuid;
         mHost = host;
         mPort = port;
     }
 
     // Called by the c++ code to send a packet.
     void send(byte[] buffer) {
-        Log.d(TAG, "Attempting to send " + buffer.length + " bytes to " + mHost + ":" + mPort);
+        Log.d(TAG, "Attempting to send " + buffer.length + " bytes through UUID " + mUuid + " to " + mHost + ":" + mPort);
         ConnectionTask ct = new ConnectionTask(mHost, mPort, buffer);
         ct.execute();
     }
@@ -71,6 +75,8 @@ class OpportunisticChannel {
                 transferSucceeded = true;
             } catch (IOException e) {
                 Log.d(TAG, "Transfer failed.");
+                mRouting.bringDownFace(mUuid);
+                e.printStackTrace();
                 transferSucceeded = false;
             }
             return transferSucceeded;

@@ -71,7 +71,7 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
 
 	private Refreshable mCurrentDisplayedFragment;
 
-	@Override
+    @Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
@@ -112,7 +112,9 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
 			}
 		});
 
-        setDisplayedFragment(R.id.nav_overview);
+        setDisplayedFragment(R.id.nav_serviceTracker);
+
+        mNfdSwitch.setChecked(true);
 	}
 
     @Override
@@ -189,12 +191,12 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
         else if (id == R.id.nav_contentStore)
             mCurrentDisplayedFragment = mContentStore;
 
-        if(mDaemonConnected) mCurrentDisplayedFragment.refresh(mDaemon);
-
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.container, (Fragment) mCurrentDisplayedFragment)
                 .commit();
+
+        if(mDaemonConnected) mCurrentDisplayedFragment.refresh(mDaemon);
 
         ActionBar actBar = getSupportActionBar();
         if(actBar != null) actBar.setTitle(mCurrentDisplayedFragment.getTitle());

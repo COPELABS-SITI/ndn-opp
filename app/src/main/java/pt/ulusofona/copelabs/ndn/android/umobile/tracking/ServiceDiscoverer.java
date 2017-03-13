@@ -12,12 +12,16 @@ import android.net.nsd.NsdServiceInfo;
 
 import android.util.Log;
 
+import java.util.Observable;
+import java.util.Observer;
+
+import pt.ulusofona.copelabs.ndn.android.UmobileService;
 import pt.ulusofona.copelabs.ndn.android.UmobileService.Status;
 
-class ServiceDiscoverer {
+class ServiceDiscoverer extends Observable {
     private static final String TAG = ServiceDiscoverer.class.getSimpleName();
 
-    private ServiceTracker mTracker;
+    private final ServiceTracker mTracker;
     private NsdManager mNsdManager;
 
     private boolean mDiscovering = false;
@@ -26,7 +30,7 @@ class ServiceDiscoverer {
 
     ServiceDiscoverer(ServiceTracker tracker) {
         mTracker = tracker;
-        mResolver = new ServiceResolver(mTracker);
+        mResolver = new ServiceResolver(tracker);
     }
 
     public void enable(Context ctxt) {
@@ -78,6 +82,8 @@ class ServiceDiscoverer {
             if( ! mTracker.assignedUuid.equals(svcName)) {
                 Log.d(TAG, "ServiceLost " + svcName);
                 mTracker.updateService(svcName, Status.UNAVAILABLE, ServiceTracker.UNKNOWN_HOST, ServiceTracker.UNKNOWN_PORT);
+                UmobileService svc = new UmobileService(Status.UNAVAILABLE, svcName, ServiceTracker.UNKNOWN_HOST, ServiceTracker.UNKNOWN_PORT);
+                setChanged(); notifyObservers(svc);
             }
         }
     }

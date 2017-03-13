@@ -54,11 +54,13 @@ class WifiConnectionTracker {
             String action = intent.getAction();
             if (WifiManager.NETWORK_STATE_CHANGED_ACTION.equals(action)) {
                 NetworkInfo netInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
-                Log.d(TAG, "Network state changed : isConnected() = " + netInfo.isConnected());
+                String currentBssid = intent.getStringExtra(WifiManager.EXTRA_BSSID);
+
+                Log.d(TAG, "Network state changed " + netInfo);
                 if (netInfo.isConnected()) {
                     mRegistrar.enable(context);
                     mDiscoverer.enable(context);
-                } else {
+                } else if (currentBssid == null){
                     mRegistrar.disable();
                     mDiscoverer.disable();
                 }

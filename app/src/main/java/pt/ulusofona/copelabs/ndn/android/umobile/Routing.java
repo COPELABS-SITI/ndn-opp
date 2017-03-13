@@ -30,12 +30,12 @@ public class Routing {
     private static final String TAG = Routing.class.getSimpleName();
 
     private ForwardingDaemon mDaemon;
-    private Map<String, UmobileService> mUmobilePeers = new HashMap<>();
+    private Map<String, UmobileService> mUmobileServices = new HashMap<>();
     private Map<String, Long> mOppFaceIds = new HashMap<>();
     private Map<String, OpportunisticChannel> mOppChannels = new HashMap<>();
 
-    private boolean mConnectorStarted = false;
-    private ConnectionHandler mConnector = new ConnectionHandler();
+    private boolean mEnabled = false;
+    private ConnectionHandler mConnector;
 
 	Routing(ForwardingDaemon daemon) { mDaemon = daemon; }
 
@@ -51,22 +51,26 @@ public class Routing {
         }
     }
 
-    private void bringUpFace(String uuid) {
+    void bringUpFace(String uuid) {
         Log.d(TAG, "Bringing UP face for " + uuid + " " + mOppFaceIds.containsKey(uuid));
         if(mOppFaceIds.containsKey(uuid)) {
             long faceId = mOppFaceIds.get(uuid);
-            UmobileService svc = mUmobilePeers.get(uuid);
-            OpportunisticChannel oc = new OpportunisticChannel(mDaemon, faceId, svc.host, svc.port);
-            mOppChannels.put(uuid, oc);
-            mDaemon.bringUpFace(faceId, oc);
+            UmobileService svc = mUmobileServices.get(uuid);
+            if(!mOppChannels.containsKey(uuid)) {
+                OpportunisticChannel chan = new OpportunisticChannel(mDaemon, this, uuid, faceId, svc.host, svc.port);
+                mOppChannels.put(uuid, chan);
+                mDaemon.bringUpFace(faceId, chan);
+            }
         }
     }
 
-    private void bringDownFace(String uuid) {
+    void bringDownFace(String uuid) {
         Log.d(TAG, "Bringing DOWN face for " + uuid);
         if (mOppFaceIds.containsKey(uuid)) {
-            mOppChannels.remove(uuid);
-            mDaemon.bringDownFace(mOppFaceIds.get(uuid));
+            if(mOppChannels.containsKey(uuid)) {
+                mOppChannels.remove(uuid);
+                mDaemon.bringDownFace(mOppFaceIds.get(uuid));
+            }
         }
     }
 
@@ -75,14 +79,14 @@ public class Routing {
             /* If the peer is unknown (i.e. its UUID is not in the list of UMobile peers,
              * we request the creation of a Face for it. Then, if the Face has an ID referenced
              * in the existing Opportunistic faces, bring it up. */
-            if(!mUmobilePeers.containsKey(current.uuid)) {
+            if(!mUmobileServices.containsKey(current.uuid)) {
                 Log.d(TAG, "Requesting Face creation");
                 mDaemon.createFace("opp://" + current.uuid, 0, false);
             }
-            mUmobilePeers.put(current.uuid, current);
+            mUmobileServices.put(current.uuid, current);
             bringUpFace(current.uuid);
         } else if(current.getStatus() == Status.UNAVAILABLE) {
-            mUmobilePeers.put(current.uuid, current);
+            mUmobileServices.put(current.uuid, current);
             bringDownFace(current.uuid);
         }
     }
@@ -93,16 +97,17 @@ public class Routing {
     }
 
     public void enable(ServerSocket mSocket) {
-        if( !mConnectorStarted ) {
-            mConnector.runOn(mSocket);
-            mConnectorStarted = true;
+        if( !mEnabled) {
+            mConnector = new ConnectionHandler(mSocket);
+            mConnector.start();
+            mEnabled = true;
         }
     }
 
     public void disable() {
-        if( mConnectorStarted ) {
-            mConnector.stop();
-            mConnectorStarted = false;
+        if(mEnabled) {
+            mConnector.terminate();
+            mEnabled = false;
         }
     }
 
@@ -113,18 +118,19 @@ public class Routing {
         private ServerSocket mAcceptingSocket;
         private boolean mEnabled;
 
-        void runOn(ServerSocket sock) {
+        ConnectionHandler(ServerSocket sock) {
             mBuffer = new byte[MAX_NDN_PACKET_SIZE];
             mAcceptingSocket = sock;
-            if(!mEnabled)
-                start();
+            mEnabled = true;
         }
 
-        private String hex(byte[] buf, int limit) {
-            StringBuilder hexStr = new StringBuilder();
-            for(int i = 0; i < limit; i++)
-                hexStr.append(Integer.toHexString(buf[i] & 0xFF)).append(" ");
-            return hexStr.toString();
+        void terminate() {
+            mEnabled = false;
+            try {
+                mAcceptingSocket.close();
+            } catch (IOException e) {
+                Log.w(TAG, "Failure to close the ServerSocket " + e.getMessage());
+            }
         }
 
         @Override
@@ -140,7 +146,6 @@ public class Routing {
                     int availableBytes = in.available();
                     int received = in.read(mBuffer, 0, availableBytes);
                     Log.d(TAG, "Received " + received + " bytes of " + availableBytes + " expected.");
-                    Log.d(TAG, "Payload : " + hex(mBuffer, received));
                     in.close();
                     if(received > 0)
                         mDaemon.receiveOnFace(identifyUuid(connection.getInetAddress().getHostAddress()), received, mBuffer);
@@ -151,16 +156,10 @@ public class Routing {
                     Log.e(TAG, "Connection went WRONG.");
                 }
             }
-            Log.d(TAG, "Shutting down acceptor.");
-            try {
-                mAcceptingSocket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
 
         private long identifyUuid(String hostAddress) {
-            for(UmobileService svc : mUmobilePeers.values())
+            for(UmobileService svc : mUmobileServices.values())
                 if(svc.host.equals(hostAddress))
                     return mOppFaceIds.get(svc.uuid);
 

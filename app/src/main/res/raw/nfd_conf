@@ -1,12 +1,10 @@
 general {}
 
 log {
-    default_level ALL
-    Scheduler NONE
-    DeadNonceList NONE 
-    NameTreeIterator NONE
-    NameTree NONE
-    NameTreeHashtable NONE
+    default_level NONE
+    NFD-JNI ALL
+    Forwarder ALL
+    OppTransport ALL
 }
 
 tables { 

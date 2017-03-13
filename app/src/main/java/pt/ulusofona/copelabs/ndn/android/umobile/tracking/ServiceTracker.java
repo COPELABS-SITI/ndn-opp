@@ -13,6 +13,7 @@ import android.util.Log;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
+import java.util.Observer;
 
 import pt.ulusofona.copelabs.ndn.android.UmobileService;
 import pt.ulusofona.copelabs.ndn.android.UmobileService.Status;
@@ -24,7 +25,7 @@ public class ServiceTracker extends Observable {
     // @TODO: assign port dynamically
     private static final String TAG = ServiceTracker.class.getSimpleName();
 
-    static final String SERVICE_TYPE = "_umobile._tcp";
+    static final String SERVICE_TYPE = "_umobiledebug._tcp";
 
     static final String UNKNOWN_HOST = "0.0.0.0";
     static final int UNKNOWN_PORT = 0;
@@ -52,7 +53,7 @@ public class ServiceTracker extends Observable {
     public void disable() {
         mWifiTracker.disable(mContext);
         for (UmobileService svc : mServices.values()) svc.currently = UmobileService.Status.UNAVAILABLE;
-        setChanged(); notifyObservers(); clearChanged();
+        setChanged(); notifyObservers();
     }
 
     public Map<String,UmobileService> getServices() {
@@ -72,6 +73,14 @@ public class ServiceTracker extends Observable {
 
         mServices.put(uuid, svc);
 
-        setChanged(); notifyObservers(svc); clearChanged();
+        setChanged(); notifyObservers(svc);
     }
+
+    /*@Override
+    public void update(Observable observable, Object o) {
+        UmobileService svc = (UmobileService) o;
+        Log.d(TAG, "Updating " + o.toString());
+        mServices.put(svc.uuid, svc);
+        setChanged(); notifyObservers(svc);
+    }*/
 }

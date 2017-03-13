@@ -14,13 +14,18 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
 import java.net.ServerSocket;
+import java.net.SocketException;
+import java.util.Enumeration;
 import java.util.Locale;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.Routing;
 
 class ServiceRegistrar {
     private static final String TAG = ServiceRegistrar.class.getSimpleName();
+
+    private static final int DEFAULT_PORT = 16363;
 
     private final Routing mRouting;
 
@@ -38,7 +43,15 @@ class ServiceRegistrar {
     public void enable(Context ctxt) {
         if (!mRegistered) {
             try {
-                ServerSocket socket = new ServerSocket(0);
+                try {
+                    Enumeration<NetworkInterface> nis = NetworkInterface.getNetworkInterfaces();
+                    while(nis.hasMoreElements())
+                        Log.d(TAG, "NetworkInterface: " + nis.nextElement().toString());
+                } catch (SocketException e) {
+                    e.printStackTrace();
+                }
+
+                ServerSocket socket = new ServerSocket(DEFAULT_PORT);
                 Log.d(TAG, "Opening socket on " + socket.getInetAddress().getHostAddress() + ":" + socket.getLocalPort());
 
                 mRouting.enable(socket);
@@ -46,7 +59,8 @@ class ServiceRegistrar {
                 NsdServiceInfo mDescriptor = new NsdServiceInfo();
                 mDescriptor.setServiceName(mAssignedUuid);
                 mDescriptor.setServiceType(ServiceTracker.SERVICE_TYPE);
-                mDescriptor.setPort(socket.getLocalPort());
+                mDescriptor.setHost(socket.getInetAddress());
+                mDescriptor.setPort(DEFAULT_PORT);
 
                 mNsdManager = (NsdManager) ctxt.getSystemService(Context.NSD_SERVICE);
                 mNsdManager.registerService(mDescriptor, NsdManager.PROTOCOL_DNS_SD, mListener);
@@ -57,7 +71,10 @@ class ServiceRegistrar {
     }
 
     public void disable() {
-        if (mRegistered) mNsdManager.unregisterService(mListener);
+        if (mRegistered) {
+            mRouting.disable();
+            mNsdManager.unregisterService(mListener);
+        }
     }
 
     private class RegistrationListener implements NsdManager.RegistrationListener {

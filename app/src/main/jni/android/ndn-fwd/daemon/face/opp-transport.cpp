@@ -48,11 +48,10 @@ int OppTransport::getQueueSize() {
 void OppTransport::onSendComplete(bool succeeded) {
     NFD_LOG_INFO("onSendComplete. Succeeded ? " << succeeded);
 
-    if(succeeded) m_sendQueue.pop();
-    else NFD_LOG_DEBUG("Packet sending failed.");
-
-    if(this->getState() == TransportState::UP) sendNextPacket();
-    else NFD_LOG_DEBUG("Transport is DOWN. Giving up for now.");
+    if(succeeded) {
+        m_sendQueue.pop();
+        sendNextPacket();
+    } else NFD_LOG_DEBUG("Packet sending failed.");
 }
 
 void OppTransport::doSend(Packet&& packet) {

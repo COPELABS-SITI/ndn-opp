@@ -51,14 +51,18 @@ public class Status extends Fragment implements Refreshable {
 
 	@Override
 	public void refresh(@NonNull ForwardingDaemon daemon) {
-		mVersion.setText(daemon.getVersion());
+		if(mVersion != null)
+			mVersion.setText(daemon.getVersion());
 
-		long uptimeInSeconds = daemon.getUptime() / 1000L;
-		long s = (uptimeInSeconds % 60);
-		long m = (uptimeInSeconds / 60) % 60;
-		long h = (uptimeInSeconds / 3600) % 60;
-		mUptime.setText(String.format(Locale.getDefault(), "%02d:%02d:%02d", h, m, s));
+		if(mUptime != null) {
+			long uptimeInSeconds = daemon.getUptime() / 1000L;
+			long s = (uptimeInSeconds % 60);
+			long m = (uptimeInSeconds / 60) % 60;
+			long h = (uptimeInSeconds / 3600) % 60;
+			mUptime.setText(String.format(Locale.getDefault(), "%02d:%02d:%02d", h, m, s));
+		}
 
-		mUmobileUuid.setText(daemon.getUmobileUuid());
+		if(mUmobileUuid != null)
+			mUmobileUuid.setText(daemon.getUmobileUuid());
 	}
 }
