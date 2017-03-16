@@ -20,14 +20,17 @@ import pt.ulusofona.copelabs.ndn.android.CsEntry;
 import pt.ulusofona.copelabs.ndn.android.Face;
 import pt.ulusofona.copelabs.ndn.android.FibEntry;
 import pt.ulusofona.copelabs.ndn.android.Name;
+import pt.ulusofona.copelabs.ndn.android.NsdService;
 import pt.ulusofona.copelabs.ndn.android.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.SctEntry;
-import pt.ulusofona.copelabs.ndn.android.UmobileService;
+import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceTracker;
+import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pConnectivityTracker;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class ForwardingDaemon extends Service {
@@ -51,9 +54,12 @@ public class ForwardingDaemon extends Service {
     // FaceTable
     private LongSparseArray<Face> mFacetable = new LongSparseArray<>();
 
+    // Assigned UUID
+    private String mAssignedUuid;
     // Routing & Contextual Manager
     private Routing mRouting;
-    private ContextualManager mContextualMgr;
+    private NsdServiceTracker mServiceTracker = new NsdServiceTracker();
+    private WifiP2pConnectivityTracker mConnectivityTracker = new WifiP2pConnectivityTracker();
 
     // Replace this logic with a lock.
     private State current = State.STOPPED;
@@ -63,14 +69,12 @@ public class ForwardingDaemon extends Service {
 		return oldValue;
 	}
 
-
-
     @Override
     public void onCreate() {
         super.onCreate();
 
         mRouting = new Routing(this);
-        mContextualMgr = new ContextualManager(this, mRouting);
+        mAssignedUuid = Utilities.obtainUuid(this);
 
         // Retrieve the contents of the configuration file to build a String out of it.
         StringBuilder configuration = new StringBuilder();
@@ -92,7 +96,14 @@ public class ForwardingDaemon extends Service {
 		if(State.STOPPED == getAndSetState(State.STARTED)) {
             jniStart();
 			startTime = System.currentTimeMillis();
-            mContextualMgr.enable();
+
+            mServiceTracker.addObserver(mRouting);
+            mServiceTracker.enable(this, mAssignedUuid);
+
+            mConnectivityTracker.addObserver(mRouting);
+            mConnectivityTracker.addObserver(mServiceTracker);
+            mConnectivityTracker.enable(this);
+
             Log.d(TAG, STARTED);
             sendBroadcast(new Intent(STARTED));
 		}
@@ -109,7 +120,14 @@ public class ForwardingDaemon extends Service {
 		if(State.STARTED == getAndSetState(State.STOPPED)) {
 			jniStop();
             jniCleanUp();
-            mContextualMgr.disable();
+
+            mConnectivityTracker.disable();
+            mConnectivityTracker.deleteObserver(mServiceTracker);
+            mConnectivityTracker.deleteObserver(mRouting);
+
+            mServiceTracker.disable();
+            mServiceTracker.deleteObserver(mRouting);
+
 			sendBroadcast(new Intent(STOPPING));
 			stopSelf();
             super.onDestroy();
@@ -134,16 +152,18 @@ public class ForwardingDaemon extends Service {
 
     // UMobile UUID used by the ContextualManager.
     public String getUmobileUuid() {
-        return (current == State.STARTED) ? mContextualMgr.getUmobileUuid() : getString(R.string.notAvailable);
+        return (current == State.STARTED) ? mAssignedUuid : getString(R.string.notAvailable);
     }
 
     // Currently known UMobile Service Devices.
-    public List<UmobileService> getUmobileServices() {
-        List<UmobileService> peers;
-        if(mContextualMgr != null)
-            peers = mContextualMgr.getUmobilePeers();
+    public Collection<NsdService> getUmobileServices() {
+        Collection<NsdService> peers;
+
+        if(mServiceTracker != null)
+            peers = mServiceTracker.getServices().values();
         else
             peers = new ArrayList<>();
+
         return peers;
     }
 

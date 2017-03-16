@@ -1,0 +1,27 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:tools="http://schemas.android.com/tools"
+             style="@style/match"
+             tools:context="pt.ulusofona.copelabs.ndn.android.ui.fragment.PeerTracking">
+
+    <LinearLayout style="@style/fill" android:orientation="vertical">
+
+        <Button
+            android:id="@+id/button_group_formation"
+            style="@style/piece"
+            android:text="@string/groupFormation"/>
+
+        <Switch style="@style/piece"
+                android:id="@+id/switch_wifi_p2p_peer_tracking"
+                android:text="@string/peerTracking"/>
+
+        <TextView style="@style/title" android:text="@string/uuid"/>
+        <TextView style="@style/piece" android:id="@+id/text_nsd_uuid" android:text="@string/notAvailable"/>
+
+        <TextView style="@style/title" android:text="@string/wifiP2pPeers"/>
+        <ListView style="@style/piece" android:id="@+id/list_wifiP2pPeers"/>
+
+        <TextView style="@style/title" android:text="@string/nsdServices"/>
+        <ListView style="@style/piece" android:id="@+id/list_nsd_services"/>
+
+    </LinearLayout>
+</FrameLayout>

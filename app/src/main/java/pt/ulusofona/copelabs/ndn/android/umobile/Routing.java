@@ -19,23 +19,30 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Set;
 
 import pt.ulusofona.copelabs.ndn.android.Face;
-import pt.ulusofona.copelabs.ndn.android.UmobileService;
-import pt.ulusofona.copelabs.ndn.android.UmobileService.Status;
+import pt.ulusofona.copelabs.ndn.android.NsdService;
+import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceRegistrar;
+import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceTracker;
+import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pConnectivityTracker;
 
 // @TODO: if phone goes to sleep, all the open connections will close.
-public class Routing {
+public class Routing implements Observer {
     private static final String TAG = Routing.class.getSimpleName();
+    private static final int DEFAULT_PORT = 16363;
 
     private ForwardingDaemon mDaemon;
-    private Map<String, UmobileService> mUmobileServices = new HashMap<>();
+    private Map<String, NsdService> mUmobileServices = new HashMap<>();
     private Map<String, Long> mOppFaceIds = new HashMap<>();
     private Map<String, OpportunisticChannel> mOppChannels = new HashMap<>();
 
     private boolean mEnabled = false;
     private ConnectionHandler mConnector;
+
+    private NsdServiceRegistrar mRegistrar = new NsdServiceRegistrar();
 
 	Routing(ForwardingDaemon daemon) { mDaemon = daemon; }
 
@@ -55,9 +62,9 @@ public class Routing {
         Log.d(TAG, "Bringing UP face for " + uuid + " " + mOppFaceIds.containsKey(uuid));
         if(mOppFaceIds.containsKey(uuid)) {
             long faceId = mOppFaceIds.get(uuid);
-            UmobileService svc = mUmobileServices.get(uuid);
+            NsdService svc = mUmobileServices.get(uuid);
             if(!mOppChannels.containsKey(uuid)) {
-                OpportunisticChannel chan = new OpportunisticChannel(mDaemon, this, uuid, faceId, svc.host, svc.port);
+                OpportunisticChannel chan = new OpportunisticChannel(mDaemon, this, uuid, faceId, svc.getHost(), svc.getPort());
                 mOppChannels.put(uuid, chan);
                 mDaemon.bringUpFace(faceId, chan);
             }
@@ -74,40 +81,67 @@ public class Routing {
         }
     }
 
-    public void update(UmobileService current) {
-        if(current.getStatus() == Status.AVAILABLE) {
+    private void updateService(NsdService current) {
+        if(current.getStatus() == NsdService.Status.AVAILABLE) {
             /* If the peer is unknown (i.e. its UUID is not in the list of UMobile peers,
              * we request the creation of a Face for it. Then, if the Face has an ID referenced
              * in the existing Opportunistic faces, bring it up. */
-            if(!mUmobileServices.containsKey(current.uuid)) {
+            if(!mUmobileServices.containsKey(current.getUuid())) {
                 Log.d(TAG, "Requesting Face creation");
-                mDaemon.createFace("opp://" + current.uuid, 0, false);
+                mDaemon.createFace("opp://" + current.getUuid(), 0, false);
             }
-            mUmobileServices.put(current.uuid, current);
-            bringUpFace(current.uuid);
-        } else if(current.getStatus() == Status.UNAVAILABLE) {
-            mUmobileServices.put(current.uuid, current);
-            bringDownFace(current.uuid);
+            mUmobileServices.put(current.getUuid(), current);
+            bringUpFace(current.getUuid());
+        } else if(current.getStatus() == NsdService.Status.UNAVAILABLE) {
+            mUmobileServices.put(current.getUuid(), current);
+            bringDownFace(current.getUuid());
         }
     }
 
-    public void update(Set<UmobileService> serviceChanges) {
-        Log.d(TAG, "Received a COMPLETE update : " + serviceChanges);
-        for(UmobileService svc : serviceChanges) update(svc);
-    }
-
-    public void enable(ServerSocket mSocket) {
-        if( !mEnabled) {
-            mConnector = new ConnectionHandler(mSocket);
-            mConnector.start();
-            mEnabled = true;
+    private void enable() {
+        if(!mEnabled) {
+            try {
+                Log.v(TAG, "Enabling ServerSocket");
+                ServerSocket mSocket = new ServerSocket(DEFAULT_PORT);
+                mConnector = new ConnectionHandler(mSocket);
+                mConnector.start();
+                mRegistrar.enable(mDaemon, mDaemon.getUmobileUuid(), DEFAULT_PORT);
+                mEnabled = true;
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to open listening socket");
+                e.printStackTrace();
+            }
         }
     }
 
-    public void disable() {
+    private void disable() {
         if(mEnabled) {
             mConnector.terminate();
+            mRegistrar.disable();
             mEnabled = false;
+        }
+    }
+
+    @Override
+    public void update(Observable observable, Object obj) {
+        if(observable instanceof NsdServiceTracker) {
+            if (obj != null) {
+                if (obj instanceof NsdService) {
+                    NsdService svc = (NsdService) obj;
+                    Log.v(TAG, "Received a PUNCTUAL NsdService UPDATE : " + svc);
+                    updateService((NsdService) obj);
+                } else if (obj instanceof Set) {
+                    Set<NsdService> changes = (Set<NsdService>) obj;
+                    Log.v(TAG, "Received a COMPLETE NsdService UPDATE : " + changes);
+                    for (NsdService current : changes)
+                        updateService(current);
+                }
+            } else
+                Log.w(TAG, "Received NULL object from NsdServiceTracker");
+        } else if (observable instanceof WifiP2pConnectivityTracker) {
+            boolean connected = (boolean) obj;
+            if(connected) enable();
+            else disable();
         }
     }
 
@@ -159,9 +193,9 @@ public class Routing {
         }
 
         private long identifyUuid(String hostAddress) {
-            for(UmobileService svc : mUmobileServices.values())
-                if(svc.host.equals(hostAddress))
-                    return mOppFaceIds.get(svc.uuid);
+            for(NsdService svc : mUmobileServices.values())
+                if(svc.getHost().equals(hostAddress))
+                    return mOppFaceIds.get(svc.getUuid());
 
             Log.e(TAG, "No service matching " + hostAddress + " found.");
             return -1L;

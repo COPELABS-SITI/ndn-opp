@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/match">
+
+    <TextView style="@style/cell" android:fontFamily="monospace" android:id="@+id/text_device_status" />
+    <TextView style="@style/cell" android:fontFamily="monospace" android:id="@+id/text_device_group" />
+    <TextView style="@style/cell" android:fontFamily="monospace" android:id="@+id/text_device_mac_address"/>
+    <TextView style="@style/hCell" android:id="@+id/text_device_name" android:gravity="start" android:maxLines="1"/>
+
+</LinearLayout>

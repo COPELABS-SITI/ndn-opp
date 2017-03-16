@@ -2,8 +2,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <group android:checkableBehavior="single">
-        <item android:id="@+id/nav_serviceTracker"
-              android:title="@string/serviceTracker" />
+        <item android:id="@+id/nav_peerTracking"
+              android:title="@string/peerTracking" />
 
         <item android:id="@+id/nav_overview"
               android:title="@string/overview"/>

@@ -37,7 +37,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import pt.ulusofona.copelabs.ndn.R;
-
+import pt.ulusofona.copelabs.ndn.android.ui.fragment.PeerTracking;
 import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.AddRoute;
@@ -48,33 +48,38 @@ import pt.ulusofona.copelabs.ndn.android.ui.fragment.ForwarderConfiguration;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.NameTree;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Overview;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Refreshable;
-import pt.ulusofona.copelabs.ndn.android.ui.fragment.ServiceTracking;
 
 public class Main extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     private static final String TAG = Main.class.getSimpleName();
+
     // ForwardingDaemon service
     private Intent mDaemonIntent;
-    private IntentFilter mDaemonBroadcastedIntents;
-    private DaemonBroadcastReceiver mDaemonListener;
+    private final IntentFilter mDaemonBroadcastedIntents = new IntentFilter();
+    private final DaemonBroadcastReceiver mDaemonListener = new DaemonBroadcastReceiver();
 
     private ForwardingDaemon mDaemon;
     private boolean mDaemonConnected = false;
 
-    private Switch mNfdSwitch;
-
-	// Fragments
-    private ServiceTracking mServiceTracking;
-    private Overview mOverview;
-	private ForwarderConfiguration mForwarderConfiguration;
-    private NameTree mNametree;
-    private ContentStore mContentStore;
+    // Fragments
+    private final PeerTracking mPeerTracking = new PeerTracking();
+    private final Overview mOverview = new Overview();
+	private final ForwarderConfiguration mForwarderConfiguration = new ForwarderConfiguration();
+    private final NameTree mNametree = new NameTree();
+    private final ContentStore mContentStore = new ContentStore();
 
 	private Refreshable mCurrentDisplayedFragment;
+
+    public Main() {
+        mDaemonBroadcastedIntents.addAction(ForwardingDaemon.STARTED);
+        mDaemonBroadcastedIntents.addAction(ForwardingDaemon.STOPPING);
+    }
 
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+
+        mDaemonIntent = new Intent(getApplicationContext(), ForwardingDaemon.class);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -88,20 +93,8 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
         NavigationView navigationView = (NavigationView) findViewById(R.id.navigation);
         navigationView.setNavigationItemSelectedListener(this);
 
-        mDaemonIntent = new Intent(getApplicationContext(), ForwardingDaemon.class);
-        mDaemonBroadcastedIntents = new IntentFilter();
-        mDaemonBroadcastedIntents.addAction(ForwardingDaemon.STARTED);
-        mDaemonBroadcastedIntents.addAction(ForwardingDaemon.STOPPING);
-        mDaemonListener = new DaemonBroadcastReceiver();
-
-        mServiceTracking = new ServiceTracking();
-		mOverview = new Overview();
-		mForwarderConfiguration = new ForwarderConfiguration();
-        mNametree = new NameTree();
-        mContentStore = new ContentStore();
-
-        mNfdSwitch = (Switch) findViewById(R.id.nfdSwitch);
-		mNfdSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        Switch nfdSwitch = (Switch) findViewById(R.id.nfdSwitch);
+		nfdSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 			@Override
 			public void onCheckedChanged(CompoundButton button, boolean isOn) {
 				if(isOn) startService(mDaemonIntent);
@@ -112,9 +105,7 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
 			}
 		});
 
-        setDisplayedFragment(R.id.nav_serviceTracker);
-
-        mNfdSwitch.setChecked(true);
+        setDisplayedFragment(R.id.nav_peerTracking);
 	}
 
     @Override
@@ -180,8 +171,10 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
     }
 
     private void setDisplayedFragment(int id) {
-        if(id == R.id.nav_serviceTracker)
-            mCurrentDisplayedFragment = mServiceTracking;
+        mCurrentDisplayedFragment = null;
+
+        if(id == R.id.nav_peerTracking)
+            mCurrentDisplayedFragment = mPeerTracking;
         else if (id == R.id.nav_overview)
             mCurrentDisplayedFragment = mOverview;
         else if (id == R.id.nav_forwarderConfiguration)

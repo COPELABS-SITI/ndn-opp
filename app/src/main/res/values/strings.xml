@@ -44,4 +44,19 @@
     <string name="authorName">Seweryn Dynerowicz</string>
     <string name="authorEmail">seweryn.dynerowicz@ulusofona.pt</string>
     <string name="umobileUuid">UUID</string>
+
+    <string name="nsdServices">NSD Services</string>
+    <string name="nsdServiceDiscovery">NSD Service Discovery</string>
+    <string name="nsdServiceRegistration">NSD Service Registration</string>
+
+    <string name="groupOwner">GO</string>
+    <string name="groupClient">Cl</string>
+    <string name="missingGroup">--</string>
+    <string name="groupFormation">Group / Ungroup</string>
+    <string name="wifiP2pPeers">WiFi P2P Peers</string>
+    <string name="missingUuid">------------</string>
+    <string name="missingStatus">--</string>
+    <string name="missingMac">--:--:--:--:--:--</string>
+    <string name="peerTracking">UMobile Peer Tracking</string>
+    <string name="uuid">UUID</string>
 </resources>
