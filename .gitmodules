@@ -7,3 +7,6 @@
 [submodule "app/src/main/jni/ndn-fwd"]
 	path = app/src/main/jni/ndn-fwd
 	url = https://github.com/COPELABS-SITI/ndn-fwd.git
+[submodule "app/src/main/jni/android/coffeecatch"]
+	path = app/src/main/jni/android/coffeecatch
+	url = https://github.com/xroche/coffeecatch.git
