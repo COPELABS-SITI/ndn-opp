@@ -2,6 +2,7 @@ package pt.ulusofona.copelabs.ndn.android.umobile.wifip2p;
 
 import android.content.Context;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.provider.CalendarContract;
 import android.util.Log;
 
 import java.util.HashMap;
@@ -11,6 +12,8 @@ import java.util.Observer;
 
 public class WifiP2pPeerTracker extends Observable implements Observer {
     private static final String TAG = WifiP2pPeerTracker.class.getSimpleName();
+
+    private static WifiP2pPeerTracker INSTANCE = null;
 
     private boolean mEnabled = false;
 
@@ -28,38 +31,44 @@ public class WifiP2pPeerTracker extends Observable implements Observer {
     private Map<String, WifiP2pDevice> mDevices = new HashMap<>();
     private Map<String, WifiP2pService> mServices = new HashMap<>();
 
+    public static WifiP2pPeerTracker getInstance() {
+        if(INSTANCE == null)
+            INSTANCE = new WifiP2pPeerTracker();
+        return INSTANCE;
+    }
+
     public synchronized void enable(Context context, WifiP2pManager wifiP2pMgr, WifiP2pManager.Channel wifiP2pChn, String uuid) {
         if(!mEnabled) {
             Log.v(TAG, "Enabling Peer Tracker.");
 
-            mWifiP2pServiceRegistrar.enable(context, wifiP2pMgr, wifiP2pChn, uuid);
+            mWifiP2pServiceRegistrar.enable(wifiP2pMgr, wifiP2pChn, uuid);
 
             mWifiP2pDeviceDiscoverer.addObserver(this);
             mWifiP2pDeviceDiscoverer.enable(context, wifiP2pMgr, wifiP2pChn);
 
             mWifiP2pServiceDiscoverer.addObserver(this);
-            mWifiP2pServiceDiscoverer.enable(context, wifiP2pMgr, wifiP2pChn, uuid);
+            mWifiP2pServiceDiscoverer.enable(wifiP2pMgr, wifiP2pChn, uuid);
 
             mEnabled = true;
         } else
-            Log.w(TAG, "Attempt to enable a second time.");
+            Log.w(TAG, "Attempt to register a second time.");
     }
 
     public synchronized void disable() {
         if(mEnabled) {
             Log.v(TAG, "Disabling Peer Tracker");
 
-            mWifiP2pServiceDiscoverer.deleteObserver(this);
             mWifiP2pServiceDiscoverer.disable();
+            mWifiP2pServiceDiscoverer.deleteObserver(this);
 
-            mWifiP2pDeviceDiscoverer.deleteObserver(this);
             mWifiP2pDeviceDiscoverer.disable();
+            mWifiP2pDeviceDiscoverer.deleteObserver(this);
 
             mWifiP2pServiceRegistrar.disable();
 
             mEnabled = false;
         } else
-            Log.w(TAG, "Attempt to disable a second time.");
+            Log.w(TAG, "Attempt to unregister a second time.");
     }
 
     public Map<String, WifiP2pPeer> getPeers() {return mPeers;}

@@ -12,28 +12,33 @@ import java.util.Observable;
 public class WifiP2pDiscoveryTracker  extends Observable {
     private static final String TAG = WifiP2pStateTracker.class.getSimpleName();
 
+    private static WifiP2pDiscoveryTracker INSTANCE = null;
+
     private final IntentFilter mIntents = new IntentFilter();
     private DiscoveryEventTracker mDiscoveryEventReceiver = new DiscoveryEventTracker();
 
-    private Context mContext;
     private boolean mEnabled = false;
 
-    public WifiP2pDiscoveryTracker() {
+    public static WifiP2pDiscoveryTracker getInstance() {
+        if(INSTANCE == null)
+            INSTANCE = new WifiP2pDiscoveryTracker();
+        return INSTANCE;
+    }
+
+    private WifiP2pDiscoveryTracker() {
         mIntents.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
     }
 
     public synchronized void enable(Context ctxt) {
         if(!mEnabled) {
-            mContext = ctxt;
-            mContext.registerReceiver(mDiscoveryEventReceiver, mIntents);
+            ctxt.registerReceiver(mDiscoveryEventReceiver, mIntents);
             mEnabled = true;
         }
     }
 
-    public synchronized void disable() {
+    public synchronized void disable(Context ctxt) {
         if(mEnabled) {
-            mContext.unregisterReceiver(mDiscoveryEventReceiver);
-            mContext = null;
+            ctxt.unregisterReceiver(mDiscoveryEventReceiver);
             mEnabled = false;
         }
     }

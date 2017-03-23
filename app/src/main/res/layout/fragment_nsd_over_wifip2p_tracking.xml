@@ -10,10 +10,6 @@
             style="@style/piece"
             android:text="@string/groupFormation"/>
 
-        <Switch style="@style/piece"
-                android:id="@+id/switch_wifi_p2p_peer_tracking"
-                android:text="@string/peerTracking"/>
-
         <TextView style="@style/title" android:text="@string/uuid"/>
         <TextView style="@style/piece" android:id="@+id/text_nsd_uuid" android:text="@string/notAvailable"/>
 

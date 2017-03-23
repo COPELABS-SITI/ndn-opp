@@ -24,6 +24,8 @@ import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pConnectivityTrac
 public class NsdServiceTracker extends Observable implements Observer {
     private static final String TAG = NsdServiceTracker.class.getSimpleName();
 
+    private static NsdServiceTracker INSTANCE = null;
+
     private NsdManager mNsdManager;
     private String mAssignedUuid;
 
@@ -33,8 +35,18 @@ public class NsdServiceTracker extends Observable implements Observer {
     private final DiscoveryListener mListener = new DiscoveryListener();
     private final NsdServiceResolver mResolver = new NsdServiceResolver();
 
+    private final WifiP2pConnectivityTracker mConnectivityTracker = WifiP2pConnectivityTracker.getInstance();
+
     // Associates a UUID to a NsdService.
     private Map<String, NsdService> mServices = new HashMap<>();
+
+    private NsdServiceTracker() {}
+
+    public static NsdServiceTracker getInstance() {
+        if(INSTANCE == null)
+            INSTANCE = new NsdServiceTracker();
+        return INSTANCE;
+    }
 
     public synchronized void enable(Context context, String uuid) {
         if (!mEnabled) {
@@ -44,6 +56,8 @@ public class NsdServiceTracker extends Observable implements Observer {
 
             mResolver.addObserver(this);
             mResolver.enable(mNsdManager);
+
+            mConnectivityTracker.addObserver(this);
 
             mEnabled = true;
         } else
@@ -57,6 +71,8 @@ public class NsdServiceTracker extends Observable implements Observer {
 
             mResolver.disable();
             mResolver.deleteObserver(this);
+
+            mConnectivityTracker.deleteObserver(this);
 
             mEnabled = false;
         } else

@@ -11,85 +11,44 @@ import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.util.Log;
 
-import java.util.Observable;
-import java.util.Observer;
-
 import pt.ulusofona.copelabs.ndn.android.NsdService;
-import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pConnectivityTracker;
 
-public class NsdServiceRegistrar implements Observer {
+public class NsdServiceRegistrar {
     private static final String TAG = NsdServiceRegistrar.class.getSimpleName();
 
     private NsdManager mNsdManager;
 
-    private boolean mEnabled = false;
     private boolean mRegistered = false;
 
-    private NsdServiceInfo mDescriptor;
     private String mAssignedUuid;
 
-    private final WifiP2pConnectivityTracker mConnectivityTracker;
-
-    public NsdServiceRegistrar() {
-        mConnectivityTracker = new WifiP2pConnectivityTracker();
-    }
-
-    public synchronized void enable(Context context, String uuid, int port) {
-        if(!mEnabled) {
+    public synchronized void register(Context context, String uuid, int port) {
+        if(!mRegistered) {
             Log.v(TAG, "Enabling");
             mNsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
 
             mAssignedUuid = uuid;
 
-            mDescriptor = new NsdServiceInfo();
+            NsdServiceInfo mDescriptor = new NsdServiceInfo();
             mDescriptor.setServiceName(mAssignedUuid);
             mDescriptor.setServiceType(NsdService.SERVICE_TYPE);
             mDescriptor.setPort(port);
 
-            mConnectivityTracker.addObserver(this);
-            mConnectivityTracker.enable(context);
-
-            mEnabled = true;
-        } else
-            Log.w(TAG, "Attempt to enable a second time.");
-    }
-
-    public synchronized void disable() {
-        if(mEnabled) {
-            Log.v(TAG, "Disabling");
-            unregister();
-
-            mConnectivityTracker.deleteObserver(this);
-            mConnectivityTracker.disable();
-
-            mEnabled = false;
-        } else
-            Log.w(TAG, "Attempt to disable a second time.");
-    }
-
-    private synchronized void register() {
-        if (mEnabled && !mRegistered) {
             Log.d(TAG, "Registering " + mDescriptor);
             mNsdManager.registerService(mDescriptor, NsdManager.PROTOCOL_DNS_SD, mListener);
-        }
+
+            mRegistered = true;
+        } else
+            Log.w(TAG, "Attempt to register a second time.");
     }
 
-    private synchronized void unregister() {
-        if (mEnabled && mRegistered) {
+    public synchronized void unregister() {
+        if(mRegistered) {
+            Log.v(TAG, "Unregistering");
             mNsdManager.unregisterService(mListener);
             mRegistered = false;
-        }
-    }
-
-    @Override
-    public void update(Observable observable, Object obj) {
-        if (observable instanceof WifiP2pConnectivityTracker) {
-            boolean isConnected = (boolean) obj;
-            Log.d(TAG, "Connection change : " + (isConnected ? "CONNECTED" : "DISCONNECTED"));
-
-            if(isConnected) register();
-            else unregister();
-        }
+        } else
+            Log.w(TAG, "Attempt to unregister a second time.");
     }
 
     private NsdManager.RegistrationListener mListener = new NsdManager.RegistrationListener() {

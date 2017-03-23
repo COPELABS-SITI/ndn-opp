@@ -9,7 +9,9 @@
 package pt.ulusofona.copelabs.ndn.android.umobile;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
@@ -25,6 +27,9 @@ import pt.ulusofona.copelabs.ndn.android.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.SctEntry;
 import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceTracker;
 import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pConnectivityTracker;
+import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pDiscoveryTracker;
+import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pStateTracker;
+import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.WifiP2pPeerTracker;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -58,8 +63,13 @@ public class ForwardingDaemon extends Service {
     private String mAssignedUuid;
     // Routing & Contextual Manager
     private Routing mRouting;
-    private NsdServiceTracker mServiceTracker = new NsdServiceTracker();
-    private WifiP2pConnectivityTracker mConnectivityTracker = new WifiP2pConnectivityTracker();
+
+    private WifiP2pPeerTracker mPeerTracker = WifiP2pPeerTracker.getInstance();
+    private NsdServiceTracker mServiceTracker = NsdServiceTracker.getInstance();
+
+    private WifiP2pStateTracker mStateTracker = WifiP2pStateTracker.getInstance();
+    private WifiP2pDiscoveryTracker mDiscoveryTracker = WifiP2pDiscoveryTracker.getInstance();
+    private WifiP2pConnectivityTracker mConnectivityTracker = WifiP2pConnectivityTracker.getInstance();
 
     // Replace this logic with a lock.
     private State current = State.STOPPED;
@@ -97,11 +107,18 @@ public class ForwardingDaemon extends Service {
             jniStart();
 			startTime = System.currentTimeMillis();
 
+            WifiP2pManager wifiP2pManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
+            WifiP2pManager.Channel wifiP2pChannel = wifiP2pManager.initialize(this, getMainLooper(), null);
+
+            mPeerTracker.enable(this, wifiP2pManager, wifiP2pChannel, mAssignedUuid);
+
             mServiceTracker.addObserver(mRouting);
             mServiceTracker.enable(this, mAssignedUuid);
 
+            mStateTracker.enable(this);
+            mDiscoveryTracker.enable(this);
+
             mConnectivityTracker.addObserver(mRouting);
-            mConnectivityTracker.addObserver(mServiceTracker);
             mConnectivityTracker.enable(this);
 
             Log.d(TAG, STARTED);
@@ -121,8 +138,11 @@ public class ForwardingDaemon extends Service {
 			jniStop();
             jniCleanUp();
 
-            mConnectivityTracker.disable();
-            mConnectivityTracker.deleteObserver(mServiceTracker);
+            mPeerTracker.disable();
+
+            mStateTracker.disable(this);
+            mDiscoveryTracker.disable(this);
+            mConnectivityTracker.disable(this);
             mConnectivityTracker.deleteObserver(mRouting);
 
             mServiceTracker.disable();

@@ -28,9 +28,8 @@ class WifiP2pDeviceDiscoverer extends Observable implements Observer {
     private final IntentFilter mPeerChangeIntent = new IntentFilter();
     private final PeerChangeReceiver mPeerChangeTracker = new PeerChangeReceiver();
 
-    private final WifiP2pStateTracker mStateTracker = new WifiP2pStateTracker();
-    private final WifiP2pDiscoveryTracker mDiscoveryTracker = new WifiP2pDiscoveryTracker();
-    private final WifiP2pConnectivityTracker mConnectivityTracker = new WifiP2pConnectivityTracker();
+    private final WifiP2pStateTracker mStateTracker = WifiP2pStateTracker.getInstance();
+    private final WifiP2pConnectivityTracker mConnectivityTracker = WifiP2pConnectivityTracker.getInstance();
 
     private boolean mEnabled = false;
     private boolean mStarted = false;
@@ -53,17 +52,11 @@ class WifiP2pDeviceDiscoverer extends Observable implements Observer {
             mWifiP2pChannel = wifiP2pChn;
 
             mStateTracker.addObserver(this);
-            mStateTracker.enable(context);
-
-            mDiscoveryTracker.addObserver(this);
-            mDiscoveryTracker.enable(context);
-
             mConnectivityTracker.addObserver(this);
-            mConnectivityTracker.enable(context);
 
             mEnabled = true;
         } else
-            Log.w(TAG, "Attempt to enable a second time.");
+            Log.w(TAG, "Attempt to register a second time.");
     }
 
     synchronized void disable() {
@@ -71,13 +64,7 @@ class WifiP2pDeviceDiscoverer extends Observable implements Observer {
             Log.d(TAG, "Disabling Peer Discoverer");
             stop();
 
-            mStateTracker.disable();
             mStateTracker.deleteObserver(this);
-
-            mDiscoveryTracker.disable();
-            mDiscoveryTracker.deleteObserver(this);
-
-            mConnectivityTracker.disable();
             mConnectivityTracker.deleteObserver(this);
 
             mWifiP2pEnabled = false;
@@ -85,7 +72,7 @@ class WifiP2pDeviceDiscoverer extends Observable implements Observer {
 
             mEnabled = false;
         } else
-            Log.w(TAG, "Attempt to disable a second time.");
+            Log.w(TAG, "Attempt to unregister a second time.");
     }
 
     private synchronized void start() {

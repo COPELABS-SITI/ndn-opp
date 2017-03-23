@@ -15,6 +15,7 @@ import android.util.Log;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
@@ -98,14 +99,15 @@ public class Routing implements Observer {
         }
     }
 
-    private void enable() {
+    private void enable(String assignedIp) {
         if(!mEnabled) {
             try {
                 Log.v(TAG, "Enabling ServerSocket");
-                ServerSocket mSocket = new ServerSocket(DEFAULT_PORT);
-                mConnector = new ConnectionHandler(mSocket);
+                ServerSocket socket = new ServerSocket();
+                socket.bind(new InetSocketAddress(assignedIp, DEFAULT_PORT));
+                mConnector = new ConnectionHandler(socket);
                 mConnector.start();
-                mRegistrar.enable(mDaemon, mDaemon.getUmobileUuid(), DEFAULT_PORT);
+                mRegistrar.register(mDaemon, mDaemon.getUmobileUuid(), DEFAULT_PORT);
                 mEnabled = true;
             } catch (IOException e) {
                 Log.e(TAG, "Failed to open listening socket");
@@ -117,7 +119,7 @@ public class Routing implements Observer {
     private void disable() {
         if(mEnabled) {
             mConnector.terminate();
-            mRegistrar.disable();
+            mRegistrar.unregister();
             mEnabled = false;
         }
     }
@@ -139,8 +141,9 @@ public class Routing implements Observer {
             } else
                 Log.w(TAG, "Received NULL object from NsdServiceTracker");
         } else if (observable instanceof WifiP2pConnectivityTracker) {
+            WifiP2pConnectivityTracker wifiConnTracker = (WifiP2pConnectivityTracker) observable;
             boolean connected = (boolean) obj;
-            if(connected) enable();
+            if(connected) enable(wifiConnTracker.getAssignedIp());
             else disable();
         }
     }

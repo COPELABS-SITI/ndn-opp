@@ -24,8 +24,8 @@ class WifiP2pServiceDiscoverer extends Observable implements Observer {
     private String mAssignedUuid;
     private WifiP2pDnsSdServiceRequest mRequest;
 
-    private WifiP2pStateTracker mStateTracker = new WifiP2pStateTracker();
-    private WifiP2pConnectivityTracker mConnectivityTracker = new WifiP2pConnectivityTracker();
+    private WifiP2pStateTracker mStateTracker = WifiP2pStateTracker.getInstance();
+    private WifiP2pConnectivityTracker mConnectivityTracker = WifiP2pConnectivityTracker.getInstance();
 
     private boolean mEnabled = false;
     private boolean mDiscoveryEnabled = false;
@@ -40,7 +40,7 @@ class WifiP2pServiceDiscoverer extends Observable implements Observer {
         return mServices;
     }
 
-    public synchronized void enable(Context context, WifiP2pManager wifip2pMgr, WifiP2pManager.Channel wifip2pChn, String uuid) {
+    public synchronized void enable(WifiP2pManager wifip2pMgr, WifiP2pManager.Channel wifip2pChn, String uuid) {
         if(!mEnabled) {
             Log.v(TAG, "Enabling");
             mWifiP2pMgr = wifip2pMgr;
@@ -50,29 +50,23 @@ class WifiP2pServiceDiscoverer extends Observable implements Observer {
             mRequest = WifiP2pDnsSdServiceRequest.newInstance(WifiP2pService.SVC_INSTANCE_TYPE);
 
             mStateTracker.addObserver(this);
-            mStateTracker.enable(context);
-
             mConnectivityTracker.addObserver(this);
-            mConnectivityTracker.enable(context);
 
             mEnabled = true;
         } else
-            Log.w(TAG, "Attempt to enable TWICE");
+            Log.w(TAG, "Attempt to register TWICE");
     }
 
     public synchronized void disable() {
         if(mEnabled) {
             disableDiscovery();
 
-            mStateTracker.disable();
             mStateTracker.deleteObserver(this);
-
-            mConnectivityTracker.disable();
             mConnectivityTracker.deleteObserver(this);
 
             mEnabled = false;
         } else
-            Log.w(TAG, "Attempt to disable TWICE");
+            Log.w(TAG, "Attempt to unregister TWICE");
     }
 
     private synchronized void enableDiscovery() {
@@ -82,7 +76,7 @@ class WifiP2pServiceDiscoverer extends Observable implements Observer {
             mWifiP2pMgr.addServiceRequest(mWifiP2pChn, mRequest, afterRequestAdded);
             mDiscoveryEnabled = true;
         } else
-            Log.v(TAG, "Attempt to enable Discovery TWICE");
+            Log.v(TAG, "Attempt to register Discovery TWICE");
     }
 
     private synchronized void disableDiscovery() {
@@ -97,7 +91,7 @@ class WifiP2pServiceDiscoverer extends Observable implements Observer {
 
             mDiscoveryEnabled = false;
         } else
-            Log.v(TAG, "Attempt to disable Discovery TWICE");
+            Log.v(TAG, "Attempt to unregister Discovery TWICE");
     }
 
     private synchronized void startDiscovery() {

@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -67,7 +68,8 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
     private final NameTree mNametree = new NameTree();
     private final ContentStore mContentStore = new ContentStore();
 
-	private Refreshable mCurrentDisplayedFragment;
+    private Fragment mCurrentlyDisplayed;
+    private int mCurrentlyDisplayedTitle;
 
     public Main() {
         mDaemonBroadcastedIntents.addAction(ForwardingDaemon.STARTED);
@@ -145,18 +147,20 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
 
     @Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		switch(item.getItemId()) {
-		    case R.id.createFace:
-			    CreateFace cf = new CreateFace(mDaemon);
-			    cf.setTargetFragment((Fragment) mCurrentDisplayedFragment, 0);
-			    cf.show(getSupportFragmentManager(), cf.getTag());
-			    break;
-            case R.id.addRoute:
-                AddRoute ar = new AddRoute(mDaemon);
-                ar.setTargetFragment((Fragment) mCurrentDisplayedFragment, 0);
-                ar.show(getSupportFragmentManager(), ar.getTag());
-                break;
-        }
+        DialogFragment dialog = null;
+        int itemId = item.getItemId();
+
+        if(item.getItemId() == R.id.createFace)
+            dialog = new CreateFace(mDaemon);
+        else if (itemId == R.id.addRoute)
+            dialog = new AddRoute(mDaemon);
+
+        if(dialog != null) {
+            dialog.setTargetFragment(mCurrentlyDisplayed, 0);
+            dialog.show(getSupportFragmentManager(), dialog.getTag());
+        } else
+            Log.w(TAG, "Invalid item ID selected from Options");
+
 		return true;
 	}
 
@@ -171,28 +175,38 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
     }
 
     private void setDisplayedFragment(int id) {
-        mCurrentDisplayedFragment = null;
+        mCurrentlyDisplayed = null;
 
-        if(id == R.id.nav_peerTracking)
-            mCurrentDisplayedFragment = mPeerTracking;
-        else if (id == R.id.nav_overview)
-            mCurrentDisplayedFragment = mOverview;
-        else if (id == R.id.nav_forwarderConfiguration)
-            mCurrentDisplayedFragment = mForwarderConfiguration;
-        else if (id == R.id.nav_nameTree)
-            mCurrentDisplayedFragment = mNametree;
-        else if (id == R.id.nav_contentStore)
-            mCurrentDisplayedFragment = mContentStore;
+        if(id == R.id.nav_peerTracking) {
+            mCurrentlyDisplayed = mPeerTracking;
+            mCurrentlyDisplayedTitle = R.string.peerTracking;
+        } else if (id == R.id.nav_overview) {
+            mCurrentlyDisplayed = mOverview;
+            mCurrentlyDisplayedTitle = R.string.overview;
+        } else if (id == R.id.nav_forwarderConfiguration) {
+            mCurrentlyDisplayed = mForwarderConfiguration;
+            mCurrentlyDisplayedTitle = R.string.forwarderConfiguration;
+        } else if (id == R.id.nav_nameTree) {
+            mCurrentlyDisplayed = mNametree;
+            mCurrentlyDisplayedTitle = R.string.nametree;
+        } else if (id == R.id.nav_contentStore) {
+            mCurrentlyDisplayed = mContentStore;
+            mCurrentlyDisplayedTitle = R.string.contentstore;
+        }
 
         getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.container, (Fragment) mCurrentDisplayedFragment)
+                .replace(R.id.container, mCurrentlyDisplayed)
                 .commit();
 
-        if(mDaemonConnected) mCurrentDisplayedFragment.refresh(mDaemon);
-
-        ActionBar actBar = getSupportActionBar();
-        if(actBar != null) actBar.setTitle(mCurrentDisplayedFragment.getTitle());
+        if(mDaemonConnected) {
+            if(mCurrentlyDisplayed instanceof Refreshable) {
+                Refreshable refr = (Refreshable) mCurrentlyDisplayed;
+                refr.refresh(mDaemon);
+            }
+            ActionBar actBar = getSupportActionBar();
+            if(actBar != null) actBar.setTitle(mCurrentlyDisplayedTitle);
+        }
     }
 
     @Override
@@ -205,11 +219,18 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
         return true;
     }
 
-    // For automatic refreshing of mCurrentDisplayedFragment.
+    // For automatic refreshing of mCurrentDisplayedRefreshable.
     private static final long STARTUP_DELAY = 0L;
     private static final long UPDATE_PERIOD = 1000L;
     private boolean mUpdaterRunning;
     private Timer mUpdater;
+
+    private void refreshDisplayed() {
+        if (mCurrentlyDisplayed instanceof Refreshable && mDaemonConnected) {
+            Refreshable refr = (Refreshable) mCurrentlyDisplayed;
+            refr.refresh(mDaemon);
+        }
+    }
 
     private void startUpdater() {
         if(!mUpdaterRunning) {
@@ -221,8 +242,7 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
                         @Override
                         public void run() {
                             // TODO: check this does not run all the time ...
-                            if (mCurrentDisplayedFragment != null && mDaemonConnected)
-                                mCurrentDisplayedFragment.refresh(mDaemon);
+                            refreshDisplayed();
                         }
                     });
                 }
@@ -272,7 +292,7 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
                 bindService(mDaemonIntent, mConnection, Context.BIND_AUTO_CREATE);
             } else if (action.equals(ForwardingDaemon.STOPPING)) {
                 stopUpdater();
-                mCurrentDisplayedFragment.refresh(mDaemon);
+                refreshDisplayed();
             }
         }
     }

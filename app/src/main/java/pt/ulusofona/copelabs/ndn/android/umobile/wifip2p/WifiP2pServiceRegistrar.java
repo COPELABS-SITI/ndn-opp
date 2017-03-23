@@ -1,6 +1,5 @@
 package pt.ulusofona.copelabs.ndn.android.umobile.wifip2p;
 
-import android.content.Context;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.ActionListener;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
@@ -19,12 +18,12 @@ public class WifiP2pServiceRegistrar implements Observer {
 
     private WifiP2pDnsSdServiceInfo mDescriptor;
 
-    private WifiP2pStateTracker mStateTracker = new WifiP2pStateTracker();
+    private WifiP2pStateTracker mStateTracker = WifiP2pStateTracker.getInstance();
 
     private boolean mEnabled = false;
     private boolean mRegistered = false;
 
-    public synchronized void enable(Context context, WifiP2pManager wifiP2pMgr, WifiP2pManager.Channel wifiP2pChn, String uuid) {
+    public synchronized void enable(WifiP2pManager wifiP2pMgr, WifiP2pManager.Channel wifiP2pChn, String uuid) {
         if(!mEnabled) {
             Log.w(TAG, "Enabling.");
             mWifiP2pMgr = wifiP2pMgr;
@@ -32,11 +31,10 @@ public class WifiP2pServiceRegistrar implements Observer {
             mDescriptor = WifiP2pDnsSdServiceInfo.newInstance(uuid, WifiP2pService.SVC_INSTANCE_TYPE, null);
 
             mStateTracker.addObserver(this);
-            mStateTracker.enable(context);
 
             mEnabled = true;
         } else
-            Log.w(TAG, "Attempt to enable a second time.");
+            Log.w(TAG, "Attempt to register a second time.");
     }
 
     public synchronized void disable() {
@@ -44,7 +42,6 @@ public class WifiP2pServiceRegistrar implements Observer {
             Log.w(TAG, "Disabling.");
             unregister();
 
-            mStateTracker.disable();
             mStateTracker.deleteObserver(this);
 
             mWifiP2pMgr = null;
@@ -52,7 +49,7 @@ public class WifiP2pServiceRegistrar implements Observer {
             mDescriptor = null;
             mEnabled = false;
         } else
-            Log.w(TAG, "Attempt to disable a second time.");
+            Log.w(TAG, "Attempt to unregister a second time.");
     }
 
     private synchronized void register() {

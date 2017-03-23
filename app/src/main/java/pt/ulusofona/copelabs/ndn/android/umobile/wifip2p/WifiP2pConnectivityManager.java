@@ -60,7 +60,7 @@ public class WifiP2pConnectivityManager {
                 WifiP2pConfig connConfig = new WifiP2pConfig();
                 connConfig.deviceAddress = selectedGroupOwner.getMacAddress();
                 connConfig.wps.setup = WpsInfo.PBC;
-                connConfig.groupOwnerIntent = 14;
+                connConfig.groupOwnerIntent = 0;
 
                 Toast.makeText(mContext, "Connecting to : " + connConfig.deviceAddress, Toast.LENGTH_LONG).show();
                 Log.d(TAG, "Connecting to : " + connConfig.deviceAddress);
