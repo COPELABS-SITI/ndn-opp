@@ -1,7 +1,7 @@
 /**
  *  @version 1.0
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
- * Implementation of the Peer entry class.
+ * Implementation of a Peer, which is an NDN-Opp enabled device.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
 package pt.ulusofona.copelabs.ndn.android.umobile.wifip2p;

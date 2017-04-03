@@ -1,3 +1,9 @@
+/**
+ *  @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-03-23
+ * This class encapsulates Status of WiFi P2P Devices
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ */
 package pt.ulusofona.copelabs.ndn.android.umobile.wifip2p;
 
 import android.net.wifi.p2p.WifiP2pDevice;

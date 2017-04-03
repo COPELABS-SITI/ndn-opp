@@ -1,3 +1,9 @@
+/**
+ *  @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
+ * This class manages the Fragment which displays the PeerTracking and controls Group Formation.
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ */
 package pt.ulusofona.copelabs.ndn.android.ui.fragment;
 
 import android.content.Context;

@@ -1,3 +1,9 @@
+/**
+ *  @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-03-23
+ * This class is in charge of WiFi P2P device discovery
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ */
 package pt.ulusofona.copelabs.ndn.android.umobile.wifip2p;
 
 import android.content.BroadcastReceiver;

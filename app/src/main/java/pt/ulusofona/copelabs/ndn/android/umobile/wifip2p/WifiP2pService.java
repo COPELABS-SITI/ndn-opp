@@ -1,7 +1,7 @@
 /**
  *  @version 1.0
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-21
- * The WifiP2pService represents a device running a Service of interest.
+ * The WifiP2pService represents a device running a the NDN-Opp service.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
 package pt.ulusofona.copelabs.ndn.android.umobile.wifip2p;

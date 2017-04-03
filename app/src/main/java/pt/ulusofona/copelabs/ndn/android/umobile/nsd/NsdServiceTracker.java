@@ -1,7 +1,8 @@
 /**
  *  @version 1.0
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-21
- * The DiscoveryListener used by the ServiceTracker.
+ * The NsdServiceTracker centralizes the functionality of maintaining up to date the list of
+ * Services that are known in the network we're part of.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
 package pt.ulusofona.copelabs.ndn.android.umobile.nsd;

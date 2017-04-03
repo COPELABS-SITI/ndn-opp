@@ -1,3 +1,9 @@
+/**
+ *  @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
+ * The WifiP2pPeerAdapter is used to populate a ListView
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ */
 package pt.ulusofona.copelabs.ndn.android.ui.adapter;
 
 import android.content.Context;

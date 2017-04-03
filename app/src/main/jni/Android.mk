@@ -1,6 +1,8 @@
 LOCAL_PATH := $(call my-dir)
 LOCAL_PATH_SAVED := $(LOCAL_PATH)
 
+LOCAL_CFLAGS := -funwind-tables
+
 # Build the version of NFD wrapped with a JNI interface and a specific Runner for use in Android.
 include $(LOCAL_PATH_SAVED)/nfd-wrapped.mk
 

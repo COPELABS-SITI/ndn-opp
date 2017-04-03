@@ -1,7 +1,10 @@
 /**
  * @version 1.0
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-20
- * //TODO: Description.
+ * The NsdServiceResolver is in charge of actualling calling the resolution function of Android.
+ * The main reason for this class is that it seems to be necessary to perform resolution of one service
+ * at a time even when multiple services are discovered at the same time. (i.e. performing two resolutions
+ * at the same time makes the second one fail)
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
 package pt.ulusofona.copelabs.ndn.android.umobile.nsd;

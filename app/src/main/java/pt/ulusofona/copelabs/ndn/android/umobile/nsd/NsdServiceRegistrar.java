@@ -1,7 +1,8 @@
 /**
  * @version 1.0
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-20
- * //TODO: Description.
+ * The NsdServiceRegistrar takes care of registering and unregistering a Service
+ * for advertisement on an IP network.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
 package pt.ulusofona.copelabs.ndn.android.umobile.nsd;

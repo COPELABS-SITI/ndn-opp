@@ -1,3 +1,9 @@
+/**
+ *  @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-03-23
+ * This class is used to register the NDN-Opp service at the WiFi P2P level for Service Discovery.
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ */
 package pt.ulusofona.copelabs.ndn.android.umobile.wifip2p;
 
 import android.net.wifi.p2p.WifiP2pManager;

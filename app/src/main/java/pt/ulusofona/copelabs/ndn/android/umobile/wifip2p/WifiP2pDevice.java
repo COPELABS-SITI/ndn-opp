@@ -1,7 +1,7 @@
 /**
  *  @version 1.0
- * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
- * Implementation of the Peer entry class.
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-03-23
+ * Implementation of the WiFi P2P device entry class.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
 package pt.ulusofona.copelabs.ndn.android.umobile.wifip2p;

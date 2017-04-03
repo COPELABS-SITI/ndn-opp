@@ -1,10 +1,10 @@
 /**
  *  @version 1.0
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-20
- * //TODO: Description.
+ * Implementation of the Opportunistic Channel encapsulating the actual communication scheme
+ * used to transmit the bytes.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
-
 package pt.ulusofona.copelabs.ndn.android.umobile;
 
 import android.os.AsyncTask;
