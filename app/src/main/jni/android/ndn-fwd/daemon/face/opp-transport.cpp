@@ -76,8 +76,8 @@ void OppTransport::handleReceive(const uint8_t *buffer, size_t buf_size) {
     this->receive(Transport::Packet(std::move(element)));
 }
 
-void OppTransport::beforeChangePersistency(ndn::nfd::FacePersistency newP) {
-    NFD_LOG_INFO("BeforeChangePersistency ignored.");
+void OppTransport::afterChangePersistency(ndn::nfd::FacePersistency oldP) {
+    NFD_LOG_INFO("AfterChangePersistency ignored.");
 }
 
 } // namespace face

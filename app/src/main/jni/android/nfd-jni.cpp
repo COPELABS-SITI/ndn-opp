@@ -43,7 +43,6 @@ namespace nfd {
 	void resetGlobalIoService();
 }
 
-static boost::asio::io_service* g_io;
 static std::unique_ptr<nfd::Nfd> g_nfd;
 static std::unique_ptr<nfd::rib::Service> g_nrd;
 
@@ -141,7 +140,7 @@ void afterFaceAdd(const nfd::Face& current) {
 
 static void jniInitialize(JNIEnv* env, jobject fDaemon, jstring homepath, jstring configuration) {
     COFFEE_TRY_JNI(env,
-        if (g_io == nullptr) {
+        {
             forwardingDaemonInstance = env->NewGlobalRef(fDaemon);
 
             std::string home = convertString(env, homepath);
@@ -156,9 +155,6 @@ static void jniInitialize(JNIEnv* env, jobject fDaemon, jstring homepath, jstrin
             NFD_LOG_INFO("Initializing Logging.");
             initializeLogging(config);
 
-            NFD_LOG_INFO("Initializing global I/O service.");
-            g_io = &nfd::getGlobalIoService();
-
             NFD_LOG_INFO("Setting NFD.");
             g_nfd.reset(new nfd::Nfd(config));
             NFD_LOG_INFO("Setting NRD.");
@@ -171,8 +167,6 @@ static void jniInitialize(JNIEnv* env, jobject fDaemon, jstring homepath, jstrin
             g_nfd->initialize();
             NFD_LOG_INFO("Initializing NRD.");
             g_nrd->initialize();
-
-            NFD_LOG_DEBUG("m_registeredFaces address : " << &(g_nrd->m_ribManager->m_registeredFaces));
         }
     );
 }
@@ -182,16 +176,23 @@ static void jniCleanUp(JNIEnv* env, jobject) {
         NFD_LOG_INFO("Cleaning up NFD...");
         g_nfd.reset(); g_nfd = nullptr;
         g_nrd.reset(); g_nrd = nullptr;
+        NFD_LOG_INFO("Resetting Global Scheduler");
         nfd::scheduler::resetGlobalScheduler();
-        nfd::resetGlobalIoService(); g_io = nullptr;
+        NFD_LOG_INFO("Resetting Global I/O Service");
+        nfd::resetGlobalIoService();
     );
 }
 
 static void jniStart(JNIEnv* env, jobject) {
     COFFEE_TRY_JNI(env,
         boost::thread([] {
+            NFD_LOG_INFO("Started secondary thread");
             try {
-                g_io->run();
+                COFFEE_TRY() {
+                    nfd::getGlobalIoService().run();
+                } COFFEE_CATCH() {
+                    PERFORM_ATTACHED(coffeecatch_throw_exception(env));
+                } COFFEE_END();
             } catch (const std::exception& e) {
                 NFD_LOG_FATAL("std::exception: " << e.what());
             } catch (const nfd::PrivilegeHelper::Error& e) {
@@ -205,11 +206,10 @@ static void jniStart(JNIEnv* env, jobject) {
 
 static void jniStop(JNIEnv* env, jobject) {
     COFFEE_TRY_JNI(env,
-        if (g_io != nullptr)
-            g_io->post( [] {
-                NFD_LOG_DEBUG("Stopping I/O service.");
-                g_io->stop();
-            });
+        nfd::getGlobalIoService().post( [] {
+            NFD_LOG_DEBUG("Stopping I/O service.");
+            nfd::getGlobalIoService().stop();
+        });
     );
 }
 
@@ -369,15 +369,11 @@ static jobject jniGetForwardingInformationBase(JNIEnv* env, jobject) {
 }
 
 void onRibUpdateSuccess(const nfd::rib::RibUpdate& update) {
-    NFD_LOG_DEBUG("RIB update succeeded " << update);
+    g_nrd->m_ribManager->onRibUpdateSuccess(update);
 }
 
 void onRibUpdateFailure(const nfd::rib::RibUpdate& update, uint32_t code, const std::string& error) {
-    NFD_LOG_DEBUG("RIB update failed for " << update
-                        << " (code: " << code
-                        << ", error: " << error << ")");
-
-    g_nrd->m_ribManager->scheduleActiveFaceFetch(ndn::time::seconds(1));
+    g_nrd->m_ribManager->onRibUpdateFailure(update, code, error);
 }
 
 static void jniAddRoute(JNIEnv* env, jobject, jstring prefix, jlong faceId, jlong origin, jlong cost, jlong flags) {
@@ -454,7 +450,7 @@ static jobject jniGetStrategyChoiceTable(JNIEnv* env, jobject) {
             for(auto&& entry : g_nfd->getStrategyChoiceTable()) {
                 jobject jstrategy = env->NewObject(sctEntry, newSctEntry,
                         env->NewStringUTF(entry.getPrefix().toUri().c_str()),
-                        env->NewStringUTF(entry.getStrategyName().toUri().c_str()));
+                        env->NewStringUTF(entry.getStrategyInstanceName().toUri().c_str()));
                 env->CallBooleanMethod(sct, listAdd, jstrategy);
             }
         }
@@ -501,12 +497,12 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 		NFD_LOG_DEBUG("Caching JNI classes.");
 		list = static_cast<jclass>(env->NewGlobalRef(env->FindClass("java/util/ArrayList")));
 
-		name     = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/Name")));
-		face     = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/Face")));
-		fibEntry = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/FibEntry")));
-		pitEntry = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/PitEntry")));
-		sctEntry = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/SctEntry")));
-		csEntry  = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/CsEntry")));
+		name     = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/models/Name")));
+		face     = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/models/Face")));
+		fibEntry = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/models/FibEntry")));
+		pitEntry = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/models/PitEntry")));
+		sctEntry = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/models/SctEntry")));
+		csEntry  = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/models/CsEntry")));
 
         cls_opp_channel = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/umobile/OpportunisticChannel")));
 
@@ -518,7 +514,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 		newSctEntry = env->GetMethodID(sctEntry, "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
 		newCsEntry  = env->GetMethodID(csEntry, "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
 
-        addFace      = env->GetMethodID(forwardingDaemon, "addFace", "(Lpt/ulusofona/copelabs/ndn/android/Face;)V");
+        addFace      = env->GetMethodID(forwardingDaemon, "addFace", "(Lpt/ulusofona/copelabs/ndn/android/models/Face;)V");
 
 		listAdd      = env->GetMethodID(list    , "add"         , "(Ljava/lang/Object;)Z");
 		addNextHop   = env->GetMethodID(fibEntry, "addNextHop"  , "(JI)V");

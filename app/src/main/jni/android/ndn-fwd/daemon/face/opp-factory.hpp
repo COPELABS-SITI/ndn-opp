@@ -10,6 +10,11 @@ namespace nfd {
 
 class OppFactory : public ProtocolFactory {
 public:
+    static const std::string& getId();
+
+    void processConfig(OptionalConfigSection configSection,
+                       FaceSystem::ConfigContext& context) override;
+
     virtual void createFace(
         const FaceUri& uri,
         ndn::nfd::FacePersistency persistency,

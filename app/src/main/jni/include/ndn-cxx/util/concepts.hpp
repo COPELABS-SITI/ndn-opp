@@ -1,6 +1,12 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2013-2015 Regents of the University of California.
+ * Copyright (c) 2014-2017 Regents of the University of California,
+ *                         Arizona Board of Regents,
+ *                         Colorado State University,
+ *                         University Pierre & Marie Curie, Sorbonne University,
+ *                         Washington University in St. Louis,
+ *                         Beijing Institute of Technology,
+ *                         The University of Memphis.
  *
  * This file is part of ndn-cxx library (NDN C++ library with eXperimental eXtensions).
  *
@@ -22,9 +28,13 @@
 #ifndef NDN_UTIL_CONCEPTS_HPP
 #define NDN_UTIL_CONCEPTS_HPP
 
-#include <boost/concept/usage.hpp>
 #include "../encoding/block.hpp"
 #include "../encoding/encoding-buffer.hpp"
+
+#include <boost/concept/usage.hpp>
+#include <boost/type_traits/has_equal_to.hpp>
+#include <boost/type_traits/has_not_equal_to.hpp>
+#include <boost/type_traits/has_left_shift.hpp>
 
 namespace ndn {
 
@@ -95,6 +105,60 @@ public:
     hash.Restart();
   }
 };
+
+/** \brief a concept check for a Status Dataset item
+ *  \sa https://redmine.named-data.net/projects/nfd/wiki/StatusDataset
+ */
+template<class X>
+class StatusDatasetItem : public WireEncodable<X>
+                        , public WireEncodableWithEncodingBuffer<X>
+                        , public WireDecodable<X>
+{
+public:
+  BOOST_CONCEPT_USAGE(StatusDatasetItem)
+  {
+    static_assert(std::is_default_constructible<X>::value, "");
+    static_assert(boost::has_equal_to<X, X, bool>::value, "");
+    static_assert(boost::has_not_equal_to<X, X, bool>::value, "");
+    static_assert(boost::has_left_shift<std::ostream, X, std::ostream&>::value, "");
+    static_assert(std::is_base_of<tlv::Error, typename X::Error>::value, "");
+  }
+};
+
+// NDN_CXX_ASSERT_DEFAULT_CONSTRUCTIBLE and NDN_CXX_ASSERT_FORWARD_ITERATOR
+// originally written as part of NFD codebase
+
+namespace detail {
+
+// As of Boost 1.61.0, the internal implementation of BOOST_CONCEPT_ASSERT does not allow
+// multiple assertions on the same line, so we have to combine multiple concepts together.
+
+template<typename T>
+class StlForwardIteratorConcept : public boost::ForwardIterator<T>
+                                , public boost::DefaultConstructible<T>
+{
+};
+
+} // namespace detail
+
+// std::is_default_constructible is broken in gcc-4.8, see bug #3882
+/** \brief assert T is default constructible
+ *  \sa http://en.cppreference.com/w/cpp/concept/DefaultConstructible
+ */
+#define NDN_CXX_ASSERT_DEFAULT_CONSTRUCTIBLE(T) \
+  static_assert(std::is_default_constructible<T>::value, \
+                #T " must be default-constructible"); \
+  BOOST_CONCEPT_ASSERT((boost::DefaultConstructible<T>))
+
+/** \brief assert T is a forward iterator
+ *  \sa http://en.cppreference.com/w/cpp/concept/ForwardIterator
+ *  \note A forward iterator should be default constructible, but boost::ForwardIterator follows
+ *        SGI standard which doesn't require DefaultConstructible, so a separate check is needed.
+ */
+#define NDN_CXX_ASSERT_FORWARD_ITERATOR(T) \
+  static_assert(std::is_default_constructible<T>::value, \
+                #T " must be default-constructible"); \
+  BOOST_CONCEPT_ASSERT((::ndn::detail::StlForwardIteratorConcept<T>))
 
 } // namespace ndn
 

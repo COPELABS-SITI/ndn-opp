@@ -16,8 +16,8 @@ import android.view.ViewGroup;
 
 import pt.ulusofona.copelabs.ndn.R;
 
-import pt.ulusofona.copelabs.ndn.android.Face;
-import pt.ulusofona.copelabs.ndn.android.PitEntry;
+import pt.ulusofona.copelabs.ndn.android.models.Face;
+import pt.ulusofona.copelabs.ndn.android.models.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
 public class Overview extends Fragment implements Refreshable {

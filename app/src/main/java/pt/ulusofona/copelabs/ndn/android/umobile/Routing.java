@@ -24,8 +24,8 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 
-import pt.ulusofona.copelabs.ndn.android.Face;
-import pt.ulusofona.copelabs.ndn.android.NsdService;
+import pt.ulusofona.copelabs.ndn.android.models.Face;
+import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceRegistrar;
 import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceTracker;
 import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pConnectivityTracker;

@@ -1,13 +1,16 @@
-COPELABS NFD Android is licensed under conditions of GNU General Public License version 3.0+.
+COPELABS NDN-Opp is licensed under conditions of GNU General Public License version 3.0+.
 
-The COPELABS NFD Android relies on third-party software and library, licensed under the following
+The COPELABS NDN-Opp relies on third-party software and library, licensed under the following
 licenses:
 
 - NFD Android project licensed under conditions of
-  [LGPL version 3.0+](https://github.com/named-data/NFD-android/blob/master/COPYING.md)
+  [GPL version 3.0](https://github.com/named-data-mobile/NFD-android/blob/master/COPYING.md)
+
+- NFD project licensed under conditions of
+  [GPL version 3.0] (https://github.com/named-data/NFD/blob/master/COPYING.md)
 
 - ndn-cxx library licensed under conditions of
-  [LGPL version 3.0+](https://github.com/named-data/ndn-cxx/blob/master/COPYING.md)
+  [LGPL version 3.0](https://github.com/named-data/ndn-cxx/blob/master/COPYING.md)
 
 - Boost libraries licensed under conditions of
   [Boost Software License 1.0](http://www.boost.org/users/license.html)
@@ -20,7 +23,7 @@ licenses:
 - CoffeeCatch is licensed under conditions of
   (https://github.com/xroche/coffeecatch/blob/master/LICENSE)
 
-The COPELABS NFD Android also relies on several other third-party libraries with non-GPL
+The COPELABS NDN-Opp also relies on several other third-party libraries with non-GPL
 compatible license. These library fall into category of "System Libraries" under GPL
 license definitions and are used in accordance with GPL license.
 

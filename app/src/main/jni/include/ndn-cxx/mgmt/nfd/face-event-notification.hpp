@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2013-2016 Regents of the University of California.
+ * Copyright (c) 2013-2017 Regents of the University of California.
  *
  * This file is part of ndn-cxx library (NDN C++ library with eXperimental eXtensions).
  *
@@ -32,8 +32,10 @@ namespace nfd {
  * \ingroup management
  */
 enum FaceEventKind {
-  FACE_EVENT_CREATED = 1,
-  FACE_EVENT_DESTROYED = 2
+  FACE_EVENT_CREATED = 1, ///< face created
+  FACE_EVENT_DESTROYED = 2, ///< face destroyed
+  FACE_EVENT_UP = 3, ///< face went UP (from DOWN state)
+  FACE_EVENT_DOWN = 4 ///< face went DOWN (from UP state)
 };
 
 /**
@@ -77,7 +79,7 @@ public: // getters & setters
 
 protected:
   void
-  wireReset() const;
+  wireReset() const override;
 
 private:
   FaceEventKind m_kind;

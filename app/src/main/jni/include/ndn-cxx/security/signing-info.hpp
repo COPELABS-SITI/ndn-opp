@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2013-2015 Regents of the University of California.
+ * Copyright (c) 2013-2017 Regents of the University of California.
  *
  * This file is part of ndn-cxx library (NDN C++ library with eXperimental eXtensions).
  *
@@ -24,14 +24,18 @@
 
 #include "../name.hpp"
 #include "../signature-info.hpp"
+#include "pib/identity.hpp"
+#include "pib/key.hpp"
 #include "security-common.hpp"
-
 
 namespace ndn {
 namespace security {
 
 /**
  * @brief Signing parameters passed to KeyChain
+ *
+ * A SigningInfo is invalid if the specified identity/key/certificate does not exist,
+ * or the PIB Identity or Key instance is not valid.
  */
 class SigningInfo
 {
@@ -56,7 +60,7 @@ public:
     /// @brief signer is a certificate, use it directly
     SIGNER_TYPE_CERT = 3,
     /// @brief use sha256 digest, no signer needs to be specified
-    SIGNER_TYPE_SHA256 = 4
+    SIGNER_TYPE_SHA256 = 4,
   };
 
 public:
@@ -71,8 +75,20 @@ public:
    */
   explicit
   SigningInfo(SignerType signerType = SIGNER_TYPE_NULL,
-              const Name& signerName = EMPTY_NAME,
-              const SignatureInfo& signatureInfo = EMPTY_SIGNATURE_INFO);
+              const Name& signerName = getEmptyName(),
+              const SignatureInfo& signatureInfo = getEmptySignatureInfo());
+
+  /**
+   * @brief Create a signingInfo using pib identity;
+   */
+  explicit
+  SigningInfo(const Identity& identity);
+
+  /**
+   * @brief Create a signingInfo using pib key;
+   */
+  explicit
+  SigningInfo(const Key& key);
 
   /**
    * @brief Construct SigningInfo from its string representation
@@ -93,29 +109,43 @@ public:
    * @brief Set signer as an identity with name @p identity
    * @post Change the signerType to SIGNER_TYPE_ID
    */
-  void
+  SigningInfo&
   setSigningIdentity(const Name& identity);
 
   /**
    * @brief Set signer as a key with name @p keyName
    * @post Change the signerType to SIGNER_TYPE_KEY
    */
-  void
+  SigningInfo&
   setSigningKeyName(const Name& keyName);
 
   /**
    * @brief Set signer as a certificate with name @p certificateName
    * @post Change the signerType to SIGNER_TYPE_CERT
    */
-  void
+  SigningInfo&
   setSigningCertName(const Name& certificateName);
 
   /**
    * @brief Set Sha256 as the signing method
    * @post Reset signerName, also change the signerType to SIGNER_TYPE_SHA256
    */
-  void
+  SigningInfo&
   setSha256Signing();
+
+  /**
+   * @brief Set signer as a PIB identity handler @p identity
+   * @post Change the signerType to SIGNER_TYPE_ID
+   */
+  SigningInfo&
+  setPibIdentity(const Identity& identity);
+
+  /**
+   * @brief Set signer as a PIB key handler @p key
+   * @post Change the signerType to SIGNER_TYPE_KEY
+   */
+  SigningInfo&
+  setPibKey(const Key& key);
 
   /**
    * @return Type of the signer
@@ -136,12 +166,36 @@ public:
   }
 
   /**
+   * @pre signerType must be SIGNER_TYPE_ID
+   * @return the identity handler of signer, or Identity() if getSignerName() should be used
+   *         to find the identity
+   */
+  const Identity&
+  getPibIdentity() const
+  {
+    BOOST_ASSERT(m_type == SIGNER_TYPE_ID);
+    return m_identity;
+  }
+
+  /**
+   * @pre signerType must be SIGNER_TYPE_KEY
+   * @return the key handler of signer, or Key() if getSignerName() should be used to find the key
+   */
+  const Key&
+  getPibKey() const
+  {
+    BOOST_ASSERT(m_type == SIGNER_TYPE_KEY);
+    return m_key;
+  }
+
+  /**
    * @brief Set the digest algorithm for public key operations
    */
-  void
+  SigningInfo&
   setDigestAlgorithm(const DigestAlgorithm& algorithm)
   {
     m_digestAlgorithm = algorithm;
+    return *this;
   }
 
   /**
@@ -156,7 +210,7 @@ public:
   /**
    * @brief Set a semi-prepared SignatureInfo;
    */
-  void
+  SigningInfo&
   setSignatureInfo(const SignatureInfo& signatureInfo);
 
   /**
@@ -169,15 +223,33 @@ public:
   }
 
 public:
-  static const Name EMPTY_NAME;
-  static const SignatureInfo EMPTY_SIGNATURE_INFO;
+  static const Name&
+  getEmptyName();
+
+  static const SignatureInfo&
+  getEmptySignatureInfo();
+
+  /**
+   * @brief A localhost identity to indicate that the signature is generated using SHA-256.
+   */
+  static const Name&
+  getDigestSha256Identity();
+
+  bool
+  operator==(const SigningInfo& rhs) const;
+
+  bool
+  operator!=(const SigningInfo& rhs) const
+  {
+    return !(*this == rhs);
+  }
 
 private:
   SignerType m_type;
   Name m_name;
-
+  Identity m_identity;
+  Key m_key;
   DigestAlgorithm m_digestAlgorithm;
-
   SignatureInfo m_info;
 };
 

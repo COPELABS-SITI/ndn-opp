@@ -26,7 +26,7 @@ public:
 private:
     virtual void doClose() override;
     virtual void doSend(Packet&& packet) override;
-    virtual void beforeChangePersistency(ndn::nfd::FacePersistency newP) override;
+    virtual void afterChangePersistency(ndn::nfd::FacePersistency oldP) override;
 
 private:
     std::queue<Block> m_sendQueue;

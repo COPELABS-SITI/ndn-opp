@@ -11,6 +11,17 @@
 namespace nfd {
 
 NFD_LOG_INIT("OppFactory");
+NFD_REGISTER_PROTOCOL_FACTORY(OppFactory);
+
+    const std::string& OppFactory::getId() {
+      static std::string id("opp");
+      return id;
+    }
+
+    void OppFactory::processConfig(OptionalConfigSection configSection,
+                                   FaceSystem::ConfigContext& context) {
+        providedSchemes.insert("opp");
+    }
 
     void OppFactory::createFace(const FaceUri& uri,
                                 ndn::nfd::FacePersistency persistency,

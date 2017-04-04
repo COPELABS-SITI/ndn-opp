@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2013-2016 Regents of the University of California.
+ * Copyright (c) 2013-2017 Regents of the University of California.
  *
  * This file is part of ndn-cxx library (NDN C++ library with eXperimental eXtensions).
  *
@@ -93,6 +93,11 @@ public: // consumer
       packet.add<lp::NextHopFaceIdField>(*nextHopFaceIdTag);
     }
 
+    shared_ptr<lp::CongestionMarkTag> congestionMarkTag = interest->getTag<lp::CongestionMarkTag>();
+    if (congestionMarkTag != nullptr) {
+      packet.add<lp::CongestionMarkField>(*congestionMarkTag);
+    }
+
     packet.add<lp::FragmentField>(std::make_pair(interest->wireEncode().begin(),
                                                  interest->wireEncode().end()));
 
@@ -131,7 +136,7 @@ public: // consumer
   {
     for (auto entry = m_pendingInterestTable.begin(); entry != m_pendingInterestTable.end(); ) {
       const Interest& pendingInterest = *(*entry)->getInterest();
-      if (pendingInterest == nack.getInterest()) {
+      if (nack.getInterest().matchesInterest(pendingInterest)) {
         shared_ptr<PendingInterest> matchedEntry = *entry;
         entry = m_pendingInterestTable.erase(entry);
         matchedEntry->invokeNackCallback(nack);

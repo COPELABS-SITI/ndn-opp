@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2013-2015 Regents of the University of California.
+ * Copyright (c) 2013-2017 Regents of the University of California.
  *
  * This file is part of ndn-cxx library (NDN C++ library with eXperimental eXtensions).
  *
@@ -87,7 +87,6 @@ enum {
   LinkPreference = 30,
   LinkDelegation = 31,
   SelectedDelegation = 32,
-  LongLivedInterest = 33,
 
   AppPrivateBlock1 = 128,
   AppPrivateBlock2 = 32767
@@ -99,6 +98,9 @@ enum SignatureTypeValue {
   // <Unassigned> = 2,
   SignatureSha256WithEcdsa = 3
 };
+
+std::ostream&
+operator<<(std::ostream& os, const SignatureTypeValue& signatureType);
 
 /** @brief TLV codes for SignatureInfo features
  *  @sa docs/tutorials/certificate-format.rst

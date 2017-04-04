@@ -12,7 +12,7 @@
 #define DEFAULT_CONFIG_FILE "./nfd.conf"
 #define HAVE_CUSTOM_LOGGER 1
 #define NDEBUG 1
-// Needed because some data structure members are not de-facto exposed to the outside in any way ...
+// Used because some data structure members are private and unaccessible otherwise ...
 #define WITH_TESTS 1
 
 #define BOOST_LOG_DYN_LINK 1

@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
-import pt.ulusofona.copelabs.ndn.android.NsdService;
+import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pConnectivityTracker;
 
 // @TODO: figure out if the observed micro-cuts [LOST =(1-2seconds)= FOUND] can be safely concealed.

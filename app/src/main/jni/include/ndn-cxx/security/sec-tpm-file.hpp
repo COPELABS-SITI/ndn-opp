@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2013-2016 Regents of the University of California.
+ * Copyright (c) 2013-2017 Regents of the University of California.
  *
  * This file is part of ndn-cxx library (NDN C++ library with eXperimental eXtensions).
  *
@@ -17,137 +17,17 @@
  * <http://www.gnu.org/licenses/>.
  *
  * See AUTHORS.md for complete list of ndn-cxx authors and contributors.
- *
- * @author Xingyu Ma <http://www.linkedin.com/pub/xingyu-ma/1a/384/5a8>
- * @author Yingdi Yu <http://irl.cs.ucla.edu/~yingdi/>
- * @author Alexander Afanasyev <http://lasr.cs.ucla.edu/afanasyev/index.html>
  */
 
-#ifndef NDN_SECURITY_SEC_TPM_FILE_HPP
-#define NDN_SECURITY_SEC_TPM_FILE_HPP
+/**
+ * @file security/sec-tpm-file.hpp
+ * @deprecated Use new TPM backed routines
+ */
 
-#include "../common.hpp"
+#include "security-common.hpp"
 
-#include "sec-tpm.hpp"
-
-namespace ndn {
-namespace security {
-
-class SecTpmFile : public SecTpm
-{
-public:
-  class Error : public SecTpm::Error
-  {
-  public:
-    explicit
-    Error(const std::string& what)
-      : SecTpm::Error(what)
-    {
-    }
-  };
-
-  explicit
-  SecTpmFile(const std::string& dir = "");
-
-  virtual
-  ~SecTpmFile();
-
-  virtual void
-  setTpmPassword(const uint8_t* password, size_t passwordLength)
-  {
-  }
-
-  virtual void
-  resetTpmPassword()
-  {
-  }
-
-  virtual void
-  setInTerminal(bool inTerminal)
-  {
-    m_inTerminal = inTerminal;
-  }
-
-  virtual bool
-  getInTerminal() const
-  {
-    return m_inTerminal;
-  }
-
-  virtual bool
-  isLocked()
-  {
-    return false;
-  }
-
-  virtual bool
-  unlockTpm(const char* password, size_t passwordLength, bool usePassword)
-  {
-    return !isLocked();
-  }
-
-  virtual void
-  generateKeyPairInTpm(const Name& keyName, const KeyParams& params);
-
-  virtual void
-  deleteKeyPairInTpm(const Name& keyName);
-
-  virtual shared_ptr<v1::PublicKey>
-  getPublicKeyFromTpm(const Name&  keyName);
-
-  virtual Block
-  signInTpm(const uint8_t* data, size_t dataLength,
-            const Name& keyName, DigestAlgorithm digestAlgorithm);
-
-  virtual ConstBufferPtr
-  decryptInTpm(const uint8_t* data, size_t dataLength, const Name& keyName, bool isSymmetric);
-
-  virtual ConstBufferPtr
-  encryptInTpm(const uint8_t* data, size_t dataLength, const Name& keyName, bool isSymmetric);
-
-  virtual void
-  generateSymmetricKeyInTpm(const Name& keyName, const KeyParams& params);
-
-  virtual bool
-  doesKeyExistInTpm(const Name& keyName, KeyClass keyClass);
-
-  virtual bool
-  generateRandomBlock(uint8_t* res, size_t size);
-
-  virtual void
-  addAppToAcl(const Name& keyName, KeyClass keyClass, const std::string& appPath, AclType acl)
-  {
-  }
-
-protected:
-  ////////////////////////////////
-  // From TrustedPlatformModule //
-  ////////////////////////////////
-  virtual std::string
-  getScheme();
-
-  virtual ConstBufferPtr
-  exportPrivateKeyPkcs8FromTpm(const Name& keyName);
-
-  virtual bool
-  importPrivateKeyPkcs8IntoTpm(const Name& keyName, const uint8_t* buf, size_t size);
-
-  virtual bool
-  importPublicKeyPkcs1IntoTpm(const Name& keyName, const uint8_t* buf, size_t size);
-
-public:
-  static const std::string SCHEME;
-
-private:
-  class Impl;
-  unique_ptr<Impl> m_impl;
-  bool m_inTerminal;
-};
-
-} // namespace security
-
-using security::SecTpmFile;
-
-} // namespace ndn
-
-#endif  // NDN_SECURITY_SEC_TPM_FILE_HPP
+#ifdef NDN_CXX_KEEP_SECURITY_V1_ALIASES
+#include "v1/sec-tpm-file.hpp"
+#else
+#error "Deprecated. Use the new TPM backed routines"
+#endif // NDN_CXX_KEEP_SECURITY_V1_ALIASES

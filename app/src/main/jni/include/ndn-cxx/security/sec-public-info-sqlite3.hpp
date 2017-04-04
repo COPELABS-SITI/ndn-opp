@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2013-2016 Regents of the University of California.
+ * Copyright (c) 2013-2017 Regents of the University of California.
  *
  * This file is part of ndn-cxx library (NDN C++ library with eXperimental eXtensions).
  *
@@ -17,156 +17,17 @@
  * <http://www.gnu.org/licenses/>.
  *
  * See AUTHORS.md for complete list of ndn-cxx authors and contributors.
- *
- * @author Yingdi Yu <http://irl.cs.ucla.edu/~yingdi/>
- * @author Jeff Thompson <jefft0@remap.ucla.edu>
  */
 
-#ifndef NDN_SECURITY_SEC_PUBLIC_INFO_SQLITE3_HPP
-#define NDN_SECURITY_SEC_PUBLIC_INFO_SQLITE3_HPP
+/**
+ * @file security/sec-public-info-sqlite3.hpp
+ * @deprecated Use new PIB backed routines
+ */
 
-#include "../common.hpp"
-#include "sec-public-info.hpp"
+#include "security-common.hpp"
 
-struct sqlite3;
-
-namespace ndn {
-namespace security {
-
-class SecPublicInfoSqlite3 : public SecPublicInfo
-{
-public:
-  class Error : public SecPublicInfo::Error
-  {
-  public:
-    explicit
-    Error(const std::string& what)
-      : SecPublicInfo::Error(what)
-    {
-    }
-  };
-
-  explicit
-  SecPublicInfoSqlite3(const std::string& dir = "");
-
-  virtual
-  ~SecPublicInfoSqlite3();
-
-  /**********************
-   * from SecPublicInfo *
-   **********************/
-
-  virtual void
-  setTpmLocator(const std::string& tpmLocator);
-
-  virtual std::string
-  getTpmLocator();
-
-  virtual std::string
-  getPibLocator();
-
-  virtual bool
-  doesIdentityExist(const Name& identityName);
-
-  virtual void
-  addIdentity(const Name& identityName);
-
-  virtual bool
-  revokeIdentity();
-
-  virtual bool
-  doesPublicKeyExist(const Name& keyName);
-
-  virtual void
-  addKey(const Name& keyName, const v1::PublicKey& publicKeyDer);
-
-  virtual shared_ptr<v1::PublicKey>
-  getPublicKey(const Name& keyName);
-
-  virtual KeyType
-  getPublicKeyType(const Name& keyName);
-
-  virtual bool
-  doesCertificateExist(const Name& certificateName);
-
-  virtual void
-  addCertificate(const v1::IdentityCertificate& certificate);
-
-  virtual shared_ptr<v1::IdentityCertificate>
-  getCertificate(const Name& certificateName);
-
-
-
-  virtual Name
-  getDefaultIdentity();
-
-  virtual Name
-  getDefaultKeyNameForIdentity(const Name& identityName);
-
-  virtual Name
-  getDefaultCertificateNameForKey(const Name& keyName);
-
-  virtual void
-  getAllIdentities(std::vector<Name>& nameList, bool isDefault);
-
-  virtual void
-  getAllKeyNames(std::vector<Name>& nameList, bool isDefault);
-
-  virtual void
-  getAllKeyNamesOfIdentity(const Name& identity, std::vector<Name>& nameList, bool isDefault);
-
-  virtual void
-  getAllCertificateNames(std::vector<Name>& nameList, bool isDefault);
-
-  virtual void
-  getAllCertificateNamesOfKey(const Name& keyName, std::vector<Name>& nameList, bool isDefault);
-
-  virtual void
-  deleteCertificateInfo(const Name& certificateName);
-
-  virtual void
-  deletePublicKeyInfo(const Name& keyName);
-
-  virtual void
-  deleteIdentityInfo(const Name& identity);
-
-private:
-  bool
-  initializeTable(const std::string& tableName, const std::string& initCommand);
-
-  void
-  deleteTable(const std::string& tableName);
-
-  void
-  setTpmLocatorInternal(const std::string& tpmLocator, bool needReset);
-
-  void
-  setDefaultIdentityInternal(const Name& identityName);
-
-  void
-  setDefaultKeyNameForIdentityInternal(const Name& keyName);
-
-  void
-  setDefaultCertificateNameForKeyInternal(const Name& certificateName);
-
-  std::string
-  getScheme();
-
-NDN_CXX_PUBLIC_WITH_TESTS_ELSE_PRIVATE:
-  bool
-  doesTableExist(const std::string& tableName);
-
-public:
-  static const std::string SCHEME;
-
-private:
-  sqlite3* m_database;
-};
-
-} // namespace security
-
-using security::SecPublicInfoSqlite3;
-
-} // namespace ndn
-
-#endif // NDN_SECURITY_SEC_PUBLIC_INFO_SQLITE3_HPP
+#ifdef NDN_CXX_KEEP_SECURITY_V1_ALIASES
+#include "v1/sec-public-info-sqlite3.hpp"
+#else
+#error "Deprecated. Use the new PIB backed routines"
+#endif // NDN_CXX_KEEP_SECURITY_V1_ALIASES

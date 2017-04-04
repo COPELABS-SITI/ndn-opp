@@ -7,6 +7,7 @@
 #include "mgmt/general-config-section.hpp"
 #include "mgmt/tables-config-section.hpp"
 
+#include "daemon/face/face-system.hpp"
 #include "daemon/face/opp-factory.hpp"
 #include "daemon/face/protocol-factory.hpp"
 
@@ -40,8 +41,8 @@ void Nfd::initialize() {
 	m_authenticator = CommandAuthenticator::create();
 
 	NFD_LOG_INFO("Creating FaceManager & FibManager.");
-	m_faceManager.reset(new FaceManager(m_forwarder.getFaceTable(), *m_dispatcher, *m_authenticator));
-	m_fibManager.reset(new FibManager(m_forwarder.getFib(), m_forwarder.getFaceTable(), *m_dispatcher, *m_authenticator));
+	m_faceManager.reset(new FaceManager(*new FaceSystem(faceTable), *m_dispatcher, *m_authenticator));
+	m_fibManager.reset(new FibManager(m_forwarder.getFib(), faceTable, *m_dispatcher, *m_authenticator));
 
 	NFD_LOG_INFO("Setting the configuration files.");
 	ConfigFile config(&ConfigFile::ignoreUnknownSection);
@@ -67,9 +68,6 @@ void Nfd::initialize() {
 	NFD_LOG_INFO("Creating reserved faces (null, contentstore)");
 	faceTable.addReserved(face::makeNullFace(), face::FACEID_NULL);
 	faceTable.addReserved(face::makeNullFace(FaceUri("contentstore://")), face::FACEID_CONTENT_STORE);
-
-    shared_ptr<OppFactory> factory = make_shared<OppFactory>();
-    m_faceManager->m_factories.insert(std::make_pair("opp", factory));
 }
 
 void Nfd::createFace(std::string& faceUri, ndn::nfd::FacePersistency persistency, bool localFields) {
@@ -80,8 +78,8 @@ void Nfd::createFace(std::string& faceUri, ndn::nfd::FacePersistency persistency
 		return;
 	}
 
-	auto factory = m_faceManager->m_factories.find(uri.getScheme());
-	if (factory == m_faceManager->m_factories.end()) {
+	auto factory = m_faceManager->m_faceSystem.m_factories.find(uri.getScheme());
+	if (factory == m_faceManager->m_faceSystem.m_factories.end()) {
 		NFD_LOG_INFO("406 : received create request for unsupported protocol");
 		return;
 	}

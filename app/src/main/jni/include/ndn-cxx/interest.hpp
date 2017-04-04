@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2013-2016 Regents of the University of California.
+ * Copyright (c) 2013-2017 Regents of the University of California.
  *
  * This file is part of ndn-cxx library (NDN C++ library with eXperimental eXtensions).
  *
@@ -119,8 +119,7 @@ public:
   toUri() const;
 
 public: // Link and forwarding hint
-
-   /**
+  /**
    * @brief Check whether the Interest contains a Link object
    * @return True if there is a link object, otherwise false
    */
@@ -210,6 +209,18 @@ public: // matching
   bool
   matchesData(const Data& data) const;
 
+  /**
+   * @brief Check if Interest matches @p other interest
+   *
+   * Interest matches @p other if both have the same name, selectors, and link.  Other fields
+   * (e.g., Nonce) may be different.
+   *
+   * @todo Implement distinguishing interests by link. The current implementation checks only
+   *       name+selectors (Issue #3162).
+   */
+  bool
+  matchesInterest(const Interest& other) const;
+
 public: // Name and guiders
   const Name&
   getName() const
@@ -237,20 +248,6 @@ public: // Name and guiders
     m_interestLifetime = interestLifetime;
     m_wire.reset();
     return *this;
-  }
-
-  const bool
-  isLongLived() const
-  {
-	  return m_isLongLived;
-  }
-
-  Interest&
-  setLongLived(bool lli)
-  {
-	  m_isLongLived = lli;
-	  m_wire.reset();
-	  return *this;
   }
 
   /** @brief Check if Nonce set
@@ -412,7 +409,6 @@ private:
   Selectors m_selectors;
   mutable Block m_nonce;
   time::milliseconds m_interestLifetime;
-  bool m_isLongLived;
 
   mutable Block m_link;
   mutable shared_ptr<Link> m_linkCached;

@@ -25,7 +25,7 @@ import java.util.Observable;
 import java.util.Observer;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.NsdService;
+import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 import pt.ulusofona.copelabs.ndn.android.ui.adapter.NsdServiceAdapter;
 import pt.ulusofona.copelabs.ndn.android.ui.adapter.WifiP2pPeerAdapter;
 import pt.ulusofona.copelabs.ndn.android.umobile.Utilities;

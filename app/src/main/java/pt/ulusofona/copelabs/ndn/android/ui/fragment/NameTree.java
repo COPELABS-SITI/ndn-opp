@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.List;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.Name;
+import pt.ulusofona.copelabs.ndn.android.models.Name;
 import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
 public class NameTree extends Fragment implements Refreshable {

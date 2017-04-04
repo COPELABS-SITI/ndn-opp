@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2013-2016 Regents of the University of California.
+ * Copyright (c) 2013-2017 Regents of the University of California.
  *
  * This file is part of ndn-cxx library (NDN C++ library with eXperimental eXtensions).
  *
@@ -22,31 +22,22 @@
 #ifndef NDN_MGMT_NFD_RIB_ENTRY_HPP
 #define NDN_MGMT_NFD_RIB_ENTRY_HPP
 
-#include "rib-flags.hpp" // include this first, to ensure it compiles on its own.
+#include "rib-flags.hpp"
+#include "../../encoding/block.hpp"
 #include "../../name.hpp"
 #include "../../util/time.hpp"
-
-#include <list>
 
 namespace ndn {
 namespace nfd {
 
 /**
- * @ingroup management
- *
- * @brief Data abstraction for Route
+ * \ingroup management
+ * \brief represents a route in a RibEntry
  *
  * A route indicates the availability of content via a certain face and
  * provides meta-information about the face.
  *
- *     Route := ROUTE-TYPE TLV-LENGTH
- *                FaceId
- *                Origin
- *                Cost
- *                Flags
- *                ExpirationPeriod?
- *
- * @sa http://redmine.named-data.net/projects/nfd/wiki/RibMgmt
+ * \sa https://redmine.named-data.net/projects/nfd/wiki/RibMgmt#Route
  */
 class Route : public RibFlagsTraits<Route>
 {
@@ -55,7 +46,8 @@ public:
   {
   public:
     explicit
-    Error(const std::string& what) : tlv::Error(what)
+    Error(const std::string& what)
+      : tlv::Error(what)
     {
     }
   };
@@ -72,12 +64,7 @@ public:
   }
 
   Route&
-  setFaceId(uint64_t faceId)
-  {
-    m_faceId = faceId;
-    m_wire.reset();
-    return *this;
-  }
+  setFaceId(uint64_t faceId);
 
   uint64_t
   getOrigin() const
@@ -89,12 +76,7 @@ public:
    *  @param origin a code defined in ndn::nfd::RouteOrigin
    */
   Route&
-  setOrigin(uint64_t origin)
-  {
-    m_origin = origin;
-    m_wire.reset();
-    return *this;
-  }
+  setOrigin(uint64_t origin);
 
   uint64_t
   getCost() const
@@ -103,12 +85,7 @@ public:
   }
 
   Route&
-  setCost(uint64_t cost)
-  {
-    m_cost = cost;
-    m_wire.reset();
-    return *this;
-  }
+  setCost(uint64_t cost);
 
   uint64_t
   getFlags() const
@@ -120,37 +97,25 @@ public:
    *  @param flags a bitwise OR'ed code from ndn::nfd::RouteFlags
    */
   Route&
-  setFlags(uint64_t flags)
+  setFlags(uint64_t flags);
+
+  bool
+  hasExpirationPeriod() const
   {
-    m_flags = flags;
-    m_wire.reset();
-    return *this;
+    return !!m_expirationPeriod;
   }
 
-  static const time::milliseconds INFINITE_EXPIRATION_PERIOD;
-
-  const time::milliseconds&
+  time::milliseconds
   getExpirationPeriod() const
   {
-    return m_expirationPeriod;
+    return m_expirationPeriod ? *m_expirationPeriod : time::milliseconds::max();
   }
 
   Route&
-  setExpirationPeriod(const time::milliseconds& expirationPeriod)
-  {
-    m_expirationPeriod = expirationPeriod;
+  setExpirationPeriod(time::milliseconds expirationPeriod);
 
-    m_hasInfiniteExpirationPeriod = m_expirationPeriod == INFINITE_EXPIRATION_PERIOD;
-
-    m_wire.reset();
-    return *this;
-  }
-
-  bool
-  hasInfiniteExpirationPeriod() const
-  {
-    return m_hasInfiniteExpirationPeriod;
-  }
+  Route&
+  unsetExpirationPeriod();
 
   template<encoding::Tag TAG>
   size_t
@@ -160,34 +125,38 @@ public:
   wireEncode() const;
 
   void
-  wireDecode(const Block& wire);
+  wireDecode(const Block& block);
 
 private:
   uint64_t m_faceId;
   uint64_t m_origin;
   uint64_t m_cost;
   uint64_t m_flags;
-  time::milliseconds m_expirationPeriod;
-  bool m_hasInfiniteExpirationPeriod;
+  optional<time::milliseconds> m_expirationPeriod;
 
   mutable Block m_wire;
 };
 
+bool
+operator==(const Route& a, const Route& b);
+
+inline bool
+operator!=(const Route& a, const Route& b)
+{
+  return !(a == b);
+}
+
 std::ostream&
 operator<<(std::ostream& os, const Route& route);
 
+
 /**
- * @ingroup management
+ * \ingroup management
+ * \brief represents an item in NFD RIB dataset
  *
- * @brief Data abstraction for RIB entry
+ * A RIB entry contains one or more routes for a name prefix
  *
- * A RIB entry contains one or more routes for the name prefix
- *
- *     RibEntry := RIB-ENTRY-TYPE TLV-LENGTH
- *                Name
- *                Route+
- *
- * @sa http://redmine.named-data.net/projects/nfd/wiki/RibMgmt
+ * \sa https://redmine.named-data.net/projects/nfd/wiki/RibMgmt#RIB-Dataset
  */
 class RibEntry
 {
@@ -195,13 +164,12 @@ public:
   class Error : public tlv::Error
   {
   public:
-    Error(const std::string& what) : tlv::Error(what)
+    explicit
+    Error(const std::string& what)
+      : tlv::Error(what)
     {
     }
   };
-
-  typedef std::list<Route> RouteList;
-  typedef RouteList::const_iterator iterator;
 
   RibEntry();
 
@@ -215,33 +183,28 @@ public:
   }
 
   RibEntry&
-  setName(const Name& prefix)
-  {
-    m_prefix = prefix;
-    m_wire.reset();
-    return *this;
-  }
+  setName(const Name& prefix);
 
-  const std::list<Route>&
+  const std::vector<Route>&
   getRoutes() const
   {
     return m_routes;
   }
 
+  template<typename InputIt>
   RibEntry&
-  addRoute(const Route& route)
+  setRoutes(InputIt first, InputIt last)
   {
-    m_routes.push_back(route);
+    m_routes.assign(first, last);
     m_wire.reset();
     return *this;
   }
 
   RibEntry&
-  clearRoutes()
-  {
-    m_routes.clear();
-    return *this;
-  }
+  addRoute(const Route& route);
+
+  RibEntry&
+  clearRoutes();
 
   template<encoding::Tag TAG>
   size_t
@@ -251,31 +214,22 @@ public:
   wireEncode() const;
 
   void
-  wireDecode(const Block& wire);
-
-  iterator
-  begin() const;
-
-  iterator
-  end() const;
+  wireDecode(const Block& block);
 
 private:
   Name m_prefix;
-  RouteList m_routes;
+  std::vector<Route> m_routes;
 
   mutable Block m_wire;
 };
 
-inline RibEntry::iterator
-RibEntry::begin() const
-{
-  return m_routes.begin();
-}
+bool
+operator==(const RibEntry& a, const RibEntry& b);
 
-inline RibEntry::iterator
-RibEntry::end() const
+inline bool
+operator!=(const RibEntry& a, const RibEntry& b)
 {
-  return m_routes.end();
+  return !(a == b);
 }
 
 std::ostream&

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014-2016,  Regents of the University of California,
+ * Copyright (c) 2014-2017,  Regents of the University of California,
  *                           Arizona Board of Regents,
  *                           Colorado State University,
  *                           University Pierre & Marie Curie, Sorbonne University,
@@ -26,28 +26,24 @@
 #ifndef NFD_RIB_RIB_MANAGER_HPP
 #define NFD_RIB_RIB_MANAGER_HPP
 
-#include "rib.hpp"
-#include "core/config-file.hpp"
-#include "core/manager-base.hpp"
 #include "auto-prefix-propagator.hpp"
 #include "fib-updater.hpp"
+#include "rib.hpp"
 
-#include <ndn-cxx/encoding/buffer-stream.hpp>
+#include "core/config-file.hpp"
+#include "core/manager-base.hpp"
+
 #include <ndn-cxx/security/validator-config.hpp>
-#include <ndn-cxx/mgmt/nfd/face-monitor.hpp>
 #include <ndn-cxx/mgmt/nfd/controller.hpp>
-#include <ndn-cxx/mgmt/nfd/control-command.hpp>
-#include <ndn-cxx/mgmt/nfd/control-response.hpp>
-#include <ndn-cxx/mgmt/nfd/control-parameters.hpp>
+#include <ndn-cxx/mgmt/nfd/face-event-notification.hpp>
+#include <ndn-cxx/mgmt/nfd/face-monitor.hpp>
+#include <ndn-cxx/util/scheduler-scoped-event-id.hpp>
 
 namespace nfd {
 namespace rib {
 
-using ndn::nfd::ControlCommand;
-using ndn::nfd::ControlResponse;
-using ndn::nfd::ControlParameters;
-
-using ndn::nfd::FaceEventNotification;
+class AutoPrefixPropagator;
+class Readvertise;
 
 class RibManager : public nfd::ManagerBase
 {
@@ -65,13 +61,13 @@ public:
 public:
   RibManager(Dispatcher& dispatcher, ndn::Face& face, ndn::KeyChain& keyChain);
 
-  ~RibManager();
+  ~RibManager() override;
 
   void
   registerWithNfd();
 
   void
-  enableLocalControlHeader();
+  enableLocalFields();
 
   void
   setConfigFile(ConfigFile& configFile);
@@ -107,7 +103,7 @@ private: // ControlCommand and StatusDataset
   void
   setFaceForSelfRegistration(const Interest& request, ControlParameters& parameters);
 
-  virtual ndn::mgmt::Authorization
+  ndn::mgmt::Authorization
   makeAuthorization(const std::string& verb) override;
 
 private: // Face monitor
@@ -115,10 +111,7 @@ private: // Face monitor
   fetchActiveFaces();
 
   void
-  fetchSegments(const Data& data, shared_ptr<ndn::OBufferStream> buffer);
-
-  void
-  onFetchFaceStatusTimeout();
+  onFetchActiveFacesFailure(uint32_t code, const std::string& reason);
 
   void
   onFaceDestroyedEvent(uint64_t faceId);
@@ -130,10 +123,10 @@ PUBLIC_WITH_TESTS_ELSE_PRIVATE:
   /**
    * @brief remove invalid faces
    *
-   * @param buffer Face dataset contents
+   * @param status Face dataset
   */
   void
-  removeInvalidFaces(shared_ptr<ndn::OBufferStream> buffer);
+  removeInvalidFaces(const std::vector<ndn::nfd::FaceStatus>& activeFaces);
 
   /**
    * @brief response to face events
@@ -141,21 +134,20 @@ PUBLIC_WITH_TESTS_ELSE_PRIVATE:
    * @param notification
    */
   void
-  onNotification(const FaceEventNotification& notification);
+  onNotification(const ndn::nfd::FaceEventNotification& notification);
 
 private:
   void
-  onCommandPrefixAddNextHopSuccess(const Name& prefix,
-                                   const ndn::nfd::ControlParameters& result);
+  onCommandPrefixAddNextHopSuccess(const Name& prefix, const ControlParameters& result);
 
   void
-  onCommandPrefixAddNextHopError(const Name& name, const ndn::nfd::ControlResponse& response);
+  onCommandPrefixAddNextHopError(const Name& name, const ControlResponse& response);
 
   void
-  onControlHeaderSuccess();
+  onEnableLocalFieldsSuccess();
 
   void
-  onControlHeaderError(const ndn::nfd::ControlResponse& response);
+  onEnableLocalFieldsError(const ControlResponse& response);
 
 private:
   ndn::Face& m_face;
@@ -166,14 +158,11 @@ private:
   ndn::ValidatorConfig m_localhopValidator;
   bool m_isLocalhopEnabled;
   AutoPrefixPropagator m_prefixPropagator;
+  unique_ptr<Readvertise> m_readvertiseNlsr;
 
 PUBLIC_WITH_TESTS_ELSE_PRIVATE:
   Rib m_rib;
   FibUpdater m_fibUpdater;
-
-  typedef std::set<uint64_t> FaceIdSet;
-  /** \brief contains FaceIds with one or more Routes in the RIB */
-  FaceIdSet m_registeredFaces;
 
 private:
   static const Name LOCAL_HOST_TOP_PREFIX;
@@ -181,7 +170,13 @@ private:
   static const std::string MGMT_MODULE_NAME;
   static const Name FACES_LIST_DATASET_PREFIX;
   static const time::seconds ACTIVE_FACE_FETCH_INTERVAL;
-  scheduler::EventId m_activeFaceFetchEvent;
+  scheduler::ScopedEventId m_activeFaceFetchEvent;
+  static const Name READVERTISE_NLSR_PREFIX;
+
+  /** \brief contains FaceIds with one or more Routes in the RIB
+  */
+  typedef std::set<uint64_t> FaceIdSet;
+  FaceIdSet m_registeredFaces;
 
   std::function<void(const Name& topPrefix)> m_addTopPrefix;
 };

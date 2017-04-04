@@ -18,9 +18,9 @@ import android.view.LayoutInflater;
 
 import pt.ulusofona.copelabs.ndn.R;
 
-import pt.ulusofona.copelabs.ndn.android.Face;
-import pt.ulusofona.copelabs.ndn.android.FibEntry;
-import pt.ulusofona.copelabs.ndn.android.SctEntry;
+import pt.ulusofona.copelabs.ndn.android.models.Face;
+import pt.ulusofona.copelabs.ndn.android.models.FibEntry;
+import pt.ulusofona.copelabs.ndn.android.models.SctEntry;
 import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
 public class ForwarderConfiguration extends Fragment implements Refreshable {

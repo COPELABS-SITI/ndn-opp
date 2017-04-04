@@ -18,7 +18,7 @@ import android.widget.TextView;
 import java.util.Locale;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.NsdService;
+import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 
 public class NsdServiceAdapter extends ArrayAdapter<NsdService> {
     private LayoutInflater mInflater;

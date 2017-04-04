@@ -23,8 +23,8 @@
  * NFD, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ANDROID_LOGGER_FACTORY_HPP
-#define ANDROID_LOGGER_FACTORY_HPP
+#ifndef NFD_ANDROID_CUSTOM_LOGGER_FACTORY_HPP
+#define NFD_ANDROID_CUSTOM_LOGGER_FACTORY_HPP
 
 #include "core/common.hpp"
 
@@ -109,4 +109,4 @@ LoggerFactory::getDefaultLevel() const
 
 } // namespace nfd
 
-#endif // ANDROID_LOGGER_FACTORY_HPP
+#endif // NFD_ANDROID_CUSTOM_LOGGER_FACTORY_HPP

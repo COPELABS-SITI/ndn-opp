@@ -16,7 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.CsEntry;
+import pt.ulusofona.copelabs.ndn.android.models.CsEntry;
 import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
 public class ContentStore extends Fragment implements Refreshable {

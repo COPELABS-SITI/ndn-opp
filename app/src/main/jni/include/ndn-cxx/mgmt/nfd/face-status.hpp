@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2013-2016 Regents of the University of California.
+ * Copyright (c) 2013-2017 Regents of the University of California.
  *
  * This file is part of ndn-cxx library (NDN C++ library with eXperimental eXtensions).
  *
@@ -22,7 +22,7 @@
 #ifndef NDN_MGMT_NFD_FACE_STATUS_HPP
 #define NDN_MGMT_NFD_FACE_STATUS_HPP
 
-#include "face-traits.hpp" // include this first, to ensure it compiles on its own.
+#include "face-traits.hpp"
 #include "../../encoding/block.hpp"
 #include "../../util/time.hpp"
 
@@ -31,8 +31,8 @@ namespace nfd {
 
 /**
  * \ingroup management
- * \brief represents Face status
- * \sa http://redmine.named-data.net/projects/nfd/wiki/FaceMgmt#Face-Dataset
+ * \brief represents an item in NFD Face dataset
+ * \sa https://redmine.named-data.net/projects/nfd/wiki/FaceMgmt#Face-Dataset
  */
 class FaceStatus : public FaceTraits<FaceStatus>
 {
@@ -62,18 +62,18 @@ public: // getters & setters
   bool
   hasExpirationPeriod() const
   {
-    return m_hasExpirationPeriod;
+    return !!m_expirationPeriod;
   }
 
-  const time::milliseconds&
+  time::milliseconds
   getExpirationPeriod() const
   {
-    BOOST_ASSERT(m_hasExpirationPeriod);
-    return m_expirationPeriod;
+    BOOST_ASSERT(hasExpirationPeriod());
+    return *m_expirationPeriod;
   }
 
   FaceStatus&
-  setExpirationPeriod(const time::milliseconds& expirationPeriod);
+  setExpirationPeriod(time::milliseconds expirationPeriod);
 
   uint64_t
   getNInInterests() const
@@ -87,11 +87,11 @@ public: // getters & setters
   uint64_t
   getNInDatas() const
   {
-    return m_nInDatas;
+    return m_nInData;
   }
 
   FaceStatus&
-  setNInDatas(uint64_t nInDatas);
+  setNInDatas(uint64_t nInData);
 
   uint64_t
   getNInNacks() const
@@ -114,11 +114,11 @@ public: // getters & setters
   uint64_t
   getNOutDatas() const
   {
-    return m_nOutDatas;
+    return m_nOutData;
   }
 
   FaceStatus&
-  setNOutDatas(uint64_t nOutDatas);
+  setNOutDatas(uint64_t nOutData);
 
   uint64_t
   getNOutNacks() const
@@ -147,40 +147,32 @@ public: // getters & setters
   FaceStatus&
   setNOutBytes(uint64_t nOutBytes);
 
-  uint64_t
-  getFlags() const
-  {
-    return m_flags;
-  }
-
-  FaceStatus&
-  setFlags(uint64_t flags);
-
-  bool
-  getFlagBit(size_t bit) const;
-
-  FaceStatus&
-  setFlagBit(size_t bit, bool value);
-
 protected:
   void
-  wireReset() const;
+  wireReset() const override;
 
 private:
-  time::milliseconds m_expirationPeriod;
-  bool m_hasExpirationPeriod;
+  optional<time::milliseconds> m_expirationPeriod;
   uint64_t m_nInInterests;
-  uint64_t m_nInDatas;
+  uint64_t m_nInData;
   uint64_t m_nInNacks;
   uint64_t m_nOutInterests;
-  uint64_t m_nOutDatas;
+  uint64_t m_nOutData;
   uint64_t m_nOutNacks;
   uint64_t m_nInBytes;
   uint64_t m_nOutBytes;
-  uint64_t m_flags;
 
   mutable Block m_wire;
 };
+
+bool
+operator==(const FaceStatus& a, const FaceStatus& b);
+
+inline bool
+operator!=(const FaceStatus& a, const FaceStatus& b)
+{
+  return !(a == b);
+}
 
 std::ostream&
 operator<<(std::ostream& os, const FaceStatus& status);

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2013-2015 Regents of the University of California.
+ * Copyright (c) 2013-2017 Regents of the University of California.
  *
  * This file is part of ndn-cxx library (NDN C++ library with eXperimental eXtensions).
  *
@@ -19,13 +19,14 @@
  * See AUTHORS.md for complete list of ndn-cxx authors and contributors.
  */
 
-#ifndef NDN_STRING_HELPER_HPP
-#define NDN_STRING_HELPER_HPP
+#ifndef NDN_UTIL_STRING_HELPER_HPP
+#define NDN_UTIL_STRING_HELPER_HPP
 
 #include "../common.hpp"
-#include "../encoding/buffer.hpp"
 
 namespace ndn {
+
+class Buffer;
 
 class StringHelperError : public std::invalid_argument
 {
@@ -43,7 +44,7 @@ public:
  * @param os Output stream
  * @param buffer The array of bytes
  * @param length Size of the array
- * @param isUpperCase if true (default) output use uppercase for hex values
+ * @param wantUpperCase if true (default) output use uppercase for hex values
  *
  * Examples:
  *
@@ -55,24 +56,24 @@ public:
  * The output string is a continuous sequence of hex characters without any whitespace separators.
  */
 void
-printHex(std::ostream& os, const uint8_t* buffer, size_t length, bool isUpperCase = true);
+printHex(std::ostream& os, const uint8_t* buffer, size_t length, bool wantUpperCase = true);
 
 /**
  * @brief Output the hex representation of the bytes in the @p buffer to the output stream @p os
  *
  * @param os Output stream
  * @param buffer The array of bytes
- * @param isUpperCase if true (default) output use uppercase for hex values
+ * @param wantUpperCase if true (default) output use uppercase for hex values
  */
 void
-printHex(std::ostream& os, const Buffer& buffer, bool isUpperCase = true);
+printHex(std::ostream& os, const Buffer& buffer, bool wantUpperCase = true);
 
 /**
  * @brief Return the hex representation of the bytes in array
  *
  * @param buffer The array of bytes
  * @param length Size of the array
- * @param isUpperCase if true (default) output use uppercase for hex values
+ * @param wantUpperCase if true (default) output use uppercase for hex values
  *
  * Examples:
  *
@@ -84,16 +85,22 @@ printHex(std::ostream& os, const Buffer& buffer, bool isUpperCase = true);
  * The output string is a continuous sequence of hex characters without any whitespace separators.
  */
 std::string
-toHex(const uint8_t* buffer, size_t length, bool isUpperCase = true);
+toHex(const uint8_t* buffer, size_t length, bool wantUpperCase = true);
 
 /**
  * @brief Return the hex representation of the bytes in the @p buffer to the output stream @p os
  *
  * @param buffer The array of bytes
- * @param isUpperCase if true (default) output use uppercase for hex values
+ * @param wantUpperCase if true (default) output use uppercase for hex values
  */
 std::string
-toHex(const Buffer& buffer, bool isUpperCase = true);
+toHex(const Buffer& buffer, bool wantUpperCase = true);
+
+/**
+ * @brief Convert the hex character to an integer from 0 to 15, or -1 if not a hex character
+ */
+int
+fromHexChar(char c);
 
 /**
  * @brief Convert the hex string to buffer
@@ -101,32 +108,8 @@ toHex(const Buffer& buffer, bool isUpperCase = true);
  *        without any whitespace separators (e.g., "48656C6C6F2C20776F726C6421")
  * @throw StringHelperError if input is invalid
  */
-shared_ptr<const Buffer>
+shared_ptr<Buffer>
 fromHex(const std::string& hexString);
-
-/**
- * @brief Modify str in place to erase whitespace on the left
- */
-void
-trimLeft(std::string& str);
-
-/**
- * @brief Modify str in place to erase whitespace on the right
- */
-void
-trimRight(std::string& str);
-
-/**
- * @brief Modify str in place to erase whitespace on the left and right
- */
-void
-trim(std::string& str);
-
-/**
- * @brief Convert the hex character to an integer from 0 to 15, or -1 if not a hex character
- */
-int
-fromHexChar(uint8_t c);
 
 /**
  * @brief Decode a percent-encoded string
@@ -144,4 +127,4 @@ unescape(const std::string& str);
 
 } // namespace ndn
 
-#endif // NDN_STRING_HELPER_HPP
+#endif // NDN_UTIL_STRING_HELPER_HPP

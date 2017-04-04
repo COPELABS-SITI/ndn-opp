@@ -1,67 +1,106 @@
-#include "core/logger.hpp"
+/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
+/**
+ * Copyright (c) 2014-2017,  Regents of the University of California,
+ *                           Arizona Board of Regents,
+ *                           Colorado State University,
+ *                           University Pierre & Marie Curie, Sorbonne University,
+ *                           Washington University in St. Louis,
+ *                           Beijing Institute of Technology,
+ *                           The University of Memphis.
+ *
+ * This file is part of NFD (Named Data Networking Forwarding Daemon).
+ * See AUTHORS.md for complete list of NFD authors and contributors.
+ *
+ * NFD is free software: you can redistribute it and/or modify it under the terms
+ * of the GNU General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * NFD is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * NFD, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "core/scheduler.hpp"
 #include "core/global-io.hpp"
 
-NFD_LOG_INIT("Scheduler");
+#include <boost/thread/tss.hpp>
 
 namespace nfd {
 namespace scheduler {
 
-std::unique_ptr<Scheduler> g_scheduler = nullptr;
+static shared_ptr<Scheduler> g_scheduler;
 
-Scheduler& getGlobalScheduler() {
-	if (g_scheduler.get() == nullptr) {
-		NFD_LOG_INFO("getGlobalScheduler() : create Scheduler.");
-		g_scheduler.reset(new Scheduler(getGlobalIoService()));
-	} else
-		NFD_LOG_INFO("getGlobalScheduler() : re-using Scheduler.");
+Scheduler&
+getGlobalScheduler()
+{
+  if (g_scheduler.get() == nullptr) {
+    g_scheduler.reset(new Scheduler(getGlobalIoService()));
+  }
 
-	return *g_scheduler;
+  return *g_scheduler;
 }
 
-EventId schedule(const time::nanoseconds& after, const Scheduler::Event& event) {
-	return getGlobalScheduler().scheduleEvent(after, event);
+EventId
+schedule(time::nanoseconds after, const EventCallback& event)
+{
+  return getGlobalScheduler().scheduleEvent(after, event);
 }
 
-void cancel(const EventId& eventId) {
-	getGlobalScheduler().cancelEvent(eventId);
+void
+cancel(const EventId& eventId)
+{
+  getGlobalScheduler().cancelEvent(eventId);
 }
 
-void resetGlobalScheduler() {
-	if(g_scheduler.get() != nullptr) {
-		NFD_LOG_INFO("resetGlobalScheduler() : resetting.");
-		g_scheduler.reset();
-		g_scheduler = nullptr;
-	} else
-		NFD_LOG_INFO("resetGlobalScheduler() : already clean.");
+void
+resetGlobalScheduler()
+{
+  g_scheduler.reset();
 }
 
-ScopedEventId::ScopedEventId() {}
-
-ScopedEventId::ScopedEventId(const EventId& event) : m_event(event) {}
-
-ScopedEventId::ScopedEventId(ScopedEventId&& other) : m_event(other.m_event) {
-	other.release();
+ScopedEventId::ScopedEventId()
+{
 }
 
-ScopedEventId& ScopedEventId::operator=(const EventId& event) {
-	if (m_event != event) {
-		scheduler::cancel(m_event);
-		m_event = event;
-	}
-	return *this;
+ScopedEventId::ScopedEventId(const EventId& event)
+  : m_event(event)
+{
 }
 
-ScopedEventId::~ScopedEventId() {
-	scheduler::cancel(m_event);
+ScopedEventId::ScopedEventId(ScopedEventId&& other)
+  : m_event(other.m_event)
+{
+  other.release();
 }
 
-void ScopedEventId::cancel() {
-	scheduler::cancel(m_event);
+ScopedEventId&
+ScopedEventId::operator=(const EventId& event)
+{
+  if (m_event != event) {
+    scheduler::cancel(m_event);
+    m_event = event;
+  }
+  return *this;
 }
 
-void ScopedEventId::release() {
-	m_event.reset();
+ScopedEventId::~ScopedEventId()
+{
+  scheduler::cancel(m_event);
+}
+
+void
+ScopedEventId::cancel()
+{
+  scheduler::cancel(m_event);
+}
+
+void
+ScopedEventId::release()
+{
+  m_event.reset();
 }
 
 } // namespace scheduler

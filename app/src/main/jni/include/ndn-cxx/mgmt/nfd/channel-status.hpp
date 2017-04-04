@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2013-2016 Regents of the University of California.
+ * Copyright (c) 2013-2017 Regents of the University of California.
  *
  * This file is part of ndn-cxx library (NDN C++ library with eXperimental eXtensions).
  *
@@ -28,9 +28,9 @@ namespace ndn {
 namespace nfd {
 
 /**
- * @ingroup management
- * @brief represents NFD Channel Status dataset
- * @sa http://redmine.named-data.net/projects/nfd/wiki/FaceMgmt#Channel-Dataset
+ * \ingroup management
+ * \brief represents an item in NFD Channel dataset
+ * \sa https://redmine.named-data.net/projects/nfd/wiki/FaceMgmt#Channel-Dataset
  */
 class ChannelStatus
 {
@@ -75,6 +75,18 @@ private:
 
   mutable Block m_wire;
 };
+
+bool
+operator==(const ChannelStatus& a, const ChannelStatus& b);
+
+inline bool
+operator!=(const ChannelStatus& a, const ChannelStatus& b)
+{
+  return !(a == b);
+}
+
+std::ostream&
+operator<<(std::ostream& os, const ChannelStatus& status);
 
 } // namespace nfd
 } // namespace ndn

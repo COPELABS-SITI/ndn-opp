@@ -107,7 +107,7 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
 			}
 		});
 
-        setDisplayedFragment(R.id.nav_peerTracking);
+        setDisplayedFragment(R.id.nav_forwarderConfiguration);
 	}
 
     @Override

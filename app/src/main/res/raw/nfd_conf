@@ -2,7 +2,8 @@ general {}
 
 log {
     default_level ALL
-    Scheduler NONE
+    Strategy NONE
+    StrategyChoice NONE
     DeadNonceList NONE
     NameTreeIterator NONE
     NameTree NONE

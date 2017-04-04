@@ -12,7 +12,7 @@ import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.util.Log;
 
-import pt.ulusofona.copelabs.ndn.android.NsdService;
+import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 
 public class NsdServiceRegistrar {
     private static final String TAG = NsdServiceRegistrar.class.getSimpleName();

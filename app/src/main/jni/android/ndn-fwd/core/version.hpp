@@ -44,7 +44,7 @@ namespace nfd {
  *
  *  MAJOR.MINOR.PATCH
  */
-#define NFD_VERSION_STRING "0.5.0"
+#define NFD_VERSION_STRING "0.5.1+"
 
 /** \brief NFD version string, including git commit information, if NFD is build from
  *         specific git commit
@@ -60,14 +60,14 @@ namespace nfd {
  *
  * Example, 0.1.0-rc1-1-g5c86570
  */
-#define NFD_VERSION_BUILD_STRING "0.5.0-COPELABS"
+#define NFD_VERSION_BUILD_STRING "0.5.1+"
 
 /// MAJOR version
 #define NFD_VERSION_MAJOR 0
 /// MINOR version
 #define NFD_VERSION_MINOR 5
 /// PATCH version
-#define NFD_VERSION_PATCH 0
+#define NFD_VERSION_PATCH 1
 
 } // namespace nfd
 

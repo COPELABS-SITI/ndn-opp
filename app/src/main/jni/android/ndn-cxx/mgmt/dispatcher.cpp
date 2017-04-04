@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2013-2016 Regents of the University of California.
+ * Copyright (c) 2013-2017 Regents of the University of California.
  *
  * This file is part of ndn-cxx library (NDN C++ library with eXperimental eXtensions).
  *
@@ -19,7 +19,7 @@
  * See AUTHORS.md for complete list of ndn-cxx authors and contributors.
  */
 
-#include "mgmt/dispatcher.hpp"
+#include "dispatcher.hpp"
 #include "lp/tags.hpp"
 #include "util/logger.hpp"
 
@@ -44,7 +44,7 @@ makeAcceptAllAuthorization()
   };
 }
 
-Dispatcher::Dispatcher(Face& face, security::KeyChain& keyChain,
+Dispatcher::Dispatcher(Face& face, security::v1::KeyChain& keyChain,
                        const security::SigningInfo& signingInfo,
                        size_t imsCapacity)
   : m_face(face)

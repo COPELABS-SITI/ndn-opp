@@ -23,8 +23,8 @@
  * NFD, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ANDROID_LOGGER_HPP
-#define ANDROID_LOGGER_HPP
+#ifndef NFD_ANDROID_CUSTOM_LOGGER_HPP
+#define NFD_ANDROID_CUSTOM_LOGGER_HPP
 
 #include "core/common.hpp"
 #include <android/log.h>
@@ -97,7 +97,6 @@ operator<<(std::ostream& output, const Logger& logger)
 
 namespace nfd {
 
-#ifdef ENABLE_LOGGING
 #define NFD_LOG_INIT(name) \
 static nfd::Logger& g_logger = nfd::LoggerFactory::create(name)
 
@@ -128,15 +127,6 @@ do {                                                                    \
                         g_logger.getName().c_str(), "%s", os.str().c_str()); \
   }                                                                     \
 } while (false)
-#else
-#define NFD_LOG_INIT(n)
-#define NFD_LOG_INCLASS_DECLARE()
-#define NFD_LOG_INCLASS_DEFINE(c, n)
-#define NFD_LOG_INCLASS_TEMPLATE_DEFINE(c, n)
-#define NFD_LOG_INCLASS_TEMPLATE_SPECIALIZATION_DEFINE(c, s, n)
-#define NFD_LOG_INCLASS_2TEMPLATE_SPECIALIZATION_DEFINE(c, s1, s2, n)
-#define NFD_LOG(n, a, m, e)
-#endif
 
 #define NFD_LOG_TRACE(expression) NFD_LOG(TRACE, VERBOSE, TRACE, expression)
 #define NFD_LOG_DEBUG(expression) NFD_LOG(DEBUG, DEBUG, DEBUG,   expression)
@@ -147,4 +137,4 @@ do {                                                                    \
 
 } // namespace nfd
 
-#endif // ANDROID_LOGGER_HPP
+#endif // NFD_ANDROID_CUSTOM_LOGGER_HPP

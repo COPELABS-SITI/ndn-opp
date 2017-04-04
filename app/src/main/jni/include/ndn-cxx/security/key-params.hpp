@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2013-2016 Regents of the University of California.
+ * Copyright (c) 2013-2017 Regents of the University of California.
  *
  * This file is part of ndn-cxx library (NDN C++ library with eXperimental eXtensions).
  *
@@ -23,6 +23,7 @@
 #define NDN_SECURITY_KEY_PARAMS_HPP
 
 #include "../common.hpp"
+#include "../name-component.hpp"
 #include "security-common.hpp"
 
 namespace ndn {
@@ -46,9 +47,7 @@ public:
   };
 
   virtual
-  ~KeyParams()
-  {
-  }
+  ~KeyParams();
 
   KeyType
   getKeyType() const
@@ -56,15 +55,48 @@ public:
     return m_keyType;
   }
 
-protected:
-  explicit
-  KeyParams(KeyType keyType)
-    : m_keyType(keyType)
+  KeyIdType
+  getKeyIdType() const
   {
+    return m_keyIdType;
   }
+
+  void
+  setKeyId(const name::Component& keyId)
+  {
+    m_keyId = keyId;
+  }
+
+  const name::Component&
+  getKeyId() const
+  {
+    return m_keyId;
+  }
+
+protected:
+  /**
+   * @brief Create a key generation parameter
+   *
+   * @param keyType Type of the created key
+   * @param keyIdType The method how the key id should be generated; must not be
+                      KeyIdType::USER_SPECIFIED
+   */
+  KeyParams(KeyType keyType, KeyIdType keyIdType);
+
+  /**
+   * @brief Create a key generation parameter
+   *
+   * @param keyType Type of the created key
+   * @param keyId The user-specified key id. The keyIdType will be set to KeyIdType::USER_SPECIFIED.
+   *              keyId MUST NOT be the empty component.
+   * @post getKeyIdType() == KeyIdType::USER_SPECIFIED
+   */
+  KeyParams(KeyType keyType, const name::Component& keyId);
 
 private:
   KeyType m_keyType;
+  KeyIdType m_keyIdType;
+  name::Component m_keyId;
 };
 
 
@@ -78,7 +110,11 @@ public:
     return KeyType::RSA;
   }
 
-  /// @brief check if size is qualified, otherwise return the default key size.
+  /**
+   * @brief check if @p size is qualified.
+   *
+   * @throw KeyParams::Error if the key size is not supported.
+   */
   static uint32_t
   checkKeySize(uint32_t size);
 
@@ -86,8 +122,8 @@ public:
   getDefaultSize();
 };
 
-/// @brief EcdsaKeyParamInfo is used to initialize a SimplePublicKeyParams template for ECDSA key.
-class EcdsaKeyParamsInfo
+/// @brief EcKeyParamInfo is used to initialize a SimplePublicKeyParams template for elliptic curve key.
+class EcKeyParamsInfo
 {
 public:
   static KeyType
@@ -96,7 +132,11 @@ public:
     return KeyType::EC;
   }
 
-  /// @brief check if size is qualified, otherwise return the default key size.
+  /**
+   * @brief check if @p size is qualified.
+   *
+   * @throw KeyParams::Error if the key size is not supported.
+   */
   static uint32_t
   checkKeySize(uint32_t size);
 
@@ -110,25 +150,27 @@ template<typename KeyParamsInfo>
 class SimplePublicKeyParams : public KeyParams
 {
 public:
+  /// @brief Create key parameter with user specified @p keyId.
   explicit
-  SimplePublicKeyParams(uint32_t size = KeyParamsInfo::getDefaultSize())
-    : KeyParams(KeyParamsInfo::getType())
+  SimplePublicKeyParams(const name::Component& keyId,
+                        uint32_t size = KeyParamsInfo::getDefaultSize())
+    : KeyParams(KeyParamsInfo::getType(), keyId)
   {
     setKeySize(size);
   }
 
+  /**
+   * @brief Create key parameter with auto-created keyId.
+   *
+   * This method is used only if user does not want to maintain the uniqueness of key name.
+   * By default, an 8-byte random number will be used as the key Id.
+   */
   explicit
-  SimplePublicKeyParams(const SimplePublicKeyParams& params)
-    : KeyParams(params)
-    , m_size(params.m_size)
+  SimplePublicKeyParams(uint32_t size = KeyParamsInfo::getDefaultSize(),
+                        KeyIdType keyIdType = KeyIdType::RANDOM)
+    : KeyParams(KeyParamsInfo::getType(), keyIdType)
   {
-  }
-
-  explicit
-  SimplePublicKeyParams(const KeyParams& params)
-    : KeyParams(params.getKeyType())
-  {
-    BOOST_THROW_EXCEPTION(KeyParams::Error("Incorrect key parameters (incompatible key type)"));
+    setKeySize(size);
   }
 
   uint32_t
@@ -157,9 +199,8 @@ private:
 /// @brief RsaKeyParams carries parameters for RSA key.
 typedef SimplePublicKeyParams<RsaKeyParamsInfo> RsaKeyParams;
 
-/// @brief EcdsaKeyParams carries parameters for ECDSA key.
-typedef SimplePublicKeyParams<EcdsaKeyParamsInfo> EcdsaKeyParams;
-
+/// @brief EcKeyParams carries parameters for EC key.
+typedef SimplePublicKeyParams<EcKeyParamsInfo> EcKeyParams;
 
 /// @brief AesKeyParamsInfo is used to initialize a SimpleSymmetricKeyParams template for AES key.
 class AesKeyParamsInfo
@@ -171,7 +212,11 @@ public:
     return KeyType::AES;
   }
 
-  /// @brief check if size is qualified, otherwise return the default key size.
+  /**
+   * @brief check if @p size is qualified.
+   *
+   * @return KeyParams::Error if the key size is not supported.
+   */
   static uint32_t
   checkKeySize(uint32_t size);
 
@@ -179,30 +224,18 @@ public:
   getDefaultSize();
 };
 
-
 /// @brief SimpleSymmetricKeyParams is a template for symmetric keys with only one parameter: size.
 template<typename KeyParamsInfo>
 class SimpleSymmetricKeyParams : public KeyParams
 {
 public:
+  /// @brief Create key parameter with user specified @p keyId.
   explicit
-  SimpleSymmetricKeyParams(uint32_t size = KeyParamsInfo::getDefaultSize())
-    : KeyParams(KeyParamsInfo::getType())
+  SimpleSymmetricKeyParams(const name::Component& keyId,
+                           uint32_t size = KeyParamsInfo::getDefaultSize())
+    : KeyParams(KeyParamsInfo::getType(), keyId)
   {
     setKeySize(size);
-  }
-
-  explicit
-  SimpleSymmetricKeyParams(const SimpleSymmetricKeyParams& params)
-    : KeyParams(params)
-    , m_size(params.m_size)
-  {
-  }
-
-  explicit
-  SimpleSymmetricKeyParams(const KeyParams& params)
-  {
-    BOOST_THROW_EXCEPTION(KeyParams::Error("Incorrect key parameters (incompatible key type)"));
   }
 
   uint32_t
@@ -226,7 +259,6 @@ private:
 
 private:
   uint32_t m_size;
-
 };
 
 typedef SimpleSymmetricKeyParams<AesKeyParamsInfo> AesKeyParams;
