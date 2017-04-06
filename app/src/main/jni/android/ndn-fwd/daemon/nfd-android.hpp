@@ -11,6 +11,8 @@
 
 #include "daemon/mgmt/fib-manager.hpp"
 #include "daemon/mgmt/face-manager.hpp"
+#include "daemon/mgmt/strategy-choice-manager.hpp"
+#include "daemon/mgmt/forwarder-status-manager.hpp"
 #include "daemon/mgmt/command-authenticator.hpp"
 
 #include <ndn-cxx/security/key-chain.hpp>
@@ -42,6 +44,8 @@ private:
 	Forwarder m_forwarder;
 	unique_ptr<FibManager> m_fibManager;
 	unique_ptr<FaceManager> m_faceManager;
+	unique_ptr<ForwarderStatusManager> m_forwarderStatusManager;
+	unique_ptr<StrategyChoiceManager> m_strategyChoiceManager;
 
 	shared_ptr<face::Face> m_internalFace;
 	shared_ptr<ndn::Face> m_internalClientFace;

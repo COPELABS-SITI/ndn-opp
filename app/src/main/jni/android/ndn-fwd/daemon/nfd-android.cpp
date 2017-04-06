@@ -13,6 +13,8 @@
 
 #include "daemon/mgmt/fib-manager.hpp"
 #include "daemon/mgmt/face-manager.hpp"
+#include "daemon/mgmt/strategy-choice-manager.hpp"
+#include "daemon/mgmt/forwarder-status-manager.hpp"
 #include "daemon/mgmt/command-authenticator.hpp"
 
 #include "face/null-face.hpp"
@@ -40,9 +42,11 @@ void Nfd::initialize() {
 	m_dispatcher.reset(new ndn::mgmt::Dispatcher(*m_internalClientFace, m_keyChain));
 	m_authenticator = CommandAuthenticator::create();
 
-	NFD_LOG_INFO("Creating FaceManager & FibManager.");
-	m_faceManager.reset(new FaceManager(*new FaceSystem(faceTable), *m_dispatcher, *m_authenticator));
-	m_fibManager.reset(new FibManager(m_forwarder.getFib(), faceTable, *m_dispatcher, *m_authenticator));
+    NFD_LOG_INFO("Creating ForwarderStatusManager, FaceManager & FibManager.");
+    m_forwarderStatusManager.reset(new ForwarderStatusManager(m_forwarder, *m_dispatcher));
+    m_faceManager.reset(new FaceManager(*new FaceSystem(faceTable), *m_dispatcher, *m_authenticator));
+    m_fibManager.reset(new FibManager(m_forwarder.getFib(), faceTable, *m_dispatcher, *m_authenticator));
+    m_strategyChoiceManager.reset(new StrategyChoiceManager(m_forwarder.getStrategyChoice(), *m_dispatcher, *m_authenticator));
 
 	NFD_LOG_INFO("Setting the configuration files.");
 	ConfigFile config(&ConfigFile::ignoreUnknownSection);
