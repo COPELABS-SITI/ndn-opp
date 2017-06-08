@@ -68,7 +68,7 @@ public class WifiP2pServiceRegistrar implements Observer {
 
     private synchronized void unregister() {
         if(mEnabled && mRegistered) {
-            mWifiP2pMgr.clearServiceRequests(mWifiP2pChn, afterLocalServiceCleared);
+            mWifiP2pMgr.clearLocalServices(mWifiP2pChn, afterLocalServiceCleared);
             mRegistered = false;
         } else
             Log.w(TAG, "Attempt to unregister a second time. mEnabled=" + mEnabled + ", mRegistered=" + mRegistered);
