@@ -26,45 +26,36 @@ import pt.ulusofona.copelabs.ndn.R;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
-public class CreateFace extends DialogFragment {
-    private ForwardingDaemon mDaemon;
-	private View mDialog;
-
+public class CreateFaceDialog extends DialogFragment {
 	private Spinner mProtocol;
 	private EditText mHost;
 	private EditText mPort;
 	private CheckBox mIsPermanent;
 
-	public CreateFace() {}
+	public static CreateFaceDialog create(ForwardingDaemon.DaemonBinder binder) {
+		CreateFaceDialog fragment = new CreateFaceDialog();
+		Bundle args = new Bundle();
+		args.putBinder("ForwardingDaemon", binder);
+		fragment.setArguments(args);
+		return fragment;
 
-    public CreateFace(ForwardingDaemon fd) {
-        mDaemon = fd;
-    }
+	}
 
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+		ForwardingDaemon.DaemonBinder dBinder = (ForwardingDaemon.DaemonBinder) getArguments().getBinder("ForwardingDaemon");
+		final ForwardingDaemon fwdDaemon = dBinder.getService();
 
-		mDialog = View.inflate(getContext(), R.layout.dialog_create_face, null);
+		View dialog = View.inflate(getContext(), R.layout.dialog_create_face, null);
 
-		mProtocol = (Spinner) mDialog.findViewById(R.id.protocol);
-		mHost = (EditText) mDialog.findViewById(R.id.host);
-		mPort = (EditText) mDialog.findViewById(R.id.port);
-		mIsPermanent = (CheckBox) mDialog.findViewById(R.id.permanent);
-
-		/*WifiManager wifiMgr = (WifiManager) getActivity().getSystemService(Context.WIFI_SERVICE);
-		int ipAddr = wifiMgr.getConnectionInfo().getIpAddress() & wifiMgr.getDhcpInfo().netmask;
-		if(ipAddr != 0)
-			mHost.setText(String.format("%d.%d.%d.%d",
-				ipAddr & 0xff,
-				ipAddr >> 8 & 0xff,
-				ipAddr >> 16 & 0xff,
-				ipAddr >> 24 & 0xff
-			));
-		else mHost.setText("");*/
+		mProtocol = (Spinner) dialog.findViewById(R.id.protocol);
+		mHost = (EditText) dialog.findViewById(R.id.host);
+		mPort = (EditText) dialog.findViewById(R.id.port);
+		mIsPermanent = (CheckBox) dialog.findViewById(R.id.permanent);
 
 		return builder
-			.setView(mDialog)
+			.setView(dialog)
 			.setPositiveButton(R.string.create, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface di, int id) {
@@ -83,7 +74,7 @@ public class CreateFace extends DialogFragment {
                         faceUri = protocol + "://" + host + ":" + port;
                     }
 
-					mDaemon.createFace(
+					fwdDaemon.createFace(
 						faceUri,
 						mIsPermanent.isChecked() ? 2 : 0,
 						host.equals("127.0.0.1")

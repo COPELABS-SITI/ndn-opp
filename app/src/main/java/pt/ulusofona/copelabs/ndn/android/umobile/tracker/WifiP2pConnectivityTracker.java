@@ -89,6 +89,7 @@ public class WifiP2pConnectivityTracker extends Observable {
             if(interfaceName != null) {
                 try {
                     Enumeration<NetworkInterface> allIfaces = NetworkInterface.getNetworkInterfaces();
+                    Log.v(TAG, allIfaces.toString());
                     while (allIfaces.hasMoreElements()) {
                         NetworkInterface iface = allIfaces.nextElement();
                         if(interfaceName.equals(iface.getName())) {

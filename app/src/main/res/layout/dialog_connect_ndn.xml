@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" style="@style/wrap" android:padding="@dimen/fragment_padding">
+
+    <TextView style="@style/title" android:text="@string/ndn_node"/>
+    <Spinner  style="@style/field" android:id="@+id/ndn_nodes" android:entries="@array/ndn_nodes_names"/>
+
+    <CheckBox style="@style/fill" android:id="@+id/permanent" android:text="@string/permanent" />
+</LinearLayout>

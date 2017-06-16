@@ -138,56 +138,37 @@ void afterFaceAdd(const nfd::Face& current) {
     );
 }
 
-static void jniInitialize(JNIEnv* env, jobject fDaemon, jstring homepath, jstring configuration) {
+static void jniStart(JNIEnv* env, jobject fDaemon, jstring homepath, jstring configuration) {
     COFFEE_TRY_JNI(env,
-        {
-            forwardingDaemonInstance = env->NewGlobalRef(fDaemon);
+        // Initialization.
+        forwardingDaemonInstance = env->NewGlobalRef(fDaemon);
 
-            std::string home = convertString(env, homepath);
-            ::setenv("HOME", home.c_str(), true);
-            NFD_LOG_INFO("Use [" << home << "] as a security storage");
+        std::string home = convertString(env, homepath);
+        ::setenv("HOME", home.c_str(), true);
+        NFD_LOG_INFO("Use [" << home << "] as a security storage");
 
-            NFD_LOG_INFO("Parsing configuration...");
-            nfd::ConfigSection config;
-            std::istringstream input(convertString(env, configuration));
-            boost::property_tree::read_info(input, config);
+        NFD_LOG_INFO("Parsing configuration...");
+        nfd::ConfigSection config;
+        std::istringstream input(convertString(env, configuration));
+        boost::property_tree::read_info(input, config);
 
-            NFD_LOG_INFO("Initializing Logging.");
-            initializeLogging(config);
+        NFD_LOG_INFO("Initializing Logging.");
+        initializeLogging(config);
 
-            NFD_LOG_INFO("Setting NFD.");
-            g_nfd.reset(new nfd::Nfd(config));
-            NFD_LOG_INFO("Setting NRD.");
-            g_nrd.reset(new nfd::rib::Service(config, g_nfd->m_keyChain));
+        NFD_LOG_INFO("Setting NFD.");
+        g_nfd.reset(new nfd::Nfd(config));
+        NFD_LOG_INFO("Setting NRD.");
+        g_nrd.reset(new nfd::rib::Service(config, g_nfd->m_keyChain));
 
-            NFD_LOG_INFO("Connecting FaceTable.afterAdd signal.");
-            g_nfd->getFaceTable().afterAdd.connect(afterFaceAdd);
+        NFD_LOG_INFO("Connecting FaceTable.afterAdd signal.");
+        g_nfd->getFaceTable().afterAdd.connect(afterFaceAdd);
 
-            NFD_LOG_INFO("Initializing NFD.");
-            g_nfd->initialize();
-            NFD_LOG_INFO("Initializing NRD.");
-            g_nrd->initialize();
-        }
-    );
-}
+        NFD_LOG_INFO("Initializing NFD.");
+        g_nfd->initialize();
+        NFD_LOG_INFO("Initializing NRD.");
+        g_nrd->initialize();
 
-static void jniCleanUp(JNIEnv* env, jobject) {
-    COFFEE_TRY_JNI(env,
-        NFD_LOG_INFO("Cleaning up NFD ...");
-        g_nfd->cleanup();
-        g_nfd.reset(); g_nfd = nullptr;
-        NFD_LOG_INFO("Cleaning up NRD ...");
-        g_nrd.reset(); g_nrd = nullptr;
-
-        NFD_LOG_INFO("Resetting Global Scheduler");
-        nfd::scheduler::resetGlobalScheduler();
-        NFD_LOG_INFO("Resetting Global I/O Service");
-        nfd::resetGlobalIoService();
-    );
-}
-
-static void jniStart(JNIEnv* env, jobject) {
-    COFFEE_TRY_JNI(env,
+        // Actual start.
         boost::thread([] {
             NFD_LOG_INFO("Started secondary thread");
             try {
@@ -212,6 +193,17 @@ static void jniStop(JNIEnv* env, jobject) {
         nfd::getGlobalIoService().post( [] {
             NFD_LOG_DEBUG("Stopping I/O service.");
             nfd::getGlobalIoService().stop();
+
+            NFD_LOG_INFO("Cleaning up NFD ...");
+            g_nfd->cleanup();
+            g_nfd.reset(); g_nfd = nullptr;
+            NFD_LOG_INFO("Cleaning up NRD ...");
+            g_nrd.reset(); g_nrd = nullptr;
+
+            NFD_LOG_INFO("Resetting Global Scheduler");
+            nfd::scheduler::resetGlobalScheduler();
+            NFD_LOG_INFO("Resetting Global I/O Service");
+            nfd::resetGlobalIoService();
         });
     );
 }
@@ -463,9 +455,9 @@ static jobject jniGetStrategyChoiceTable(JNIEnv* env, jobject) {
 }
 
 static JNINativeMethod nativeMethods[] = {
-	{ "jniInitialize", "(Ljava/lang/String;Ljava/lang/String;)V", (void*) jniInitialize },
-	{ "jniCleanUp", "()V", (void*) jniCleanUp },
-	{ "jniStart", "()V", (void*) jniStart },
+//	{ "jniInitialize", "(Ljava/lang/String;Ljava/lang/String;)V", (void*) jniInitialize },
+//	{ "jniCleanUp", "()V", (void*) jniCleanUp },
+	{ "jniStart", "(Ljava/lang/String;Ljava/lang/String;)V", (void*) jniStart },
 	{ "jniStop", "()V", (void*) jniStop },
 
 	{ "getVersion", "()Ljava/lang/String;", (void*) jniGetVersion },

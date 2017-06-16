@@ -61,4 +61,6 @@
     <string name="uuid">UUID</string>
     <string name="wfdSwitch">Wi-Fi Direct</string>
     <string name="connectNdn">Connect to NDN Testbed</string>
+    <string name="ndn_node">NDN Node</string>
+    <string name="connect">Connect</string>
 </resources>

@@ -16,6 +16,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 import android.util.LongSparseArray;
+import android.widget.Toast;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.models.CsEntry;
@@ -106,8 +107,7 @@ public class ForwardingDaemon extends Service {
     @Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if(State.STOPPED == getAndSetState(State.STARTED)) {
-            jniInitialize(getFilesDir().getAbsolutePath(), mConfiguration);
-            jniStart();
+            jniStart(getFilesDir().getAbsolutePath(), mConfiguration);
 			startTime = System.currentTimeMillis();
 
             WifiP2pManager wifiP2pManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
@@ -139,7 +139,6 @@ public class ForwardingDaemon extends Service {
 	public void onDestroy() {
 		if(State.STARTED == getAndSetState(State.STOPPED)) {
 			jniStop();
-            jniCleanUp();
 
             mPeerTracker.disable();
 
@@ -196,9 +195,7 @@ public class ForwardingDaemon extends Service {
 	}
 
 	// UmobileService related functions.
-	private native void jniInitialize(String homepath, String config);
-    private native void jniCleanUp();
-    private native void jniStart();
+    private native void jniStart(String homepath, String config);
 	private native void jniStop();
 
 	public native String getVersion();

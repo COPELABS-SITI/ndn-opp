@@ -24,34 +24,35 @@ import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.models.Face;
 import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
-public class AddRoute extends DialogFragment {
-    private ForwardingDaemon mDaemon;
-	private View mDialog;
-
+public class AddRouteDialog extends DialogFragment {
 	private EditText mPrefix;
 	private Spinner mFaces;
 
-	public AddRoute() {}
-
-    public AddRoute(ForwardingDaemon fd) {
-        mDaemon = fd;
-    }
+	public static AddRouteDialog create(ForwardingDaemon.DaemonBinder binder) {
+		AddRouteDialog fragment = new AddRouteDialog();
+		Bundle args = new Bundle();
+		args.putBinder("ForwardingDaemon", binder);
+		fragment.setArguments(args);
+		return fragment;
+	}
 
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+		ForwardingDaemon.DaemonBinder dBinder = (ForwardingDaemon.DaemonBinder) getArguments().getBinder("ForwardingDaemon");
+		final ForwardingDaemon fwdDaemon = dBinder.getService();
 
-		mDialog = View.inflate(getContext(), R.layout.dialog_add_route, null);
+		View dialog = View.inflate(getContext(), R.layout.dialog_add_route, null);
 
-		mPrefix = (EditText) mDialog.findViewById(R.id.prefix);
-		mFaces = (Spinner) mDialog.findViewById(R.id.faces);
+		mPrefix = (EditText) dialog.findViewById(R.id.prefix);
+		mFaces = (Spinner) dialog.findViewById(R.id.faces);
         List<String> spinnerList = new ArrayList<>();
-        for(Face current : mDaemon.getFaceTable())
+        for(Face current : fwdDaemon.getFaceTable())
             spinnerList.add(Long.toString(current.getId()));
         mFaces.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, spinnerList));
 
 		return builder
-			.setView(mDialog)
+			.setView(dialog)
 			.setPositiveButton(R.string.create, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface di, int id) {
@@ -61,7 +62,7 @@ public class AddRoute extends DialogFragment {
 					host = getString(R.string.defaultPrefix);
 				if(faceId.isEmpty())
 					faceId = "0";
-				mDaemon.addRoute(host, Long.decode(faceId), 0L, 0L, 1L);
+				fwdDaemon.addRoute(host, Long.decode(faceId), 0L, 0L, 1L);
 				}
 			})
 			.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {

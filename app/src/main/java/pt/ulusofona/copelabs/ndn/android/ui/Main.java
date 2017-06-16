@@ -12,11 +12,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 
 import android.content.ServiceConnection;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 
 import android.os.IBinder;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 
 import android.support.v7.app.AppCompatActivity;
@@ -34,11 +34,11 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.ui.fragment.Refreshable;
+import pt.ulusofona.copelabs.ndn.android.ui.dialog.ConnectToNdnDialog;
 import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
-import pt.ulusofona.copelabs.ndn.android.ui.dialog.AddRoute;
-import pt.ulusofona.copelabs.ndn.android.ui.dialog.CreateFace;
+import pt.ulusofona.copelabs.ndn.android.ui.dialog.AddRouteDialog;
+import pt.ulusofona.copelabs.ndn.android.ui.dialog.CreateFaceDialog;
 import pt.ulusofona.copelabs.ndn.android.umobile.Utilities;
 
 public class Main extends AppCompatActivity {
@@ -55,6 +55,7 @@ public class Main extends AppCompatActivity {
 
     private TextView mUptime;
     private ForwardingDaemon mDaemon;
+    private ForwardingDaemon.DaemonBinder mDaemonBinder;
     private boolean mDaemonConnected = false;
 
     public Main() {
@@ -141,8 +142,14 @@ public class Main extends AppCompatActivity {
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
+        ConnectivityManager connMgr = (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+
         for(int i = 0; i < menu.size(); i++)
-            menu.getItem(i).setEnabled(mDaemonConnected);
+            if(i == 0)
+                menu.getItem(i).setEnabled(mDaemonConnected && connMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isConnected());
+            else
+                menu.getItem(i).setEnabled(mDaemonConnected);
+
         return true;
     }
 
@@ -153,14 +160,15 @@ public class Main extends AppCompatActivity {
         int itemId = item.getItemId();
 
         if(item.getItemId() == R.id.createFace)
-            dialog = new CreateFace(mDaemon);
+            dialog = CreateFaceDialog.create(mDaemonBinder);
         else if (itemId == R.id.addRoute)
-            dialog = new AddRoute(mDaemon);
+            dialog = AddRouteDialog.create(mDaemonBinder);
+        else if (itemId == R.id.connectNdn)
+            dialog = ConnectToNdnDialog.create(mDaemonBinder);
 
-        if(dialog != null) {
-            //dialog.setTargetFragment(this, 0);
+        if(dialog != null)
             dialog.show(getSupportFragmentManager(), dialog.getTag());
-        } else
+        else
             Log.w(TAG, "Invalid item ID selected from Options");
 
 		return true;
@@ -222,8 +230,11 @@ public class Main extends AppCompatActivity {
 
     private void disconnectDaemon() {
         if(mDaemonConnected) {
+            stopUpdater();
             unbindService(mConnection);
+            clearDisplayed();
             mDaemonConnected = false;
+            mDaemon = null;
         }
     }
 
@@ -231,7 +242,8 @@ public class Main extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName cn, IBinder bndr) {
             Log.d(TAG, "Service Connected");
-            mDaemon = ((ForwardingDaemon.DaemonBinder) bndr).getService();
+            mDaemonBinder = (ForwardingDaemon.DaemonBinder) bndr;
+            mDaemon = mDaemonBinder.getService();
             mDaemonConnected = true;
             startUpdater();
         }

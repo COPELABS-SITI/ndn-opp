@@ -22,9 +22,11 @@
 
 #include <ndn-cxx/security/key-chain.hpp>
 
+void afterFaceFails(std::string err);
+
 namespace nfd {
 
-NFD_LOG_INIT("NFD-Android");
+NFD_LOG_INIT("Nfd");
 
 Nfd::Nfd(ConfigSection& config) : m_config(config) , m_keyChain(), m_forwarder() {}
 
@@ -75,12 +77,6 @@ void Nfd::initialize() {
 }
 
 void Nfd::cleanup() {
-    NFD_LOG_INFO("Cleaning Up: Closing all Faces");
-    for(nfd::Face& current : m_forwarder.getFaceTable()) {
-        NFD_LOG_INFO("Closing Face #" << current.getId());
-        current.close();
-    }
-
     for(auto const &factory : m_faceManager->m_faceSystem.m_factories) {
         NFD_LOG_DEBUG("Factory : " << factory.first);
         factory.second->shutdown();
@@ -91,13 +87,13 @@ void Nfd::createFace(std::string& faceUri, ndn::nfd::FacePersistency persistency
 	NFD_LOG_INFO("FaceManager::createFace.");
 	FaceUri uri;
 	if (!uri.parse(faceUri)) {
-		NFD_LOG_INFO("406 : failed to parse URI.");
+		NFD_LOG_INFO("Invalid URI");
 		return;
 	}
 
 	auto factory = m_faceManager->m_faceSystem.m_factories.find(uri.getScheme());
 	if (factory == m_faceManager->m_faceSystem.m_factories.end()) {
-		NFD_LOG_INFO("406 : received create request for unsupported protocol");
+		NFD_LOG_INFO("Unsupported protocol");
 		return;
 	}
 
@@ -108,15 +104,15 @@ void Nfd::createFace(std::string& faceUri, ndn::nfd::FacePersistency persistency
 				bind(&Nfd::afterCreateFaceFailure, this, _1, _2));
 	}
 	catch (const std::runtime_error& error) {
-		NFD_LOG_ERROR("500 : Face creation failed: " << error.what());
+		NFD_LOG_ERROR("Face creation failed: " << error.what());
 	}
 	catch (const std::logic_error& error) {
-		NFD_LOG_ERROR("500 : Face creation failed: " << error.what());
+		NFD_LOG_ERROR("Face creation failed: " << error.what());
 	}
 }
 
 void Nfd::afterCreateFaceSuccess(bool localFields, const shared_ptr<Face>& face) {
-	NFD_LOG_INFO("Face created : localFieldsEnabled=" << localFields);
+	NFD_LOG_INFO("Face created");
 	if(face->getScope() == ndn::nfd::FACE_SCOPE_LOCAL || !localFields)
 		m_forwarder.getFaceTable().add(face);
 }
