@@ -63,6 +63,8 @@ public class ForwardingDaemon extends Service {
     private String mAssignedUuid;
     // Routing & Contextual Manager
     private Routing mRouting;
+    // Configuration
+    private String mConfiguration;
 
     private WifiP2pPeerTracker mPeerTracker = WifiP2pPeerTracker.getInstance();
     private NsdServiceTracker mServiceTracker = NsdServiceTracker.getInstance();
@@ -98,12 +100,13 @@ public class ForwardingDaemon extends Service {
         }
         Log.d(TAG, "Read configuration : " + configuration.length());
 
-        jniInitialize(getFilesDir().getAbsolutePath(), configuration.toString());
+        mConfiguration = configuration.toString();
     }
 
     @Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if(State.STOPPED == getAndSetState(State.STARTED)) {
+            jniInitialize(getFilesDir().getAbsolutePath(), mConfiguration);
             jniStart();
 			startTime = System.currentTimeMillis();
 

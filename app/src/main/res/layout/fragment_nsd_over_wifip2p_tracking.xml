@@ -3,21 +3,42 @@
              style="@style/match"
              tools:context="pt.ulusofona.copelabs.ndn.android.ui.fragment.PeerTracking">
 
-    <LinearLayout style="@style/fill" android:orientation="vertical">
+    <LinearLayout
+        style="@style/fill"
+        android:orientation="vertical">
 
         <Button
             android:id="@+id/button_group_formation"
             style="@style/piece"
             android:text="@string/groupFormation"/>
 
-        <TextView style="@style/title" android:text="@string/uuid"/>
-        <TextView style="@style/piece" android:id="@+id/text_nsd_uuid" android:text="@string/notAvailable"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-        <TextView style="@style/title" android:text="@string/wifiP2pPeers"/>
-        <ListView style="@style/piece" android:id="@+id/list_wifiP2pPeers"/>
+            <TextView
+                style="@style/title"
+                android:text="@string/wifiP2pPeers"/>
 
-        <TextView style="@style/title" android:text="@string/nsdServices"/>
-        <ListView style="@style/piece" android:id="@+id/list_nsd_services"/>
+            <ProgressBar
+                android:id="@+id/scanInProgress"
+                android:visibility="invisible"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"/>
+
+        </LinearLayout>
+
+        <ListView
+            android:id="@+id/list_wifiP2pPeers"
+            style="@style/piece"/>
+
+        <TextView
+            style="@style/title"
+            android:text="@string/nsdServices"/>
+
+        <ListView
+            android:id="@+id/list_nsd_services"
+            style="@style/piece"/>
 
     </LinearLayout>
 </FrameLayout>

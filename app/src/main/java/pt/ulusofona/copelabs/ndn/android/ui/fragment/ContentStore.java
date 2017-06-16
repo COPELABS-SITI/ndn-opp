@@ -28,11 +28,11 @@ public class ContentStore extends Fragment implements Refreshable {
 
     @Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
-		View fwdConfig = inflater.inflate(R.layout.fragment_content_store, parent, false);
+		View fwdConfig = inflater.inflate(R.layout.fragment_ndn_table, parent, false);
 
 		getChildFragmentManager()
 			.beginTransaction()
-			.replace(R.id.contentstore, mContentStore)
+			.replace(R.id.table, mContentStore)
 			.commit();
 
 		return fwdConfig;
@@ -46,5 +46,10 @@ public class ContentStore extends Fragment implements Refreshable {
 	@Override
 	public void refresh(@NonNull ForwardingDaemon daemon) {
 		mContentStore.refresh(daemon.getContentStore());
+	}
+
+	@Override
+	public void clear() {
+		mContentStore.clear();
 	}
 }

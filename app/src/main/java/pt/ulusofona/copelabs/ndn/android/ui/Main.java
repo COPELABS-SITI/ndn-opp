@@ -15,61 +15,47 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 
 import android.os.IBinder;
-import android.support.annotation.NonNull;
-import android.support.design.widget.NavigationView;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v4.view.ViewPager;
 
-import android.support.v7.widget.Toolbar;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MenuInflater;
-
-import android.widget.Switch;
 import android.widget.CompoundButton;
+import android.widget.Switch;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.ui.fragment.PeerTracking;
+import pt.ulusofona.copelabs.ndn.android.ui.fragment.Refreshable;
 import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.AddRoute;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.CreateFace;
+import pt.ulusofona.copelabs.ndn.android.umobile.Utilities;
 
-import pt.ulusofona.copelabs.ndn.android.ui.fragment.ContentStore;
-import pt.ulusofona.copelabs.ndn.android.ui.fragment.ForwarderConfiguration;
-import pt.ulusofona.copelabs.ndn.android.ui.fragment.NameTree;
-import pt.ulusofona.copelabs.ndn.android.ui.fragment.Overview;
-import pt.ulusofona.copelabs.ndn.android.ui.fragment.Refreshable;
-
-public class Main extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class Main extends AppCompatActivity {
     private static final String TAG = Main.class.getSimpleName();
+
+    private ViewPager mPager;
+    private MainTabListener mTabListener;
+    private AppSections mAppSections = new AppSections(getSupportFragmentManager());
 
     // ForwardingDaemon service
     private Intent mDaemonIntent;
     private final IntentFilter mDaemonBroadcastedIntents = new IntentFilter();
     private final DaemonBroadcastReceiver mDaemonListener = new DaemonBroadcastReceiver();
 
+    private TextView mUptime;
     private ForwardingDaemon mDaemon;
     private boolean mDaemonConnected = false;
-
-    // Fragments
-    private final PeerTracking mPeerTracking = new PeerTracking();
-    private final Overview mOverview = new Overview();
-	private final ForwarderConfiguration mForwarderConfiguration = new ForwarderConfiguration();
-    private final NameTree mNametree = new NameTree();
-    private final ContentStore mContentStore = new ContentStore();
-
-    private Fragment mCurrentlyDisplayed;
-    private int mCurrentlyDisplayedTitle;
 
     public Main() {
         mDaemonBroadcastedIntents.addAction(ForwardingDaemon.STARTED);
@@ -83,17 +69,31 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
 
         mDaemonIntent = new Intent(getApplicationContext(), ForwardingDaemon.class);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        mUptime = (TextView) findViewById(R.id.uptime);
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.root);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
-        toggle.syncState();
+        mPager = (ViewPager) findViewById(R.id.root);
+        mTabListener = new MainTabListener(mPager);
+        mPager.setAdapter(mAppSections);
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.navigation);
-        navigationView.setNavigationItemSelectedListener(this);
+        // Set up the action bar.
+        final android.support.v7.app.ActionBar actionBar = getSupportActionBar();
+        actionBar.setHomeButtonEnabled(false);
+        actionBar.setNavigationMode(android.app.ActionBar.NAVIGATION_MODE_TABS);
+
+        // For each of the sections in the app, add a tab to the action bar.
+        for (int i = 0; i < mAppSections.getCount(); i++) {
+            actionBar.addTab(
+                    actionBar.newTab()
+                            .setText(mAppSections.getPageTitle(i))
+                            .setTabListener(mTabListener));
+        }
+
+        mPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
 
         Switch nfdSwitch = (Switch) findViewById(R.id.nfdSwitch);
 		nfdSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -107,7 +107,8 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
 			}
 		});
 
-        setDisplayedFragment(R.id.nav_forwarderConfiguration);
+        TextView uuid = (TextView) findViewById(R.id.umobileUuid);
+        uuid.setText(Utilities.obtainUuid(this));
 	}
 
     @Override
@@ -148,6 +149,7 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
     @Override
 	public boolean onOptionsItemSelected(MenuItem item) {
         DialogFragment dialog = null;
+
         int itemId = item.getItemId();
 
         if(item.getItemId() == R.id.createFace)
@@ -156,7 +158,7 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
             dialog = new AddRoute(mDaemon);
 
         if(dialog != null) {
-            dialog.setTargetFragment(mCurrentlyDisplayed, 0);
+            //dialog.setTargetFragment(this, 0);
             dialog.show(getSupportFragmentManager(), dialog.getTag());
         } else
             Log.w(TAG, "Invalid item ID selected from Options");
@@ -164,71 +166,30 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
 		return true;
 	}
 
-    @Override
-    public void onBackPressed() {
-        // TODO: navigate Back out of the App results in crash.
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.root);
-        if (drawer.isDrawerOpen(GravityCompat.START))
-            drawer.closeDrawer(GravityCompat.START);
-        else
-            super.onBackPressed();
-    }
-
-    private void setDisplayedFragment(int id) {
-        mCurrentlyDisplayed = null;
-
-        if(id == R.id.nav_peerTracking) {
-            mCurrentlyDisplayed = mPeerTracking;
-            mCurrentlyDisplayedTitle = R.string.peerTracking;
-        } else if (id == R.id.nav_overview) {
-            mCurrentlyDisplayed = mOverview;
-            mCurrentlyDisplayedTitle = R.string.overview;
-        } else if (id == R.id.nav_forwarderConfiguration) {
-            mCurrentlyDisplayed = mForwarderConfiguration;
-            mCurrentlyDisplayedTitle = R.string.forwarderConfiguration;
-        } else if (id == R.id.nav_nameTree) {
-            mCurrentlyDisplayed = mNametree;
-            mCurrentlyDisplayedTitle = R.string.nametree;
-        } else if (id == R.id.nav_contentStore) {
-            mCurrentlyDisplayed = mContentStore;
-            mCurrentlyDisplayedTitle = R.string.contentstore;
-        }
-
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.container, mCurrentlyDisplayed)
-                .commit();
-
-        if(mDaemonConnected) {
-            if(mCurrentlyDisplayed instanceof Refreshable) {
-                Refreshable refr = (Refreshable) mCurrentlyDisplayed;
-                refr.refresh(mDaemon);
-            }
-            ActionBar actBar = getSupportActionBar();
-            if(actBar != null) actBar.setTitle(mCurrentlyDisplayedTitle);
-        }
-    }
-
-    @Override
-    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        setDisplayedFragment(item.getItemId());
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.root);
-        drawer.closeDrawer(GravityCompat.START);
-
-        return true;
-    }
-
     // For automatic refreshing of mCurrentDisplayedRefreshable.
     private static final long STARTUP_DELAY = 0L;
     private static final long UPDATE_PERIOD = 1000L;
     private boolean mUpdaterRunning;
     private Timer mUpdater;
 
+    private void clearDisplayed() {
+        if(mUptime != null)
+            mUptime.setText(getString(R.string.notAvailable));
+
+        mAppSections.clear();
+    }
+
     private void refreshDisplayed() {
-        if (mCurrentlyDisplayed instanceof Refreshable && mDaemonConnected) {
-            Refreshable refr = (Refreshable) mCurrentlyDisplayed;
-            refr.refresh(mDaemon);
+        if(mDaemonConnected) {
+            if (mUptime != null) {
+                long uptimeInSeconds = mDaemon.getUptime() / 1000L;
+                long s = (uptimeInSeconds % 60);
+                long m = (uptimeInSeconds / 60) % 60;
+                long h = (uptimeInSeconds / 3600) % 60;
+                mUptime.setText(String.format(Locale.getDefault(), "%02d:%02d:%02d", h, m, s));
+            }
+
+            mAppSections.refresh(mDaemon, mTabListener.getCurrentPosition());
         }
     }
 
@@ -272,11 +233,14 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
             Log.d(TAG, "Service Connected");
             mDaemon = ((ForwardingDaemon.DaemonBinder) bndr).getService();
             mDaemonConnected = true;
+            startUpdater();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName cn) {
             Log.d(TAG, "Service Unexpectedly disconnected");
+            stopUpdater();
+            clearDisplayed();
             mDaemonConnected = false;
             mDaemon = null;
         }
@@ -287,13 +251,20 @@ public class Main extends AppCompatActivity implements NavigationView.OnNavigati
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             Log.d(TAG, "ForwardingDaemon : " + action);
-			if(action.equals(ForwardingDaemon.STARTED)) {
-                startUpdater();
+            Toast.makeText(Main.this, "Daemon : " + nicefy(action), Toast.LENGTH_LONG).show();
+            if(action.equals(ForwardingDaemon.STARTED))
                 bindService(mDaemonIntent, mConnection, Context.BIND_AUTO_CREATE);
-            } else if (action.equals(ForwardingDaemon.STOPPING)) {
-                stopUpdater();
-                refreshDisplayed();
-            }
+        }
+
+        private String nicefy(String action) {
+            String result = null;
+
+            if(action.equals(ForwardingDaemon.STARTED))
+                result = "STARTED";
+            else if (action.equals(ForwardingDaemon.STOPPING))
+                result = "STOPPING";
+
+            return result;
         }
     }
 }

@@ -34,11 +34,6 @@ face_system {
         keep_alive_interval 25
         mcast no
     }
-    websocket {
-        listen yes
-        port 9696
-        enable_v4 yes
-    }
 }
 
 authorizations {

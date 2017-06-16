@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ @version 1.0
+  ~ COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-mm-dd
+  ~
+  ~ @author Seweryn Dynerowicz (COPELABS/ULHT)
+  -->
+
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -7,7 +14,12 @@
     android:orientation="vertical">
 
     <FrameLayout
-        android:id="@+id/contentstore"
+        android:id="@+id/table1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <FrameLayout
+        android:id="@+id/table2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 

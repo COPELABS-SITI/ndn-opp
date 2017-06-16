@@ -6,17 +6,22 @@
  */
 package pt.ulusofona.copelabs.ndn.android.ui.fragment;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 import android.os.Looper;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.util.HashMap;
@@ -38,6 +43,9 @@ public class PeerTracking extends Fragment implements Observer {
     private static final String TAG = PeerTracking.class.getSimpleName();
 
     private String mAssignedUuid;
+    private ProgressBar mScanInProgress;
+
+    private ScanDetector mScanningDetector = new ScanDetector();
 
     private NsdServiceTracker mServiceTracker = NsdServiceTracker.getInstance();
     private WifiP2pPeerTracker mWifiP2pPeerTracker = WifiP2pPeerTracker.getInstance();
@@ -56,6 +64,9 @@ public class PeerTracking extends Fragment implements Observer {
         WifiP2pManager mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
         WifiP2pManager.Channel mWifiP2pChannel = mWifiP2pManager.initialize(context, Looper.getMainLooper(), null);
 
+        mScanningDetector = new ScanDetector();
+        context.registerReceiver(mScanningDetector, new IntentFilter(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION));
+
         mAssignedUuid = Utilities.obtainUuid(context);
 
         mWifiP2pPeerAdapter = new WifiP2pPeerAdapter(context);
@@ -70,6 +81,7 @@ public class PeerTracking extends Fragment implements Observer {
     @Override
     public void onDetach() {
         mWifiP2pConnectivityManager.disable();
+        getContext().unregisterReceiver(mScanningDetector);
         super.onDetach();
     }
 
@@ -92,6 +104,8 @@ public class PeerTracking extends Fragment implements Observer {
                              Bundle savedInstanceState) {
         View viewWifiP2pTracking = inflater.inflate(R.layout.fragment_nsd_over_wifip2p_tracking, container, false);
 
+        mScanInProgress = (ProgressBar) viewWifiP2pTracking.findViewById(R.id.scanInProgress);
+
         Button btn_groupFormation = (Button) viewWifiP2pTracking.findViewById(R.id.button_group_formation);
         btn_groupFormation.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -99,9 +113,6 @@ public class PeerTracking extends Fragment implements Observer {
                 mWifiP2pConnectivityManager.join(mWifiP2pPeerTracker.getPeers());
             }
         });
-
-        TextView uuid = (TextView) viewWifiP2pTracking.findViewById(R.id.text_nsd_uuid);
-        uuid.setText(mAssignedUuid);
 
         ListView listViewWifiP2pPeers = (ListView) viewWifiP2pTracking.findViewById(R.id.list_wifiP2pPeers);
         listViewWifiP2pPeers.setAdapter(mWifiP2pPeerAdapter);
@@ -118,6 +129,7 @@ public class PeerTracking extends Fragment implements Observer {
         @Override
         public void run() {
             mWifiP2pPeerAdapter.clear();
+            Log.d(TAG, "New Peer list : " + mPeers.values());
             mWifiP2pPeerAdapter.addAll(mPeers.values());
         }
     };
@@ -151,6 +163,20 @@ public class PeerTracking extends Fragment implements Observer {
 
             if(act != null)
                 act.runOnUiThread(mServiceUpdater);
+        }
+    }
+
+    private class ScanDetector extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION.equals(action)) {
+                int extra = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE, -1);
+                if(extra == WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED)
+                    mScanInProgress.setVisibility(View.VISIBLE);
+                else
+                    mScanInProgress.setVisibility(View.INVISIBLE);
+            }
         }
     }
 }

@@ -74,6 +74,19 @@ void Nfd::initialize() {
 	faceTable.addReserved(face::makeNullFace(FaceUri("contentstore://")), face::FACEID_CONTENT_STORE);
 }
 
+void Nfd::cleanup() {
+    NFD_LOG_INFO("Cleaning Up: Closing all Faces");
+    for(nfd::Face& current : m_forwarder.getFaceTable()) {
+        NFD_LOG_INFO("Closing Face #" << current.getId());
+        current.close();
+    }
+
+    for(auto const &factory : m_faceManager->m_faceSystem.m_factories) {
+        NFD_LOG_DEBUG("Factory : " << factory.first);
+        factory.second->shutdown();
+    }
+}
+
 void Nfd::createFace(std::string& faceUri, ndn::nfd::FacePersistency persistency, bool localFields) {
 	NFD_LOG_INFO("FaceManager::createFace.");
 	FaceUri uri;

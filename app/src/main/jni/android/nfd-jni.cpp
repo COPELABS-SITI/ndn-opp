@@ -173,9 +173,12 @@ static void jniInitialize(JNIEnv* env, jobject fDaemon, jstring homepath, jstrin
 
 static void jniCleanUp(JNIEnv* env, jobject) {
     COFFEE_TRY_JNI(env,
-        NFD_LOG_INFO("Cleaning up NFD...");
+        NFD_LOG_INFO("Cleaning up NFD ...");
+        g_nfd->cleanup();
         g_nfd.reset(); g_nfd = nullptr;
+        NFD_LOG_INFO("Cleaning up NRD ...");
         g_nrd.reset(); g_nrd = nullptr;
+
         NFD_LOG_INFO("Resetting Global Scheduler");
         nfd::scheduler::resetGlobalScheduler();
         NFD_LOG_INFO("Resetting Global I/O Service");

@@ -1,8 +1,7 @@
-/**
- *  @version 1.0
- * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
- * This class manages the Fragment which displays the FaceTable, FIB & Strategy Choice Table of
- * the ForwardingDaemon.
+/*
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-mm-dd
+ *
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
 
@@ -15,18 +14,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import java.util.Collections;
-import java.util.List;
-
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.models.Name;
+import pt.ulusofona.copelabs.ndn.android.models.SctEntry;
 import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
-public class NameTree extends Fragment implements Refreshable {
-	private Table<Name> mNameTree;
+public class StrategyChoiceTable extends Fragment implements Refreshable {
+	private Table<SctEntry> mSct;
 
-    public NameTree() {
-		mNameTree = Table.newInstance(R.string.nametree, R.layout.item_name);
+    public StrategyChoiceTable() {
+        mSct = Table.newInstance(R.string.sct, R.layout.item_cell_two);
     }
 
     @Override
@@ -35,7 +31,7 @@ public class NameTree extends Fragment implements Refreshable {
 
 		getChildFragmentManager()
 			.beginTransaction()
-			.replace(R.id.table, mNameTree)
+			.replace(R.id.table, mSct)
 			.commit();
 
 		return fwdConfig;
@@ -43,18 +39,16 @@ public class NameTree extends Fragment implements Refreshable {
 
     @Override
     public int getTitle() {
-        return R.string.nametree;
+        return R.string.forwarderConfiguration;
     }
 
     @Override
 	public void refresh(@NonNull ForwardingDaemon daemon) {
-        List<Name> names = daemon.getNameTree();
-        Collections.sort(names);
-		mNameTree.refresh(names);
+		mSct.refresh(daemon.getStrategyChoiceTable());
 	}
 
 	@Override
 	public void clear() {
-		mNameTree.clear();
+		mSct.clear();
 	}
 }

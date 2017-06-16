@@ -1,7 +1,7 @@
-/**
- *  @version 1.0
- * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
- * Simple Dialog to Add a route to the ForwardingDaemon's RIB.
+/*
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-mm-dd
+ *
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
 
@@ -24,16 +24,16 @@ import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.models.Face;
 import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
-public class AddRoute extends DialogFragment {
+public class ConnectToNdn extends DialogFragment {
     private ForwardingDaemon mDaemon;
 	private View mDialog;
 
 	private EditText mPrefix;
 	private Spinner mFaces;
 
-	public AddRoute() {}
+	public ConnectToNdn() {}
 
-    public AddRoute(ForwardingDaemon fd) {
+    public ConnectToNdn(ForwardingDaemon fd) {
         mDaemon = fd;
     }
 

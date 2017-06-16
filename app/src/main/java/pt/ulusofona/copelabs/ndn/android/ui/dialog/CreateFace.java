@@ -35,6 +35,8 @@ public class CreateFace extends DialogFragment {
 	private EditText mPort;
 	private CheckBox mIsPermanent;
 
+	public CreateFace() {}
+
     public CreateFace(ForwardingDaemon fd) {
         mDaemon = fd;
     }

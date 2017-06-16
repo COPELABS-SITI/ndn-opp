@@ -25,6 +25,7 @@ public:
 	~Nfd();
 
 	void initialize();
+    void cleanup();
 
     void createFace(std::string& uri, ndn::nfd::FacePersistency persistency, bool localFields);
     void afterCreateFaceSuccess(bool localFields, const shared_ptr<Face>& face);

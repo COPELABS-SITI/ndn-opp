@@ -3,7 +3,7 @@
     
     <string name="app_name">NDN-Opp</string>
     <string name="label">NDN Opportunistic</string>
-    <string name="description">Porting of the NDN Forwarding Daemon to the Android platform with Opportunistic considerations.</string>
+    <string name="description">Porting of the NDN Forwarding Daemon to the Android platform with Opportunistic Networking considerations.</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
@@ -26,7 +26,7 @@
     <string name="nexthops">Next hops</string>
     <string name="inFaces">In Faces</string>
     <string name="outFaces">Out Faces</string>
-    <string name="nfdSwitch">NFD status</string>
+    <string name="nfdSwitch">Opportunistic NDN Daemon</string>
     <string name="ipAddress">IP Address</string>
 
     <string name="create">Create</string>
@@ -59,4 +59,6 @@
     <string name="missingMac">--:--:--:--:--:--</string>
     <string name="peerTracking">UMobile Peer Tracking</string>
     <string name="uuid">UUID</string>
+    <string name="wfdSwitch">Wi-Fi Direct</string>
+    <string name="connectNdn">Connect to NDN Testbed</string>
 </resources>
