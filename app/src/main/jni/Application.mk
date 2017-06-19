@@ -1,4 +1,4 @@
-APP_ABI := armeabi-v7a
+APP_ABI := armeabi-v7a arm64-v8a
 
 APP_STL := gnustl_static
 APP_CPPFLAGS += -fexceptions -frtti -std=c++11 -Wno-deprecated-declarations

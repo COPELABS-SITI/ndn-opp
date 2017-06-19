@@ -32,6 +32,9 @@ Nfd::Nfd(ConfigSection& config) : m_config(config) , m_keyChain(), m_forwarder()
 
 Nfd::~Nfd() = default;
 
+/* Performs the initialization of all the data structures of the forwarder;
+ * FaceTable, FaceManager
+ */
 void Nfd::initialize() {
 	FaceTable& faceTable = m_forwarder.getFaceTable();
 

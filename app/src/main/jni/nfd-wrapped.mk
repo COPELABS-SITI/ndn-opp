@@ -39,7 +39,7 @@ EXCLUDED_FILES := \
 COFFEE_FILES := $(addprefix android/coffeecatch/, coffeecatch.c coffeejni.c)
 LOCAL_SRC_FILES := $(filter-out $(EXCLUDED_FILES), $(COFFEE_FILES) $(SOURCE_FILES))
 
-LD_OPTFLAGS := -Wl,-gc-sections -Wl,--icf=safe
+LD_OPTFLAGS := -Wl,-gc-sections # -Wl,--icf=safe
 CPP_OPTFLAGS := -Os --visibility=hidden -ffunction-sections -fdata-sections
 
 COFFEECATCH_FLAGS := -funwind-tables -Wl,--no-merge-exidx-entries
