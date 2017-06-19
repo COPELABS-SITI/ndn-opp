@@ -32,6 +32,10 @@ public class CreateFaceDialog extends DialogFragment {
 	private EditText mPort;
 	private CheckBox mIsPermanent;
 
+	/** Method to be used for creating a new CreateFaceDialog.
+	 * @param binder used to access the locally running daemon
+	 * @return the CreateFaceDialog object
+	 */
 	public static CreateFaceDialog create(ForwardingDaemon.DaemonBinder binder) {
 		CreateFaceDialog fragment = new CreateFaceDialog();
 		Bundle args = new Bundle();
@@ -41,6 +45,11 @@ public class CreateFaceDialog extends DialogFragment {
 
 	}
 
+	/** Constructs a dialog window which enables the creation of Faces. Three parameters are requested through its fields;
+	 * the protocol (TCP, UPD, etc.), the target host information (e.g. IPv4), the port number, the permanence state of the resulting Face.
+	 * @param savedInstanceState used by Android for restoring the dialog object from a previous instance
+	 * @return the Dialog to be displayed for creating a Face.
+	 */
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());

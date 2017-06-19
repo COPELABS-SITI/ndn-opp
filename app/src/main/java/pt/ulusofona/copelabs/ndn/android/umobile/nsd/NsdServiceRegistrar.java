@@ -14,6 +14,7 @@ import android.util.Log;
 
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 
+/** Class used to encapsulate the logic of NsdService registration with the framework. */
 public class NsdServiceRegistrar {
     private static final String TAG = NsdServiceRegistrar.class.getSimpleName();
 
@@ -23,6 +24,11 @@ public class NsdServiceRegistrar {
 
     private String mAssignedUuid;
 
+    /** Register a NsdService which
+     * @param context context within which the service has to be registered
+     * @param uuid UUID of the device to be used as an identifier for the service
+     * @param port Port number on which the NDN-Opp daemon is reachable
+     */
     public synchronized void register(Context context, String uuid, int port) {
         if(!mRegistered) {
             Log.v(TAG, "Enabling");
@@ -43,6 +49,7 @@ public class NsdServiceRegistrar {
             Log.w(TAG, "Attempt to register a second time.");
     }
 
+    /** Unregister the NsdService */
     public synchronized void unregister() {
         if(mRegistered) {
             Log.v(TAG, "Unregistering");

@@ -16,7 +16,6 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 import android.util.LongSparseArray;
-import android.widget.Toast;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.models.CsEntry;
@@ -162,7 +161,7 @@ public class ForwardingDaemon extends Service {
 
     // Called by the C++ daemon when it adds a Face to its FaceTable.
     private void addFace(Face face) {
-        long faceId = face.getId();
+        long faceId = face.getFaceId();
         mFacetable.put(faceId, face);
         mRouting.afterFaceAdd(face);
     }

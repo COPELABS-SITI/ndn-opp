@@ -24,10 +24,16 @@ import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.models.Face;
 import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
+/** Dialog for the addition of a new Route to the RIB and FIB of the running daemon.
+ */
 public class AddRouteDialog extends DialogFragment {
 	private EditText mPrefix;
 	private Spinner mFaces;
 
+	/** Method to be used for creating a new AddRouteDialog.
+	 * @param binder used to access the locally running daemon
+	 * @return the AddRouteDialog
+	 */
 	public static AddRouteDialog create(ForwardingDaemon.DaemonBinder binder) {
 		AddRouteDialog fragment = new AddRouteDialog();
 		Bundle args = new Bundle();
@@ -36,6 +42,11 @@ public class AddRouteDialog extends DialogFragment {
 		return fragment;
 	}
 
+	/** Constructs a dialog window which enables the addition of routes. Three parameters are requested through its fields;
+	 * the Name prefix, the Face ID and the Cost.
+	 * @param savedInstanceState used by Android for restoring the dialog object from a previous instance
+	 * @return the Dialog to be displayed for adding a route.
+	 */
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
@@ -48,7 +59,7 @@ public class AddRouteDialog extends DialogFragment {
 		mFaces = (Spinner) dialog.findViewById(R.id.faces);
         List<String> spinnerList = new ArrayList<>();
         for(Face current : fwdDaemon.getFaceTable())
-            spinnerList.add(Long.toString(current.getId()));
+            spinnerList.add(Long.toString(current.getFaceId()));
         mFaces.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, spinnerList));
 
 		return builder

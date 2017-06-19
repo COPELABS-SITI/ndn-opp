@@ -19,10 +19,17 @@ import android.widget.Spinner;
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
+/** Dialog for the connection of the running daemon to an NDN node that provides access to the NDN testbed.
+ * (cfr. https://named-data.net/ndn-testbed)
+ */
 public class ConnectToNdnDialog extends DialogFragment {
 	private Spinner mNdnNodes;
 	private CheckBox mIsPermanent;
 
+	/** Method to be used for creating a new ConnectToNdnDialog.
+	 * @param binder used to access the locally running daemon
+	 * @return the ConnectToNdnDialog
+	 */
 	public static ConnectToNdnDialog create(ForwardingDaemon.DaemonBinder binder) {
 		ConnectToNdnDialog fragment = new ConnectToNdnDialog();
 		Bundle args = new Bundle();
@@ -31,6 +38,11 @@ public class ConnectToNdnDialog extends DialogFragment {
 		return fragment;
 	}
 
+	/** Constructs a dialog window which enables the connection to an NDN Node. Two parameters are requested through its fields;
+	 * the NDN node to connect to, whether the connection should be set to Permanent.
+	 * @param savedInstanceState used by Android for restoring the dialog object from a previous instance
+	 * @return the Dialog to be displayed for connecting to a NDN node
+	 */
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());

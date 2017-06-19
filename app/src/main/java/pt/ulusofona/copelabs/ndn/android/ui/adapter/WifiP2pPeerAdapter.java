@@ -18,14 +18,26 @@ import android.widget.TextView;
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.WifiP2pPeer;
 
+/** Adapter class for displaying a list of WifiP2pPeers in a View.
+ * cfr. https://developer.android.com/reference/android/widget/Adapter.html
+ */
 public class WifiP2pPeerAdapter extends ArrayAdapter<WifiP2pPeer> {
     private LayoutInflater mInflater;
 
+    /** Main constructor
+     * @param context Android context within which the Adapter should be created
+     */
     public WifiP2pPeerAdapter(Context context) {
         super(context, R.layout.item_wifi_p2p_peer);
         mInflater = LayoutInflater.from(context);
     }
 
+    /** Used by Android to retrieve the View corresponding to a certain item in the list of WifiP2pPeers.
+     * @param position position of the WifiP2pPeer for which the View is requested
+     * @param convertView available View that can be recycled by filling it with the WifiP2pPeer details
+     * @param parent parent View in the hierarchy
+     * @return
+     */
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {

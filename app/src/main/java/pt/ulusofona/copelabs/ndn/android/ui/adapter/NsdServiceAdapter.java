@@ -20,14 +20,26 @@ import java.util.Locale;
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 
+/** Adapter class for displaying a list of NsdServices in a View.
+ * cfr. https://developer.android.com/reference/android/widget/Adapter.html
+ */
 public class NsdServiceAdapter extends ArrayAdapter<NsdService> {
     private LayoutInflater mInflater;
 
+    /** Main constructor
+     * @param context Android context within which the Adapter should be created
+     */
     public NsdServiceAdapter(Context context) {
         super(context, R.layout.item_network_service);
         mInflater = LayoutInflater.from(context);
     }
 
+    /** Used by Android to retrieve the View corresponding to a certain item in the list of NsdServices.
+     * @param position position of the NsdService for which the View is requested
+     * @param convertView available View to be filled with the NsdService details
+     * @param parent parent View in the hierarchy
+     * @return
+     */
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {

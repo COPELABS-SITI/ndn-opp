@@ -19,36 +19,53 @@ import java.util.Locale;
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
+/** The model class used to represent Faces within the Android app.
+ * A face has 7 important properties in NDN; Face ID, Local URI, Remote URI, Scope, Persistency, Link Type and State
+ * Beside those, our OppFaces include a packet queue so we also include the number of pending packets.
+ */
 public class Face implements Table.Entry, Comparable<Face> {
-	private long id;
+	private long faceId;
     private String localURI;
-    private String remoteURI;
+    private String remoteUri;
     private int scope;
     private int persistency;
     private int linkType;
     private int state;
 	private int queueSize;
 
-	public long getId() {
-		return id;
+	public long getFaceId() {
+		return faceId;
 	}
-	public String getRemoteURI() { return remoteURI; }
+	public String getRemoteUri() { return remoteUri; }
 
-	public Face(long fId, String lu, String ru, int sc, int p, int lt, int st, int qs) {
-		id = fId;
-		localURI = lu;
-		remoteURI = ru;
-		scope = sc;
-		persistency = p;
-		linkType = lt;
-		state = st;
-        queueSize = qs;
+	/** Main constructor.
+	 * @param faceId the Face ID
+	 * @param localUri the LocalURI of the Face
+	 * @param remoteUri the RemoteURI of the Face
+	 * @param scope the Scope of the Face
+	 * @param persistency the Persistency of the Face
+	 * @param linkType the Link Type of the Face
+	 * @param state the Status of the Face
+	 * @param queueSize the number of packets pending in the Face's queue
+	 */
+	public Face(long faceId, String localUri, String remoteUri, int scope, int persistency, int linkType, int state, int queueSize) {
+		this.faceId = faceId;
+		this.localURI = localUri;
+		this.remoteUri = remoteUri;
+		this.scope = scope;
+		this.persistency = persistency;
+		this.linkType = linkType;
+		this.state = state;
+        this.queueSize = queueSize;
 	}
 
+	/* Static names to be used for pretty-printing the raw data obtained from the daemon.
+	 * Based on https://redmine.named-data.net/projects/nfd/wiki/FaceMgmt#Static-Face-Attributes */
 	private static SparseArray<String> Scope = new SparseArray<>();
 	private static SparseArray<String> Persistency = new SparseArray<>();
 	private static SparseArray<String> LinkType = new SparseArray<>();
 	private static SparseArray<String> State = new SparseArray<>();
+
 	static {
 		Scope.put(0, "NL"); // Non-local
 		Scope.put(1, "Lo"); // Local
@@ -70,32 +87,40 @@ public class Face implements Table.Entry, Comparable<Face> {
 		State.put(5, "Cd"); // CLOSED
 	}
 
-    private static void setTextView(View face, int rid, String content) {
-        ((TextView) face.findViewById(rid)).setText(content);
-    }
-
+	/** Constructs the View to use to display an instance of Face.
+	 * @param inflater the system inflater to used for turning the layout file into objects.
+	 * @return the View to be used for displaying an instance of Face.
+	 */
     @Override
     public View getView(LayoutInflater inflater) {
         return inflater.inflate(R.layout.item_face, null, false);
 	}
 
+	/** Initialize the fields of a View with the values stored in this Face.
+	 * @param entry the View to use for displaying this Face.
+	 */
     @Override
     public void setViewContents(View entry) {
-        setTextView(entry, R.id.faceId, String.format(Locale.getDefault(), "%03d", this.id));
-        setTextView(entry, R.id.state, State.get(this.state));
+		((TextView) entry.findViewById(R.id.faceId)).setText(String.format(Locale.getDefault(), "%03d", this.faceId));
+		((TextView) entry.findViewById(R.id.state)).setText(State.get(this.state));
 
-		if(this.remoteURI.startsWith("opp://"))
-        	setTextView(entry, R.id.remoteUri, "opp://..." + this.remoteURI.substring(30) + (queueSize > 0 ? " [" + queueSize + "]" : ""));
+		// Append the queue size to the RemoteURI in the case of an Opportunistic Face.
+		if(this.remoteUri.startsWith("opp://"))
+			((TextView) entry.findViewById(R.id.remoteUri)).setText("opp://..." + this.remoteUri.substring(30) + (queueSize > 0 ? " [" + queueSize + "]" : ""));
 		else
-			setTextView(entry, R.id.remoteUri, this.remoteURI);
+			((TextView) entry.findViewById(R.id.remoteUri)).setText(this.remoteUri);
 
-        setTextView(entry, R.id.scope, Scope.get(this.scope));
-        setTextView(entry, R.id.persistency, Persistency.get(this.persistency));
-        setTextView(entry, R.id.linkType, LinkType.get(this.linkType));
+		((TextView) entry.findViewById(R.id.scope)).setText(this.scope);
+		((TextView) entry.findViewById(R.id.persistency)).setText(Persistency.get(this.persistency));
+		((TextView) entry.findViewById(R.id.linkType)).setText(LinkType.get(this.linkType));
     }
 
+	/** Comparison of Faces based on their ID
+	 * @param that other Face to compare this Face with
+	 * @return ID of this Face minus ID of that Face
+	 */
 	@Override
 	public int compareTo(@NonNull Face that) {
-		return (int) (this.id - that.id);
+		return (int) (this.faceId - that.faceId);
 	}
 }

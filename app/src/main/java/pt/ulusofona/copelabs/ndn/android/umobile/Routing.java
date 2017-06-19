@@ -49,9 +49,9 @@ public class Routing implements Observer {
 
     void afterFaceAdd(Face f) {
         // If this is an opportunistic face, it must be introduced into the RIB for /ndn/multicast.
-        long faceId = f.getId();
-        if(f.getRemoteURI().startsWith("opp://")) {
-            String peerUuid = f.getRemoteURI().substring(6);
+        long faceId = f.getFaceId();
+        if(f.getRemoteUri().startsWith("opp://")) {
+            String peerUuid = f.getRemoteUri().substring(6);
             mOppFaceIds.put(peerUuid, faceId);
 
             Log.d(TAG, "Registering Opportunistic Face " + faceId + " in RIB for prefix /ndn/multicast.");
