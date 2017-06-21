@@ -11,13 +11,26 @@
  */
 package pt.ulusofona.copelabs.ndn.android.umobile;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.NetworkInfo;
+import android.net.wifi.p2p.WifiP2pGroup;
+import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
@@ -28,7 +41,6 @@ import pt.ulusofona.copelabs.ndn.android.models.Face;
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceRegistrar;
 import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceTracker;
-import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pConnectivityTracker;
 
 // @TODO: if phone goes to sleep, all the open connections will close.
 public class Routing implements Observer {
@@ -44,8 +56,17 @@ public class Routing implements Observer {
     private ConnectionHandler mConnector;
 
     private NsdServiceRegistrar mRegistrar = new NsdServiceRegistrar();
+    private ConnectionEventDetector mConnectionDetector = new ConnectionEventDetector();
 
-	Routing(ForwardingDaemon daemon) { mDaemon = daemon; }
+	void enable(ForwardingDaemon daemon) {
+        mDaemon = daemon;
+        mDaemon.registerReceiver(mConnectionDetector, new IntentFilter(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION));
+    }
+
+    void disable() {
+        mDaemon.unregisterReceiver(mConnectionDetector);
+        disableService();
+    }
 
     void afterFaceAdd(Face f) {
         // If this is an opportunistic face, it must be introduced into the RIB for /ndn/multicast.
@@ -99,7 +120,7 @@ public class Routing implements Observer {
         }
     }
 
-    private void enable(String assignedIp) {
+    private void enableService(String assignedIp) {
         if(!mEnabled) {
             try {
                 Log.v(TAG, "Enabling ServerSocket");
@@ -107,7 +128,7 @@ public class Routing implements Observer {
                 socket.bind(new InetSocketAddress(assignedIp, DEFAULT_PORT));
                 mConnector = new ConnectionHandler(socket);
                 mConnector.start();
-                mRegistrar.register(mDaemon, mDaemon.getUmobileUuid(), DEFAULT_PORT);
+                mRegistrar.register(mDaemon, mDaemon.getUmobileUuid(), assignedIp, DEFAULT_PORT);
                 mEnabled = true;
             } catch (IOException e) {
                 Log.e(TAG, "Failed to open listening socket");
@@ -116,7 +137,7 @@ public class Routing implements Observer {
         }
     }
 
-    private void disable() {
+    private void disableService() {
         if(mEnabled) {
             mConnector.terminate();
             mRegistrar.unregister();
@@ -140,11 +161,6 @@ public class Routing implements Observer {
                 }
             } else
                 Log.w(TAG, "Received NULL object from NsdServiceTracker");
-        } else if (observable instanceof WifiP2pConnectivityTracker) {
-            WifiP2pConnectivityTracker wifiConnTracker = (WifiP2pConnectivityTracker) observable;
-            boolean connected = (boolean) obj;
-            if(connected) enable(wifiConnTracker.getAssignedIp());
-            else disable();
         }
     }
 
@@ -202,6 +218,73 @@ public class Routing implements Observer {
 
             Log.e(TAG, "No service matching " + hostAddress + " found.");
             return -1L;
+        }
+    }
+
+    private class ConnectionEventDetector extends BroadcastReceiver {
+        private String mAssignedIpv4 = null;
+
+        private String extractIp(WifiP2pGroup group) {
+            String ipAddress = null;
+            String interfaceName = group.getInterface();
+            Log.v(TAG, "Group Interface : " + interfaceName);
+            if(interfaceName != null) {
+                try {
+                    Enumeration<NetworkInterface> allIfaces = NetworkInterface.getNetworkInterfaces();
+                    Log.v(TAG, allIfaces.toString());
+                    while (allIfaces.hasMoreElements()) {
+                        NetworkInterface iface = allIfaces.nextElement();
+                        Log.v(TAG, iface.toString());
+                        if(interfaceName.equals(iface.getName())) {
+                            for (InterfaceAddress ifAddr : iface.getInterfaceAddresses()) {
+                                InetAddress address = ifAddr.getAddress();
+                                if (address instanceof Inet4Address && !address.isAnyLocalAddress())
+                                    ipAddress = address.getHostAddress();
+                            }
+                        }
+                    }
+                } catch (SocketException e) {
+                    e.printStackTrace();
+                }
+            }
+            return ipAddress;
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            Log.d(TAG, "Received Intent : " + action);
+
+            if(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
+                NetworkInfo netInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
+                WifiP2pGroup wifip2pGroup = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_GROUP);
+
+                Log.v(TAG, "NetworkInfo : " + netInfo);
+                Log.v(TAG, "WifiP2pGroup : " + wifip2pGroup);
+
+                if(netInfo.isConnected()) {
+                    /* When the current device connects to a Group;
+                       1) retrieve the IP it has been assigned and
+                       2) enable the opportunistic service on that IP
+                    */
+                    String newIpv4 = extractIp(wifip2pGroup);
+                    if (mAssignedIpv4 != null) {
+                        // If it was previously connected, and the IP has changed enable the service
+                        if(!mAssignedIpv4.equals(newIpv4)) {
+                            disableService();
+                            mAssignedIpv4 = newIpv4;
+                            enableService(mAssignedIpv4);
+                        }
+                    } else {
+                        mAssignedIpv4 = newIpv4;
+                        enableService(mAssignedIpv4);
+                    }
+
+                } else {
+                    mAssignedIpv4 = null;
+                    disableService();
+                }
+            }
         }
     }
 }

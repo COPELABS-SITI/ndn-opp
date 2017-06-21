@@ -6,50 +6,64 @@
  */
 package pt.ulusofona.copelabs.ndn.android.umobile.wifip2p;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.wifi.p2p.WifiP2pManager;
-import android.net.wifi.p2p.WifiP2pManager.ActionListener;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.util.Log;
 
-import java.util.Observable;
-import java.util.Observer;
-
-import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pStateTracker;
-
-public class WifiP2pServiceRegistrar implements Observer {
+/** The WifiP2pServiceRegistrar wraps up the WifiP2p service registration of Android along with additional
+ * logic. Specifically, once enabled, it automatically registers/unregisters the NDN-Opp service as the
+ * state of Wi-Fi Direct toggles between ON and OFF.
+ */
+public class WifiP2pServiceRegistrar {
     private static final String TAG = WifiP2pServiceRegistrar.class.getSimpleName();
 
+    private Context mContext;
     private WifiP2pManager mWifiP2pMgr;
     private WifiP2pManager.Channel mWifiP2pChn;
 
+    // Used to detect changes in the state of Wi-Fi Direct (ON/OFF)
+    private ServiceRegistrarEventDetector mEventDetector = new ServiceRegistrarEventDetector();
+
     private WifiP2pDnsSdServiceInfo mDescriptor;
 
-    private WifiP2pStateTracker mStateTracker = WifiP2pStateTracker.getInstance();
-
     private boolean mEnabled = false;
-    private boolean mRegistered = false;
 
-    public synchronized void enable(WifiP2pManager wifiP2pMgr, WifiP2pManager.Channel wifiP2pChn, String uuid) {
+    /** Enable the Service Registrar to automatically advertise the NDN-Opp service over Wi-Fi Direct
+     * based on whether Wi-Fi Direct is ON or OFF.
+     * @param context Android-provided Context
+     * @param wifiP2pMgr Android-provided WifiP2pManager
+     * @param wifiP2pChn Android-provided WifiP2pManager.Channel
+     * @param uuid UUID of the current device
+     */
+    public synchronized void enable(Context context, WifiP2pManager wifiP2pMgr, WifiP2pManager.Channel wifiP2pChn, String uuid) {
         if(!mEnabled) {
             Log.w(TAG, "Enabling.");
+            mEnabled = true;
+
+            mContext = context;
             mWifiP2pMgr = wifiP2pMgr;
             mWifiP2pChn = wifiP2pChn;
             mDescriptor = WifiP2pDnsSdServiceInfo.newInstance(uuid, WifiP2pService.SVC_INSTANCE_TYPE, null);
 
-            mStateTracker.addObserver(this);
-
-            mEnabled = true;
+            mContext.registerReceiver(mEventDetector, new IntentFilter(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION));
         } else
             Log.w(TAG, "Attempt to register a second time.");
     }
 
+    /** Disable the Service Registrar.
+     */
     public synchronized void disable() {
         if(mEnabled) {
             Log.w(TAG, "Disabling.");
             unregister();
 
-            mStateTracker.deleteObserver(this);
+            mContext.unregisterReceiver(mEventDetector);
 
+            mContext = null;
             mWifiP2pMgr = null;
             mWifiP2pChn = null;
             mDescriptor = null;
@@ -58,42 +72,46 @@ public class WifiP2pServiceRegistrar implements Observer {
             Log.w(TAG, "Attempt to unregister a second time.");
     }
 
+    // Register the Wi-Fi Direct NDN-Opp service
     private synchronized void register() {
-        if(mEnabled && !mRegistered) {
-            mRegistered = true;
-            mWifiP2pMgr.addLocalService(mWifiP2pChn, mDescriptor, afterLocalServiceAdded);
-        } else
-            Log.w(TAG, "Attempt to register a second time. mEnabled=" + mEnabled + ", mRegistered=" + mRegistered);
+        if(mEnabled)
+            mWifiP2pMgr.addLocalService(mWifiP2pChn, mDescriptor, new WifiP2pManager.ActionListener() {
+                @Override
+                public void onSuccess() {
+                    Log.v(TAG, "Service successfully added");
+                }
+
+                @Override
+                public void onFailure(int i) {
+                    Log.v(TAG, "Service failed to add ... " + i);
+                }
+            });
     }
 
+    // Unregister the Wi-Fi Direct NDN-Opp service
     private synchronized void unregister() {
-        if(mEnabled && mRegistered) {
-            mWifiP2pMgr.clearLocalServices(mWifiP2pChn, afterLocalServiceCleared);
-            mRegistered = false;
-        } else
-            Log.w(TAG, "Attempt to unregister a second time. mEnabled=" + mEnabled + ", mRegistered=" + mRegistered);
+        if(mEnabled)
+            mWifiP2pMgr.removeLocalService(mWifiP2pChn, mDescriptor, null);
     }
 
-    private ActionListener afterLocalServiceAdded = new ActionListener() {
-        @Override public void onSuccess() {Log.d(TAG, "Local Service Registered.");}
+    private class ServiceRegistrarEventDetector extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
 
-        @Override public void onFailure(int error) {
-            Log.d(TAG, "Failed to register (" + error + ")");
-            mRegistered = false;
-        }
-    };
 
-    private ActionListener afterLocalServiceCleared = new ActionListener() {
-        @Override public void onSuccess() {Log.d(TAG, "Clear SUCCESS");}
-        @Override public void onFailure(int e) {Log.d(TAG, "Clear FAILED (" + e + ")");}
-    };
+            if(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)) {
+                int wifiP2pState = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1);
 
-    @Override
-    public void update(Observable observable, Object obj) {
-        if(observable instanceof WifiP2pStateTracker) {
-            boolean enabled = (boolean) obj;
-            if(enabled) register();
-            else unregister();
+                if(wifiP2pState == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
+                    Log.v(TAG, "WiFi P2P State : ON");
+                    register();
+                }
+                else if (wifiP2pState == WifiP2pManager.WIFI_P2P_STATE_DISABLED) {
+                    Log.v(TAG, "WiFi P2P State : OFF");
+                    unregister();
+                }
+            }
         }
     }
 }

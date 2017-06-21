@@ -26,9 +26,6 @@ import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 import pt.ulusofona.copelabs.ndn.android.models.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.models.SctEntry;
 import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceTracker;
-import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pConnectivityTracker;
-import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pDiscoveryTracker;
-import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pStateTracker;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.WifiP2pPeerTracker;
 
 import java.io.BufferedReader;
@@ -69,10 +66,6 @@ public class ForwardingDaemon extends Service {
     private WifiP2pPeerTracker mPeerTracker = WifiP2pPeerTracker.getInstance();
     private NsdServiceTracker mServiceTracker = NsdServiceTracker.getInstance();
 
-    private WifiP2pStateTracker mStateTracker = WifiP2pStateTracker.getInstance();
-    private WifiP2pDiscoveryTracker mDiscoveryTracker = WifiP2pDiscoveryTracker.getInstance();
-    private WifiP2pConnectivityTracker mConnectivityTracker = WifiP2pConnectivityTracker.getInstance();
-
     // Replace this logic with a lock.
     private State current = State.STOPPED;
 	private synchronized State getAndSetState(State nextState) {
@@ -81,11 +74,12 @@ public class ForwardingDaemon extends Service {
 		return oldValue;
 	}
 
+    /** Service lifecycle method. See https://developer.android.com/guide/components/services.html */
     @Override
     public void onCreate() {
         super.onCreate();
 
-        mRouting = new Routing(this);
+        mRouting = new Routing();
         mAssignedUuid = Utilities.obtainUuid(this);
 
         // Retrieve the contents of the configuration file to build a String out of it.
@@ -103,6 +97,7 @@ public class ForwardingDaemon extends Service {
         mConfiguration = configuration.toString();
     }
 
+    /** Service lifecycle method. See https://developer.android.com/guide/components/services.html */
     @Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if(State.STOPPED == getAndSetState(State.STARTED)) {
@@ -114,14 +109,10 @@ public class ForwardingDaemon extends Service {
 
             mPeerTracker.enable(this, wifiP2pManager, wifiP2pChannel, mAssignedUuid);
 
+            mRouting.enable(this);
+
             mServiceTracker.addObserver(mRouting);
             mServiceTracker.enable(this, mAssignedUuid);
-
-            mStateTracker.enable(this);
-            mDiscoveryTracker.enable(this);
-
-            mConnectivityTracker.addObserver(mRouting);
-            mConnectivityTracker.enable(this);
 
             Log.d(TAG, STARTED);
             sendBroadcast(new Intent(STARTED));
@@ -129,11 +120,13 @@ public class ForwardingDaemon extends Service {
 		return START_NOT_STICKY;
 	}
 
+    /** Service lifecycle method. See https://developer.android.com/guide/components/services.html */
 	@Override
     public IBinder onBind(Intent in) {
 		return local;
 	}
 
+    /** Service lifecycle method. See https://developer.android.com/guide/components/services.html */
 	@Override
 	public void onDestroy() {
 		if(State.STARTED == getAndSetState(State.STOPPED)) {
@@ -141,10 +134,7 @@ public class ForwardingDaemon extends Service {
 
             mPeerTracker.disable();
 
-            mStateTracker.disable(this);
-            mDiscoveryTracker.disable(this);
-            mConnectivityTracker.disable(this);
-            mConnectivityTracker.deleteObserver(mRouting);
+            mRouting.disable();
 
             mServiceTracker.disable();
             mServiceTracker.deleteObserver(mRouting);
@@ -166,12 +156,19 @@ public class ForwardingDaemon extends Service {
         mRouting.afterFaceAdd(face);
     }
 
-    // Uptime of the Forwarding Daemon in milliseconds.
+    /**
+     * Uptime of the Forwarding Daemon in milliseconds.
+     * @return Milliseconds that the daemon has been running
+     */
 	public long getUptime() {
 		return (current == State.STARTED) ? System.currentTimeMillis() - startTime : 0L;
 	}
 
     // UMobile UUID used by the ContextualManager.
+
+    /** Retrieve the automatically generated UMobile UUID
+     * @return UUID of the current device
+     */
     public String getUmobileUuid() {
         return (current == State.STARTED) ? mAssignedUuid : getString(R.string.notAvailable);
     }

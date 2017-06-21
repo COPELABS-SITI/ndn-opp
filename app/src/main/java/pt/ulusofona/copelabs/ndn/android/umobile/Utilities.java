@@ -11,9 +11,14 @@ import android.content.SharedPreferences;
 
 import java.util.UUID;
 
+/** Utility class for methods used throughout the application. */
 public class Utilities {
     private static final String PROPERTY_UUID_KEY = "UMOBILE_UUID";
 
+    /** Retrieve the UUID of the installed instance of the app.
+     * @param context Android-provided context from which the UUID can be retrieved
+     * @return UUID of the current device
+     */
     public static String obtainUuid(Context context) {
         String uuid;
         SharedPreferences storage = context.getSharedPreferences("Configuration", Context.MODE_PRIVATE);

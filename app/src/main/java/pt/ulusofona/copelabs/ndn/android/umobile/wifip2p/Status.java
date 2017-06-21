@@ -8,6 +8,7 @@ package pt.ulusofona.copelabs.ndn.android.umobile.wifip2p;
 
 import android.net.wifi.p2p.WifiP2pDevice;
 
+/** Expanded device statuses to handle the case a device is no longer within range. */
 public enum Status {
     AVAILABLE("Av"),
     CONNECTED("Co"),

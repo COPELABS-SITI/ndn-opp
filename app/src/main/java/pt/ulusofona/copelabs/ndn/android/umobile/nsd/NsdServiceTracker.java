@@ -7,9 +7,14 @@
  */
 package pt.ulusofona.copelabs.ndn.android.umobile.nsd;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.NetworkInfo;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 
 import java.util.HashMap;
@@ -18,18 +23,20 @@ import java.util.Observable;
 import java.util.Observer;
 
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
-import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pConnectivityTracker;
 
 // @TODO: figure out if the observed micro-cuts [LOST =(1-2seconds)= FOUND] can be safely concealed.
 // @TODO: Services are sometimes lost for longer period of time ...
 
-/** Implementation of a tracker which maintains a list of Nsd services detected in the same
- * Wi-Fi Direct Group along with their status. Singleton implementation.
+/** Implementation of a tracker which maintains a list of NSD services detected in the same
+ * Wi-Fi Direct Group along with their status. This list is maintained even after the current
+ * device leaves the Group.
  */
 public class NsdServiceTracker extends Observable implements Observer {
     private static final String TAG = NsdServiceTracker.class.getSimpleName();
 
     private static NsdServiceTracker INSTANCE = null;
+
+    private Context mContext;
 
     private NsdManager mNsdManager;
     private String mAssignedUuid;
@@ -40,23 +47,20 @@ public class NsdServiceTracker extends Observable implements Observer {
     private final DiscoveryListener mListener = new DiscoveryListener();
     private final NsdServiceResolver mResolver = new NsdServiceResolver();
 
-    private final WifiP2pConnectivityTracker mConnectivityTracker = WifiP2pConnectivityTracker.getInstance();
+    private final ConnectivityEventDetector mConnectivityDetector = new ConnectivityEventDetector();
 
     // Associates a UUID to a NsdService.
     private Map<String, NsdService> mServices = new HashMap<>();
 
     private NsdServiceTracker() {}
 
-    /** Obtain the instance of the tracker.
-     * @return the singleton instance of the tracker
-     */
     public static NsdServiceTracker getInstance() {
         if(INSTANCE == null)
             INSTANCE = new NsdServiceTracker();
         return INSTANCE;
     }
 
-    /** Enable the tracker.
+    /** Enable this NSD Service Tracker.
      * @param context the Android context within which the tracker should be activated.
      * @param uuid the UUID of the current device. Used for filtering out from the detected services.
      */
@@ -69,7 +73,8 @@ public class NsdServiceTracker extends Observable implements Observer {
             mResolver.addObserver(this);
             mResolver.enable(mNsdManager);
 
-            mConnectivityTracker.addObserver(this);
+            mContext = context;
+            mContext.registerReceiver(mConnectivityDetector, new IntentFilter(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION));
 
             mEnabled = true;
         } else
@@ -86,7 +91,7 @@ public class NsdServiceTracker extends Observable implements Observer {
             mResolver.disable();
             mResolver.deleteObserver(this);
 
-            mConnectivityTracker.deleteObserver(this);
+            mContext.unregisterReceiver(mConnectivityDetector);
 
             mEnabled = false;
         } else
@@ -155,17 +160,7 @@ public class NsdServiceTracker extends Observable implements Observer {
      */
     @Override
     public void update(Observable observable, Object obj) {
-        if (observable instanceof WifiP2pConnectivityTracker) {
-            boolean isConnected = (boolean) obj;
-            Log.d(TAG, "Connection change : " + (isConnected ? "CONNECTED" : "DISCONNECTED"));
-
-            // When the current device joins a Wi-Fi Direct Group, start detecting services,
-            // When the current device leaves the Wi-Fi Direct Group, stop detecting services.
-            if(isConnected) start();
-            else stop();
-
-
-        } else if(observable instanceof NsdServiceResolver)
+        if(observable instanceof NsdServiceResolver)
             // Update the NSD Service upon resolution completion
             resolutionCompleted((NsdServiceInfo) obj);
         else
@@ -218,6 +213,24 @@ public class NsdServiceTracker extends Observable implements Observer {
                     svc.markAsUnavailable();
                     setChanged(); notifyObservers(svc);
                 }
+            }
+        }
+    }
+
+    private class ConnectivityEventDetector extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+
+            if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
+                NetworkInfo netInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
+                boolean wifiP2pConnected = netInfo.isConnected();
+                Log.v(TAG, "Connection changed : " + (wifiP2pConnected ? "CONNECTED" : "DISCONNECTED"));
+
+                // When the current device joins a Wi-Fi Direct Group, start detecting services,
+                if(wifiP2pConnected) start();
+                // When the current device leaves the Wi-Fi Direct Group, stop detecting services.
+                else stop();
             }
         }
     }

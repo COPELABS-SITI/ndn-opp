@@ -129,10 +129,12 @@ public class PeerTracking extends Fragment implements Observer {
 
         ListView listViewWifiP2pPeers = (ListView) viewWifiP2pTracking.findViewById(R.id.list_wifiP2pPeers);
         listViewWifiP2pPeers.setAdapter(mWifiP2pPeerAdapter);
+        mWifiP2pPeerAdapter.clear();
         mWifiP2pPeerAdapter.addAll(mPeers.values());
 
         ListView listViewServices = (ListView) viewWifiP2pTracking.findViewById(R.id.list_nsd_services);
         listViewServices.setAdapter(mNsdServiceAdapter);
+        mNsdServiceAdapter.clear();
         mNsdServiceAdapter.addAll(mServices.values());
 
         return viewWifiP2pTracking;

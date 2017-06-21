@@ -15,12 +15,12 @@ import android.util.Log;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
-import java.util.Observer;
 
-import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pConnectivityTracker;
-import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pStateTracker;
-
-class WifiP2pServiceDiscoverer extends Observable implements Observer {
+/** The WifiP2pServiceDiscoverer (SD) wraps up the Wi-Fi P2P service discovery process of Android
+ * and includes additional logic around it. It searches for service of type _wifip2ptracker._tcp
+ * that are advertised through WifiP2p and maintains the list of all services ever detected, whether
+ * the corresponding devices are still within range or not. */
+class WifiP2pServiceDiscoverer extends Observable {
     private static final String TAG = WifiP2pServiceDiscoverer.class.getSimpleName();
 
     private WifiP2pManager mWifiP2pMgr;
@@ -29,14 +29,7 @@ class WifiP2pServiceDiscoverer extends Observable implements Observer {
     private String mAssignedUuid;
     private WifiP2pDnsSdServiceRequest mRequest;
 
-    private WifiP2pStateTracker mStateTracker = WifiP2pStateTracker.getInstance();
-    private WifiP2pConnectivityTracker mConnectivityTracker = WifiP2pConnectivityTracker.getInstance();
-
     private boolean mEnabled = false;
-    private boolean mDiscoveryEnabled = false;
-
-    private boolean mWifiP2pEnabled = false;
-    private boolean mWifiP2pConnected = false;
 
     // Associates a MAC address to a WifiP2pService.
     private Map<String, WifiP2pService> mServices = new HashMap<>();
@@ -45,6 +38,11 @@ class WifiP2pServiceDiscoverer extends Observable implements Observer {
         return mServices;
     }
 
+    /** Enable this Service Discoverer.
+     * @param wifip2pMgr the WifiP2pManager provided by the Android API which is used in the service discovery process.
+     * @param wifip2pChn the WifiP2pChannel used to interact with the WifiP2pManager
+     * @param uuid the UUID of the current device
+     */
     public synchronized void enable(WifiP2pManager wifip2pMgr, WifiP2pManager.Channel wifip2pChn, String uuid) {
         if(!mEnabled) {
             Log.v(TAG, "Enabling");
@@ -54,63 +52,34 @@ class WifiP2pServiceDiscoverer extends Observable implements Observer {
             mAssignedUuid = uuid;
             mRequest = WifiP2pDnsSdServiceRequest.newInstance(WifiP2pService.SVC_INSTANCE_TYPE);
 
-            mStateTracker.addObserver(this);
-            mConnectivityTracker.addObserver(this);
+            mWifiP2pMgr.setDnsSdResponseListeners(mWifiP2pChn, svcResponseListener, null);
+            mWifiP2pMgr.addServiceRequest(mWifiP2pChn, mRequest, afterRequestAdded);
 
             mEnabled = true;
         } else
-            Log.w(TAG, "Attempt to register TWICE");
+            Log.w(TAG, "Attempt to enable TWICE");
     }
 
+    /** Disable this Service Discoverer. */
     public synchronized void disable() {
         if(mEnabled) {
-            disableDiscovery();
-
-            mStateTracker.deleteObserver(this);
-            mConnectivityTracker.deleteObserver(this);
+            mWifiP2pMgr.removeServiceRequest(mWifiP2pChn, mRequest, null);
+            mWifiP2pMgr.setDnsSdResponseListeners(mWifiP2pChn, null, null);
 
             mEnabled = false;
         } else
-            Log.w(TAG, "Attempt to unregister TWICE");
+            Log.w(TAG, "Attempt to disable TWICE");
     }
 
-    private synchronized void enableDiscovery() {
-        if(!mDiscoveryEnabled) {
-            Log.v(TAG, "Enabling Discovery");
-            mWifiP2pMgr.setDnsSdResponseListeners(mWifiP2pChn, svcResponseListener, null);
-            mWifiP2pMgr.addServiceRequest(mWifiP2pChn, mRequest, afterRequestAdded);
-            mDiscoveryEnabled = true;
-        } else
-            Log.v(TAG, "Attempt to register Discovery TWICE");
-    }
-
-    private synchronized void disableDiscovery() {
-        if(mDiscoveryEnabled) {
-            Log.v(TAG, "Disabling Discovery");
-            mWifiP2pMgr.setDnsSdResponseListeners(mWifiP2pChn, null, null);
-            mWifiP2pMgr.clearServiceRequests(mWifiP2pChn, afterRequestClear);
-
-            for (WifiP2pService current : mServices.values()) current.setStatus(Status.LOST);
-
-            setChanged(); notifyObservers();
-
-            mDiscoveryEnabled = false;
-        } else
-            Log.v(TAG, "Attempt to unregister Discovery TWICE");
-    }
-
-    private synchronized void startDiscovery() {
-        if(mDiscoveryEnabled) {
-            Log.v(TAG, "Starting Discovery");
-            mWifiP2pMgr.discoverServices(mWifiP2pChn, afterDiscoveryStarted);
-        }
-    }
-
+    /** Processing when a new service is reported by Android. */
     private DnsSdServiceResponseListener svcResponseListener = new DnsSdServiceResponseListener() {
         @Override
         public void onDnsSdServiceAvailable(String instanceUuid, String registrationType, android.net.wifi.p2p.WifiP2pDevice node) {
             Log.d(TAG, "Service Found : " + instanceUuid + " : " + registrationType + "@" + node.deviceAddress);
+
+            // Exclude the UUID of the current device.
             if (!instanceUuid.equals(mAssignedUuid)) {
+                // Update the service information stored in the known Services.
                 WifiP2pService svc = new WifiP2pService(instanceUuid, Status.convert(node.status), node.deviceAddress);
                 mServices.put(node.deviceAddress, svc);
                 setChanged(); notifyObservers(svc);
@@ -119,33 +88,19 @@ class WifiP2pServiceDiscoverer extends Observable implements Observer {
     };
 
     private ActionListener afterRequestAdded = new ActionListener() {
-        @Override public void onSuccess() {Log.v(TAG, "Request added"); startDiscovery();}
+        @Override public void onSuccess() {Log.v(TAG, "Request added"); mWifiP2pMgr.discoverServices(mWifiP2pChn, afterDiscoverServices);}
         @Override public void onFailure(int e) {Log.e(TAG, "Request failed (" + e + ")");}
     };
 
-    private ActionListener afterRequestClear = new ActionListener() {
-        @Override public void onSuccess() {Log.v(TAG, "Request removed");}
-        @Override public void onFailure(int e) {Log.e(TAG, "Request failed (" + e + ")");}
-    };
-
-    private ActionListener afterDiscoveryStarted = new ActionListener() {
-        @Override public void onSuccess() {Log.v(TAG, "Started");}
-        @Override public void onFailure(int e) {Log.e(TAG, "Failure (" + e + ")");}
-    };
-
-    @Override
-    public void update(Observable observable, Object o) {
-        if (observable instanceof WifiP2pStateTracker) {
-            boolean enabled = (boolean) o;
-            Log.v(TAG, "Update from WifiP2pStateTracker : " + (enabled ? "ENABLED" : "DISABLED"));
-            if(enabled) enableDiscovery();
-            else disableDiscovery();
-
-
-        } else if (observable instanceof WifiP2pConnectivityTracker) {
-            boolean connected = (boolean) o;
-            Log.v(TAG, "Update from WifiP2pStateTracker : " + (connected ? "CONNECTED" : "DISCONNECTED"));
-            if(!connected) startDiscovery();
+    private ActionListener afterDiscoverServices = new ActionListener() {
+        @Override
+        public void onSuccess() {
+            Log.v(TAG, "Discovery started");
         }
-    }
+
+        @Override
+        public void onFailure(int i) {
+            Log.v(TAG, "Discovery stopped");
+        }
+    };
 }

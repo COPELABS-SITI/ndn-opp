@@ -16,6 +16,10 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
+/** The Peer Tracker is used to maintain up-to-date the lists of all NDN-Opp Peers ever detected.
+ * The Peer Tracker integrates three components; the DeviceDiscoverer, the ServiceDiscoverer and
+ * the ServiceRegistrar.
+ */
 public class WifiP2pPeerTracker extends Observable implements Observer {
     private static final String TAG = WifiP2pPeerTracker.class.getSimpleName();
 
@@ -27,27 +31,36 @@ public class WifiP2pPeerTracker extends Observable implements Observer {
     private WifiP2pDeviceDiscoverer mWifiP2pDeviceDiscoverer = new WifiP2pDeviceDiscoverer();
     private WifiP2pServiceDiscoverer mWifiP2pServiceDiscoverer = new WifiP2pServiceDiscoverer();
 
-    /** A Peer encapsulates information from a Service on a Device, namely
-     * - Device status
-     * - Service UUID
-     * - MAC address
-     * - Is the device a Group Owner or a Client in a Group
-     */
+    // Associates UUID to WifiP2pPeer instance
     private Map<String, WifiP2pPeer> mPeers = new HashMap<>();
+    // Associates MAC Address to WifiP2pDevice instance
     private Map<String, WifiP2pDevice> mDevices = new HashMap<>();
+    // Associates MAC Address to WifiP2pService instance
     private Map<String, WifiP2pService> mServices = new HashMap<>();
 
+    private WifiP2pPeerTracker() {}
+
+    /** Retrieve the instance of the Peer Tracker.
+     * @return singleton instance of Peer Tracker.
+     */
     public static WifiP2pPeerTracker getInstance() {
         if(INSTANCE == null)
             INSTANCE = new WifiP2pPeerTracker();
         return INSTANCE;
     }
 
+    /** Enable this PeerTracker. Changes in the Device and Service Discoverers will be merged together
+     * and integrated to maintain the list of WifiP2pPeers with up-to-date status, UUID and MAC address
+     * @param context Android provided Context
+     * @param wifiP2pMgr Android provided WifiP2pManager
+     * @param wifiP2pChn Android provided WifiP2pChannel
+     * @param uuid UUID of the current device
+     */
     public synchronized void enable(Context context, WifiP2pManager wifiP2pMgr, WifiP2pManager.Channel wifiP2pChn, String uuid) {
         if(!mEnabled) {
             Log.v(TAG, "Enabling Peer Tracker.");
 
-            mWifiP2pServiceRegistrar.enable(wifiP2pMgr, wifiP2pChn, uuid);
+            mWifiP2pServiceRegistrar.enable(context, wifiP2pMgr, wifiP2pChn, uuid);
 
             mWifiP2pDeviceDiscoverer.addObserver(this);
             mWifiP2pDeviceDiscoverer.enable(context, wifiP2pMgr, wifiP2pChn);
@@ -60,6 +73,7 @@ public class WifiP2pPeerTracker extends Observable implements Observer {
             Log.w(TAG, "Attempt to register a second time.");
     }
 
+    /** Disable the Peer Tracker. */
     public synchronized void disable() {
         if(mEnabled) {
             Log.v(TAG, "Disabling Peer Tracker");

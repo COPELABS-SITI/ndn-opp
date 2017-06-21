@@ -10,7 +10,9 @@ import android.util.Log;
 
 import java.lang.reflect.Field;
 
-/** Implementation of representation
+/** Customized representation of WifiP2pDevice. Essentially expands the android.net.wifi.p2p.WifiP2pDevice
+ * by including details about whether the corresponding device is currently a Group Owner or a Client of a
+ * Wi-Fi Direct Group.
  */
 class WifiP2pDevice {
     private static final String TAG = WifiP2pDevice.class.getSimpleName();
@@ -33,6 +35,7 @@ class WifiP2pDevice {
         dev.macAddress = p2pDev.deviceAddress;
         dev.isGroupOwner = p2pDev.isGroupOwner();
 
+        // Lower-level extraction of Group Owner/Client information. Not available on all Android devices.
         try {
             Class wpd = Class.forName("android.net.wifi.p2p.WifiP2pDevice");
             Field goAddress = wpd.getDeclaredField("groupownerAddress");
@@ -64,7 +67,8 @@ class WifiP2pDevice {
     public Status getStatus() { return currently; }
     String getMacAddress() { return macAddress; }
 
-    /** Used to mark the device as no longer available.
+    /** Used to mark the device as no longer available. Called when device is no longer reported
+     * by Android in the peer list.
      */
 	void markAsLost() {
         currently = Status.LOST;

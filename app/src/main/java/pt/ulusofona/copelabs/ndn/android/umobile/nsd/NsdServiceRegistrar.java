@@ -12,6 +12,9 @@ import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.util.Log;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 
 /** Class used to encapsulate the logic of NsdService registration with the framework. */
@@ -30,7 +33,7 @@ public class NsdServiceRegistrar {
      * @param uuid UUID of the device to be used as an identifier for the service
      * @param port Port number on which the NDN-Opp daemon is reachable
      */
-    public synchronized void register(Context context, String uuid, int port) {
+    public synchronized void register(Context context, String uuid, String ipAddress, int port) {
         if(!mRegistered) {
             Log.v(TAG, "Enabling");
             mNsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
@@ -39,6 +42,11 @@ public class NsdServiceRegistrar {
 
             NsdServiceInfo mDescriptor = new NsdServiceInfo();
             mDescriptor.setServiceName(mAssignedUuid);
+            try {
+                mDescriptor.setHost(InetAddress.getByName(ipAddress));
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
             mDescriptor.setServiceType(NsdService.SERVICE_TYPE);
             mDescriptor.setPort(port);
 

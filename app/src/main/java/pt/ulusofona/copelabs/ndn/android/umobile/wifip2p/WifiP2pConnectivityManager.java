@@ -57,7 +57,19 @@ public class WifiP2pConnectivityManager {
     /** Initiate a group formation given a list of candidates. This method implements a simple heuristic to perform
      * a group formation in a way that maximizes the likelihood that most devices within physical proximity agree
      * on who ought to be the group owner as well as the likelihood that that device will become the group owner.
-     * @param candidates a map of all peers
+     *
+     * Specifically, the rule is to select a device which:
+     * - Is not a Group Owner
+     * - Has the highest UUID
+     *
+     * Once a candidate has been selected, the current device will attempt a Group Formation (PBC) and set its own
+     * Group Owner Intent to 0, thus making it the most likely that the candidate will emerge as Group Owner. This
+     * step is only important when only two devices are involved.
+     *
+     * If there is no candidate satisfying those two criterions, this means that the current device
+     * is the one with the highest UUID and that others will select it for Group Formation.
+     *
+     * @param candidates a map of all peers available around the current device
      */
     public void join(Map<String, WifiP2pPeer> candidates) {
         if(!mConnected) {
@@ -98,11 +110,13 @@ public class WifiP2pConnectivityManager {
         }
     }
 
+    // Reporting of connection result.
     private WifiP2pManager.ActionListener afterConnect = new WifiP2pManager.ActionListener() {
         @Override public void onSuccess() {Log.d(TAG, "Connect success");}
         @Override public void onFailure(int e) {Log.d(TAG, "Connect failed (" + e + ")");}
     };
 
+    // Reporting of disconnection result.
     private WifiP2pManager.ActionListener afterRemoveGroup = new WifiP2pManager.ActionListener() {
         @Override public void onSuccess() {Log.v(TAG, "Group removed");}
         @Override public void onFailure(int e) {Log.e(TAG, "Group removal error (" + e + ")");}
