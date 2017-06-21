@@ -106,7 +106,6 @@ jobject constructFace(JNIEnv* env, const nfd::Face& current) {
 
     return env->NewObject(face, newFace,
                                 current.getId(),
-                                env->NewStringUTF(current.getLocalUri().toString().c_str()),
                                 env->NewStringUTF(current.getRemoteUri().toString().c_str()),
                                 (int) current.getScope(),
                                 (int) current.getPersistency(),
@@ -503,7 +502,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 
 		newList = env->GetMethodID(list, "<init>", "()V");
 		newName = env->GetMethodID(name, "<init>", "(Ljava/lang/String;)V");
-		newFace = env->GetMethodID(face, "<init>", "(JLjava/lang/String;Ljava/lang/String;IIIII)V");
+		newFace = env->GetMethodID(face, "<init>", "(JLjava/lang/String;IIIII)V");
 		newFibEntry = env->GetMethodID(fibEntry, "<init>", "(Ljava/lang/String;)V");
 		newPitEntry = env->GetMethodID(pitEntry, "<init>", "(Ljava/lang/String;)V");
 		newSctEntry = env->GetMethodID(sctEntry, "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");

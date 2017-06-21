@@ -10,6 +10,8 @@ import android.util.Log;
 
 import java.lang.reflect.Field;
 
+/** Implementation of representation
+ */
 class WifiP2pDevice {
     private static final String TAG = WifiP2pDevice.class.getSimpleName();
     private Status currently;
@@ -20,6 +22,10 @@ class WifiP2pDevice {
     private boolean hasGroupOwnerField;
     private String groupOwnerMacAddress;
 
+    /** Conversion of Android WifiP2pDevice to our own WifiP2pDevice.
+     * @param p2pDev original peer details provided by Android
+     * @return WifiP2pDevice including additional fields; namely whether the device is currently an owner or a client of a group
+     */
     static WifiP2pDevice convert(android.net.wifi.p2p.WifiP2pDevice p2pDev) {
         WifiP2pDevice dev = new WifiP2pDevice();
         dev.currently = Status.convert(p2pDev.status);
@@ -49,12 +55,17 @@ class WifiP2pDevice {
         return dev;
     }
 
+    /** Retrieve the user-defined name of the device.
+     * @return Name of the peer
+     */
     public String getName() {
         return name;
     }
     public Status getStatus() { return currently; }
     String getMacAddress() { return macAddress; }
 
+    /** Used to mark the device as no longer available.
+     */
 	void markAsLost() {
         currently = Status.LOST;
         isGroupOwner = false;
@@ -66,9 +77,15 @@ class WifiP2pDevice {
     boolean hasGroupOwnerField() { return hasGroupOwnerField; }
     String getGroupOwnerMacAddress() {return groupOwnerMacAddress;}
 
+    /** Hashcode of device. Based on String.hashCode() of the MAC.
+     * @return macAddress.hashCode()
+     */
     @Override
     public int hashCode() { return macAddress.hashCode(); }
 
+    /** Pretty-printable string representation of the device. Contains name and MAC.
+     * @return
+     */
     @Override
     public String toString() {
         return "[" + name + "#" + macAddress + "]";

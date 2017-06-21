@@ -15,25 +15,31 @@ import android.util.Log;
 
 import java.util.Observable;
 
+/** Implementation of a state tracker for the Wi-Fi Direct functionality of Android.
+ *  Implemented as an Observable.
+ */
 public class WifiP2pStateTracker extends Observable {
     private static final String TAG = WifiP2pStateTracker.class.getSimpleName();
     private static WifiP2pStateTracker INSTANCE = null;
 
-    private final IntentFilter mIntents = new IntentFilter();
+    private final IntentFilter mIntents = new IntentFilter(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
     private ConnectionEventTracker mGroupEventTracker = new ConnectionEventTracker();
 
     private boolean mEnabled = false;
 
+    /** Retrieves the instance of the state tracker.
+     * @return singleton instance of state tracker
+     */
     public static WifiP2pStateTracker getInstance() {
         if(INSTANCE == null)
             INSTANCE = new WifiP2pStateTracker();
         return INSTANCE;
     }
 
-    private WifiP2pStateTracker() {
-        mIntents.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
-    }
-
+    /**
+     * Enable the state tracker; events related to WifiP2p being toggled ON/OFF by Android will be tracked
+     * @param ctxt context within which the events should be collected
+     */
     public synchronized void enable(Context ctxt) {
         if(!mEnabled) {
             ctxt.registerReceiver(mGroupEventTracker, mIntents);
@@ -41,6 +47,9 @@ public class WifiP2pStateTracker extends Observable {
         }
     }
 
+    /** Disable the state tracker; events are no longer tracked
+     * @param ctxt context within which the events should be collected
+     */
     public synchronized void disable(Context ctxt) {
         if(mEnabled) {
             ctxt.unregisterReceiver(mGroupEventTracker);

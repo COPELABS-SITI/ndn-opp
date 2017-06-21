@@ -21,9 +21,10 @@ import java.util.Observable;
 import java.util.Observer;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pConnectivityTracker;
-import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pDiscoveryTracker;
 import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pStateTracker;
 
+/** Wrapping of device discovery into an Observer/Observable
+ */
 class WifiP2pDeviceDiscoverer extends Observable implements Observer {
     private static final String TAG = WifiP2pDeviceDiscoverer.class.getSimpleName();
 

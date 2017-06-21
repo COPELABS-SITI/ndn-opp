@@ -6,6 +6,9 @@
  */
 package pt.ulusofona.copelabs.ndn.android.umobile.wifip2p;
 
+/** Wi-Fi P2P Peer implementation for representing Peers. A Wi-Fi P2P Peer is the combination of information from
+ * a Wi-Fi P2P Device (status, MAC address, is GO ?) with a Wi-Fi P2P Service (UUID of device).
+ */
 public class WifiP2pPeer {
     private static final String TAG = WifiP2pPeer.class.getSimpleName();
 
@@ -19,8 +22,11 @@ public class WifiP2pPeer {
 
 	private String macAddress;
 
-    private WifiP2pPeer() {}
-
+    /** Create a Peer from a Device and a Service.
+     * @param dev the device from which status, MAC and whether it is GO are taken
+     * @param svc the service from which the UUID is retrieved
+     * @return the Peer containing all the information required from the service and device perspective
+     */
     static WifiP2pPeer create(WifiP2pDevice dev, WifiP2pService svc) {
         WifiP2pPeer peer = new WifiP2pPeer();
 
@@ -42,6 +48,9 @@ public class WifiP2pPeer {
     public Status getStatus() { return currently; }
     public String getMacAddress() { return macAddress; }
 
+    /** Updates the Peer information when changes are detected in the corresponding Device object (e.g. going unavailable)
+     * @param dev
+     */
     void update(WifiP2pDevice dev) {
         currently = dev.getStatus();
         isGroupOwner = dev.isGroupOwner();

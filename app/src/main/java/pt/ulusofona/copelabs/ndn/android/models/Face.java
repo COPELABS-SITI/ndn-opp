@@ -25,8 +25,7 @@ import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
  */
 public class Face implements Table.Entry, Comparable<Face> {
 	private long faceId;
-    private String localURI;
-    private String remoteUri;
+	private String remoteUri;
     private int scope;
     private int persistency;
     private int linkType;
@@ -40,7 +39,6 @@ public class Face implements Table.Entry, Comparable<Face> {
 
 	/** Main constructor.
 	 * @param faceId the Face ID
-	 * @param localUri the LocalURI of the Face
 	 * @param remoteUri the RemoteURI of the Face
 	 * @param scope the Scope of the Face
 	 * @param persistency the Persistency of the Face
@@ -48,9 +46,8 @@ public class Face implements Table.Entry, Comparable<Face> {
 	 * @param state the Status of the Face
 	 * @param queueSize the number of packets pending in the Face's queue
 	 */
-	public Face(long faceId, String localUri, String remoteUri, int scope, int persistency, int linkType, int state, int queueSize) {
+	public Face(long faceId, String remoteUri, int scope, int persistency, int linkType, int state, int queueSize) {
 		this.faceId = faceId;
-		this.localURI = localUri;
 		this.remoteUri = remoteUri;
 		this.scope = scope;
 		this.persistency = persistency;
@@ -101,18 +98,18 @@ public class Face implements Table.Entry, Comparable<Face> {
 	 */
     @Override
     public void setViewContents(View entry) {
-		((TextView) entry.findViewById(R.id.faceId)).setText(String.format(Locale.getDefault(), "%03d", this.faceId));
-		((TextView) entry.findViewById(R.id.state)).setText(State.get(this.state));
+		((TextView) entry.findViewById(R.id.faceId)).setText(String.format(Locale.getDefault(), "%03d", faceId));
+		((TextView) entry.findViewById(R.id.state)).setText(State.get(state));
 
 		// Append the queue size to the RemoteURI in the case of an Opportunistic Face.
 		if(this.remoteUri.startsWith("opp://"))
-			((TextView) entry.findViewById(R.id.remoteUri)).setText("opp://..." + this.remoteUri.substring(30) + (queueSize > 0 ? " [" + queueSize + "]" : ""));
+			((TextView) entry.findViewById(R.id.remoteUri)).setText("opp://..." + remoteUri.substring(30) + (queueSize > 0 ? " [" + queueSize + "]" : ""));
 		else
-			((TextView) entry.findViewById(R.id.remoteUri)).setText(this.remoteUri);
+			((TextView) entry.findViewById(R.id.remoteUri)).setText(remoteUri);
 
-		((TextView) entry.findViewById(R.id.scope)).setText(this.scope);
-		((TextView) entry.findViewById(R.id.persistency)).setText(Persistency.get(this.persistency));
-		((TextView) entry.findViewById(R.id.linkType)).setText(LinkType.get(this.linkType));
+		((TextView) entry.findViewById(R.id.scope)).setText(Scope.get(scope));
+		((TextView) entry.findViewById(R.id.persistency)).setText(Persistency.get(persistency));
+		((TextView) entry.findViewById(R.id.linkType)).setText(LinkType.get(linkType));
     }
 
 	/** Comparison of Faces based on their ID

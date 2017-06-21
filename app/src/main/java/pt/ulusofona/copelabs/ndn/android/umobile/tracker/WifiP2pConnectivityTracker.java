@@ -24,6 +24,9 @@ import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.Observable;
 
+/** Implementation of a connectivity tracker. This class is used to cleanly conceal the logic of keeping track
+ * of which Wi-Fi Direct Group the current device is connected to. Implemented as a Singleton and an Observable.
+ */
 public class WifiP2pConnectivityTracker extends Observable {
     private static final String TAG = WifiP2pConnectivityTracker.class.getSimpleName();
 
@@ -38,6 +41,9 @@ public class WifiP2pConnectivityTracker extends Observable {
     private String mLastAccessPoint = null;
     private String mAssignedIpv4 = null;
 
+    /** Retrieve the singleton instance.
+     * @return the singleton instance of the connectivity tracker
+     */
     public static WifiP2pConnectivityTracker getInstance() {
         if(INSTANCE == null)
             INSTANCE = new WifiP2pConnectivityTracker();
@@ -48,6 +54,9 @@ public class WifiP2pConnectivityTracker extends Observable {
         mIntents.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
     }
 
+    /** Enable the connectivity tracker.
+     * @param ctxt Android context within which the tracker should be registered
+     */
     public synchronized void enable(Context ctxt) {
         if(!mEnabled) {
             ctxt.registerReceiver(mIntentReceiver, mIntents);
@@ -55,6 +64,9 @@ public class WifiP2pConnectivityTracker extends Observable {
         }
     }
 
+    /** Disable the connectivity tracker.
+     * @param ctxt Android context within which the tracker is registered
+     */
     public synchronized void disable(Context ctxt) {
         if(mEnabled) {
             ctxt.unregisterReceiver(mIntentReceiver);
@@ -65,6 +77,9 @@ public class WifiP2pConnectivityTracker extends Observable {
         }
     }
 
+    /** Retrieve the IP assigned to the current device in the current Wi-Fi Direct Group.
+     * @return the IP address
+     */
     public String getAssignedIp() {
         return mAssignedIpv4;
     }

@@ -22,6 +22,10 @@ import pt.ulusofona.copelabs.ndn.android.umobile.tracker.WifiP2pConnectivityTrac
 
 // @TODO: figure out if the observed micro-cuts [LOST =(1-2seconds)= FOUND] can be safely concealed.
 // @TODO: Services are sometimes lost for longer period of time ...
+
+/** Implementation of a tracker which maintains a list of Nsd services detected in the same
+ * Wi-Fi Direct Group along with their status. Singleton implementation.
+ */
 public class NsdServiceTracker extends Observable implements Observer {
     private static final String TAG = NsdServiceTracker.class.getSimpleName();
 
@@ -43,12 +47,19 @@ public class NsdServiceTracker extends Observable implements Observer {
 
     private NsdServiceTracker() {}
 
+    /** Obtain the instance of the tracker.
+     * @return the singleton instance of the tracker
+     */
     public static NsdServiceTracker getInstance() {
         if(INSTANCE == null)
             INSTANCE = new NsdServiceTracker();
         return INSTANCE;
     }
 
+    /** Enable the tracker.
+     * @param context the Android context within which the tracker should be activated.
+     * @param uuid the UUID of the current device. Used for filtering out from the detected services.
+     */
     public synchronized void enable(Context context, String uuid) {
         if (!mEnabled) {
             Log.i(TAG, "Enabling");
@@ -65,6 +76,8 @@ public class NsdServiceTracker extends Observable implements Observer {
             Log.i(TAG, "Enabling TWICE");
     }
 
+    /** Disable the tracker.
+     */
     public synchronized void disable() {
         if (mEnabled) {
             Log.i(TAG, "Disabling");
@@ -80,6 +93,8 @@ public class NsdServiceTracker extends Observable implements Observer {
             Log.i(TAG, "Disabling TWICE");
     }
 
+    /** Starts the tracker; services will be discovered on the current Wi-Fi Direct Group.
+     */
     private synchronized void start() {
         if(mEnabled && !mStarted) {
             Log.i(TAG, "Starting");
@@ -89,6 +104,8 @@ public class NsdServiceTracker extends Observable implements Observer {
             Log.i(TAG, "Starting TWICE");
     }
 
+    /** Stops the tracker; services detected on the current Wi-Fi Direct Group will no longer be updated.
+     */
     private synchronized void stop() {
         if(mEnabled && mStarted) {
             Log.i(TAG, "Stopping");
@@ -104,10 +121,17 @@ public class NsdServiceTracker extends Observable implements Observer {
             Log.i(TAG, "Stopping TWICE");
     }
 
+    /** Retrieve the list of currently known services.
+     * @return
+     */
     public Map<String, NsdService> getServices() {
         return mServices;
     }
 
+    /** Invoked upon resolution completion to update the NSD service details
+     * with the new information available about it.
+     * @param descriptor relevant informations describing the service details that have changed
+     */
     private void resolutionCompleted(NsdServiceInfo descriptor) {
         String svcUuid = descriptor.getServiceName();
 
@@ -125,19 +149,24 @@ public class NsdServiceTracker extends Observable implements Observer {
         setChanged(); notifyObservers(svc);
     }
 
-    /** D3.1 & D3.3 & D5.3 */
-
+    /** Observer method to process notifications from Observables. cfr. java.util.Observer.
+     * @param observable
+     * @param obj
+     */
     @Override
     public void update(Observable observable, Object obj) {
         if (observable instanceof WifiP2pConnectivityTracker) {
             boolean isConnected = (boolean) obj;
             Log.d(TAG, "Connection change : " + (isConnected ? "CONNECTED" : "DISCONNECTED"));
 
+            // When the current device joins a Wi-Fi Direct Group, start detecting services,
+            // When the current device leaves the Wi-Fi Direct Group, stop detecting services.
             if(isConnected) start();
             else stop();
 
 
         } else if(observable instanceof NsdServiceResolver)
+            // Update the NSD Service upon resolution completion
             resolutionCompleted((NsdServiceInfo) obj);
         else
             Log.w(TAG, "Update from unknown Observable " + observable.getClass());

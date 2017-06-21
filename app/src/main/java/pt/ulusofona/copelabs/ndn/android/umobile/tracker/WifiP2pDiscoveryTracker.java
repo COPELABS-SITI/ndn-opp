@@ -15,6 +15,8 @@ import android.util.Log;
 
 import java.util.Observable;
 
+/** Implementation of the Wi-Fi Direct peer discovery class. Implemented as an Observable.
+ */
 public class WifiP2pDiscoveryTracker  extends Observable {
     private static final String TAG = WifiP2pStateTracker.class.getSimpleName();
 
@@ -25,6 +27,9 @@ public class WifiP2pDiscoveryTracker  extends Observable {
 
     private boolean mEnabled = false;
 
+    /** Retrieve the singleton instance of the discovery tracker.
+     * @return
+     */
     public static WifiP2pDiscoveryTracker getInstance() {
         if(INSTANCE == null)
             INSTANCE = new WifiP2pDiscoveryTracker();
@@ -35,6 +40,9 @@ public class WifiP2pDiscoveryTracker  extends Observable {
         mIntents.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
     }
 
+    /** Enable the tracker; discovered peers will be reported.
+     * @param ctxt
+     */
     public synchronized void enable(Context ctxt) {
         if(!mEnabled) {
             ctxt.registerReceiver(mDiscoveryEventReceiver, mIntents);
@@ -42,6 +50,9 @@ public class WifiP2pDiscoveryTracker  extends Observable {
         }
     }
 
+    /** Disable the tracker.
+     * @param ctxt
+     */
     public synchronized void disable(Context ctxt) {
         if(mEnabled) {
             ctxt.unregisterReceiver(mDiscoveryEventReceiver);

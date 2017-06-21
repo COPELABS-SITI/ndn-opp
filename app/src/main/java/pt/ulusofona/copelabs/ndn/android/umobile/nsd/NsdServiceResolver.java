@@ -17,6 +17,9 @@ import java.util.LinkedList;
 import java.util.Observable;
 import java.util.Queue;
 
+/** Implementation of a resolver which serializes resolution operations upon detection of new
+ * services in the same Wi-Fi Direct Group.
+ */
 class NsdServiceResolver extends Observable {
     private static final String TAG = NsdServiceResolver.class.getSimpleName();
 
@@ -28,6 +31,9 @@ class NsdServiceResolver extends Observable {
 
     private Queue<NsdServiceInfo> mQueue = new LinkedList<>();
 
+    /** Enable the resolver; services that are detected will be resolved serially.
+     * @param nsdMgr
+     */
     synchronized void enable(NsdManager nsdMgr) {
         if(!mEnabled) {
             mNsdManager = nsdMgr;
@@ -35,6 +41,8 @@ class NsdServiceResolver extends Observable {
         }
     }
 
+    /** Disable the resolver. All pending resolution are dropped.
+     */
     synchronized void disable() {
         if(mEnabled) {
             mQueue.clear();
@@ -43,6 +51,8 @@ class NsdServiceResolver extends Observable {
         }
     }
 
+    /** Effectively perform the resolution of the next service in the queue.
+     */
     private synchronized void resolveNext() {
         if(mQueue.isEmpty()) {
             mResolutionPending = false;
@@ -50,6 +60,9 @@ class NsdServiceResolver extends Observable {
             mNsdManager.resolveService(mQueue.remove(), mListener);
     }
 
+    /** Used to request resolution of a service. If a resolution is underway, the resolution is placed in a queue.
+     * @param descriptor partial details of the newly discovered service
+     */
     synchronized void resolve(NsdServiceInfo descriptor) {
         if(mResolutionPending) {
             Log.d(TAG, "Queueing descriptor.");

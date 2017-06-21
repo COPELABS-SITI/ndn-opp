@@ -24,7 +24,8 @@ public class NsdServiceRegistrar {
 
     private String mAssignedUuid;
 
-    /** Register a NsdService which
+    /** Register a NsdService which will be advertised on the Wi-Fi Direct Group
+     * to which the device is connected
      * @param context context within which the service has to be registered
      * @param uuid UUID of the device to be used as an identifier for the service
      * @param port Port number on which the NDN-Opp daemon is reachable
@@ -49,7 +50,7 @@ public class NsdServiceRegistrar {
             Log.w(TAG, "Attempt to register a second time.");
     }
 
-    /** Unregister the NsdService */
+    /** Unregister the service */
     public synchronized void unregister() {
         if(mRegistered) {
             Log.v(TAG, "Unregistering");

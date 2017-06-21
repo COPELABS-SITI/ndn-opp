@@ -15,6 +15,8 @@ import android.widget.Toast;
 
 import java.util.Map;
 
+/** Manager for WifiP2p connectivity to take care of everything related to forming groups, connecting
+ *  devices together. */
 public class WifiP2pConnectivityManager {
     private static final String TAG = WifiP2pConnectivityManager.class.getSimpleName();
 
@@ -25,6 +27,12 @@ public class WifiP2pConnectivityManager {
     private WifiP2pManager.Channel mWifiP2pChannel;
     private boolean mEnabled = false;
 
+    /** Enable the connectivity manager;
+     * @param context context within which the connection should occur
+     * @param wifiP2pMgr Wi-Fi P2P Manager to rely on for establishing connections (groups)
+     * @param wifiP2pChn Wi-Fi P2P Channel to use
+     * @param uuid UUID assigned to the current device
+     */
     public synchronized void enable(Context context, WifiP2pManager wifiP2pMgr, WifiP2pManager.Channel wifiP2pChn, String uuid) {
         if(!mEnabled) {
             mContext = context;
@@ -35,6 +43,8 @@ public class WifiP2pConnectivityManager {
         }
     }
 
+    /** Disable the connectivity manager; group formation will no longer be possible
+     */
     public synchronized void disable() {
         if(mEnabled) {
             mContext = null;
@@ -44,6 +54,11 @@ public class WifiP2pConnectivityManager {
         }
     }
 
+    /** Initiate a group formation given a list of candidates. This method implements a simple heuristic to perform
+     * a group formation in a way that maximizes the likelihood that most devices within physical proximity agree
+     * on who ought to be the group owner as well as the likelihood that that device will become the group owner.
+     * @param candidates a map of all peers
+     */
     public void join(Map<String, WifiP2pPeer> candidates) {
         if(!mConnected) {
             Log.d(TAG, "Selecting Group Owner among " + candidates);
