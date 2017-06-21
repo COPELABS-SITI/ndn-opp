@@ -19,6 +19,7 @@ import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.models.CsEntry;
 import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
+/** Fragment used to display the ContentStore of the running daemon. */
 public class ContentStore extends Fragment implements Refreshable {
 	private Table<CsEntry> mContentStore;
 

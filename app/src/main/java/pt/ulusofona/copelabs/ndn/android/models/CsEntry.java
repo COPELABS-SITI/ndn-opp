@@ -16,14 +16,13 @@ import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
 /** The model class used to represent entries from the ContentStore within the Android app.
- *  Given that an entry from CS is a Name + Content, the item_cell_two layout is used.
+ *  Given that an entry from CS is a Name + Content, a layout with two cells is used.
  */
 public class CsEntry implements Table.Entry, Comparable<CsEntry> {
     private String name;
 	private String data;
 
-    /**
-     * Main constructor.
+    /** Main constructor.
      * @param name the Name of this CsEntry
      * @param data a string representation of the Data packet associated to this' Name
      */

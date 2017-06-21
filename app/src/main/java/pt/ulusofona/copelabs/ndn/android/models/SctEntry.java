@@ -16,14 +16,13 @@ import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
 /** The model class used to represent entries from the StrategyChoiceTable within the Android app.
- *  A SctEntry associates a forwarding strategy (identified by a string) to a certain Name prefix.
+ *  A SctEntry associates a forwarding strategy (identified by a string) to a Name prefix.
  */
 public class SctEntry implements Table.Entry, Comparable<SctEntry> {
     private String prefix;
 	private String strategy;
 
-    /**
-     * Main constructor.
+    /** Main constructor.
      * @param prefix the Name prefix associated with this entry
      * @param strategy the name of the strategy associated with this entry
      */

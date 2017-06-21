@@ -35,14 +35,14 @@ public class PitEntry implements Table.Entry, Comparable<PitEntry> {
 		outFaces = new ArrayList<>();
 	}
 
-	/** Reference a new Incoming Face for this PitEntry
+	/** Add a new Incoming Face for this PitEntry
 	 * @param faceId ID of the Incoming Face
 	 */
 	public void addInRecord(long faceId) {
 		inFaces.add(faceId);
 	}
 
-	/** Reference a new Outgoing Face for this PitEntry
+	/** Add a new Outgoing Face for this PitEntry
 	 * @param faceId ID of the Outgoing Face
 	 */
 	public void addOutRecord(long faceId) {

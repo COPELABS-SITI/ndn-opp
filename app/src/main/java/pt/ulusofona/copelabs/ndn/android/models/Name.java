@@ -15,6 +15,7 @@ import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
 /** The model class used to represent entries from the Name tree within the Android app.
+ * Uses a single cell layout for displaying.
  */
 public class Name implements Table.Entry, Comparable<Name> {
 	private String name;

@@ -18,6 +18,7 @@ import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.models.Face;
 import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
+/** Fragment used to display the FaceTable of the running daemon. */
 public class FaceTable extends Fragment implements Refreshable {
 	private Table<Face> mFacetable;
 

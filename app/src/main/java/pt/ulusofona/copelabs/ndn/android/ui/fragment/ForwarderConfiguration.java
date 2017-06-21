@@ -20,6 +20,7 @@ import pt.ulusofona.copelabs.ndn.android.models.FibEntry;
 import pt.ulusofona.copelabs.ndn.android.models.SctEntry;
 import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
+/** Fragment used to display the Forwarder configuration (FIB + SCT) of the running daemon. */
 public class ForwarderConfiguration extends Fragment implements Refreshable {
 	private Table<FibEntry> mFib;
 	private Table<SctEntry> mSct;

@@ -32,8 +32,8 @@ public class FibEntry implements Table.Entry, Comparable<FibEntry> {
 		this.faceIds = new LongSparseArray<>();
 	}
 
-    /**
-     * Associated a pair (Face, Cost)
+    /** Associate a pair (Face, Cost) to this FibEntry. Updates the Cost of the Face if it is
+     * already associated.
      * @param faceId the ID of the Face to associated to this entry
      * @param cost the cost to associate the Face identified by faceId
      */

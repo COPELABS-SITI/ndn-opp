@@ -22,7 +22,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,13 +38,22 @@ import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.WifiP2pConnectivityMana
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.WifiP2pPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.WifiP2pPeerTracker;
 
+/** Interface to the Peer Tracking functionality of NDN-Opp. This Fragment is responsible for integrating
+ * the functionalities of the NsdServiceTracker, the WifiP2pPeerTracker and the WifiP2pConnectivityManager.
+ *
+ * The interactions between these three components is as follows;
+ *
+ * - The Peer Tracker provides the up-to-date list of Wi-Fi P2P devices running NDN-Opp that were encountered
+ * - The Connectivity Manager is used to take care of the formation of a Wi-Fi Direct Group (whether to form a new one or join an existing one)
+ * - The NSD Service Tracker is used to know which NDN-Opp daemon can be reached within the Group to which the current device is connected (if it is)
+ */
 public class PeerTracking extends Fragment implements Observer {
     private static final String TAG = PeerTracking.class.getSimpleName();
 
-    private String mAssignedUuid;
-    private ProgressBar mScanInProgress;
-
-    private ScanDetector mScanningDetector = new ScanDetector();
+    // Used for feedback to the user that a peerDiscovery is in progress
+    private ProgressBar mDiscoveryInProgress;
+    // Used to detect changes to the peerDiscovery process (see WIFI_P2P_DISCOVERY_CHANGED_ACTION)
+    private DiscoveryDetector mDiscoveryDetector = new DiscoveryDetector();
 
     private NsdServiceTracker mServiceTracker = NsdServiceTracker.getInstance();
     private WifiP2pPeerTracker mWifiP2pPeerTracker = WifiP2pPeerTracker.getInstance();
@@ -57,6 +65,9 @@ public class PeerTracking extends Fragment implements Observer {
     private WifiP2pPeerAdapter mWifiP2pPeerAdapter;
     private NsdServiceAdapter mNsdServiceAdapter;
 
+    /** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html
+     * @param context Android-provided Application context
+     */
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -64,10 +75,8 @@ public class PeerTracking extends Fragment implements Observer {
         WifiP2pManager mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
         WifiP2pManager.Channel mWifiP2pChannel = mWifiP2pManager.initialize(context, Looper.getMainLooper(), null);
 
-        mScanningDetector = new ScanDetector();
-        context.registerReceiver(mScanningDetector, new IntentFilter(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION));
-
-        mAssignedUuid = Utilities.obtainUuid(context);
+        mDiscoveryDetector = new DiscoveryDetector();
+        context.registerReceiver(mDiscoveryDetector, new IntentFilter(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION));
 
         mWifiP2pPeerAdapter = new WifiP2pPeerAdapter(context);
         mNsdServiceAdapter = new NsdServiceAdapter(context);
@@ -75,16 +84,18 @@ public class PeerTracking extends Fragment implements Observer {
         mPeers.putAll(mWifiP2pPeerTracker.getPeers());
         mServices.putAll(mServiceTracker.getServices());
 
-        mWifiP2pConnectivityManager.enable(context, mWifiP2pManager, mWifiP2pChannel, mAssignedUuid);
+        mWifiP2pConnectivityManager.enable(context, mWifiP2pManager, mWifiP2pChannel, Utilities.obtainUuid(context));
     }
 
+    /** Fragment lifecycle method (see https://developer.android.com/guide/components/fragments.html) */
     @Override
     public void onDetach() {
         mWifiP2pConnectivityManager.disable();
-        getContext().unregisterReceiver(mScanningDetector);
+        getContext().unregisterReceiver(mDiscoveryDetector);
         super.onDetach();
     }
 
+    /** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html */
     @Override
     public void onResume() {
         super.onResume();
@@ -92,6 +103,7 @@ public class PeerTracking extends Fragment implements Observer {
         mWifiP2pPeerTracker.addObserver(this);
     }
 
+    /** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html */
     @Override
     public void onPause() {
         mServiceTracker.deleteObserver(this);
@@ -99,12 +111,13 @@ public class PeerTracking extends Fragment implements Observer {
         super.onPause();
     }
 
+    /** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View viewWifiP2pTracking = inflater.inflate(R.layout.fragment_nsd_over_wifip2p_tracking, container, false);
 
-        mScanInProgress = (ProgressBar) viewWifiP2pTracking.findViewById(R.id.scanInProgress);
+        mDiscoveryInProgress = (ProgressBar) viewWifiP2pTracking.findViewById(R.id.discoveryInProgress);
 
         Button btn_groupFormation = (Button) viewWifiP2pTracking.findViewById(R.id.button_group_formation);
         btn_groupFormation.setOnClickListener(new View.OnClickListener() {
@@ -147,12 +160,16 @@ public class PeerTracking extends Fragment implements Observer {
         FragmentActivity act = getActivity();
 
         if(observable instanceof WifiP2pPeerTracker) {
+            /* When the PeerTracker notifies of some changes to its list, retrieve the new list of Peers
+               and use it to update the UI accordingly. */
             mPeers.clear();
             mPeers.putAll(mWifiP2pPeerTracker.getPeers());
 
             if(act != null)
                 act.runOnUiThread(mPeerUpdater);
         } else if (observable instanceof NsdServiceTracker) {
+            /* When the NSD Service Tracker notifies of some changes to its list, retrieve the new list of services
+               and use it to update the UI accordingly. */
             if(obj != null) {
                 NsdService svc = (NsdService) obj;
                 mServices.put(svc.getUuid(), svc);
@@ -166,16 +183,17 @@ public class PeerTracking extends Fragment implements Observer {
         }
     }
 
-    private class ScanDetector extends BroadcastReceiver {
+    // Used to toggle the visibility of the ProgressBar based on whether peer discovery is running
+    private class DiscoveryDetector extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION.equals(action)) {
                 int extra = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE, -1);
                 if(extra == WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED)
-                    mScanInProgress.setVisibility(View.VISIBLE);
+                    mDiscoveryInProgress.setVisibility(View.VISIBLE);
                 else
-                    mScanInProgress.setVisibility(View.INVISIBLE);
+                    mDiscoveryInProgress.setVisibility(View.INVISIBLE);
             }
         }
     }

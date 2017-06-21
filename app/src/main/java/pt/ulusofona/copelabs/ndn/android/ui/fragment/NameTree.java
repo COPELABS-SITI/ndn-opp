@@ -22,6 +22,7 @@ import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.models.Name;
 import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
+/** Fragment used to display the Name Tree of the running daemon. */
 public class NameTree extends Fragment implements Refreshable {
 	private Table<Name> mNameTree;
 
