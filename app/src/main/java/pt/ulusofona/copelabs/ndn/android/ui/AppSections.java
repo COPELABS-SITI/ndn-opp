@@ -81,7 +81,7 @@ class AppSections extends FragmentPagerAdapter {
         return mCurrentlyDisplayedTitle;
     }
 
-    public void refresh(ForwardingDaemon daemon, int currentPosition) {
+    public void refresh(ForwardingDaemon.DaemonBinder daemon, int currentPosition) {
         Fragment current = getItem(currentPosition);
         if(current instanceof Refreshable) {
             Refreshable refr = (Refreshable) current;

@@ -11,6 +11,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 
+/** Used to provide a list of Tabs for the Main UI */
 class MainTabListener implements ActionBar.TabListener {
     private final ViewPager mPager;
     private int mCurrentPosition = 0;

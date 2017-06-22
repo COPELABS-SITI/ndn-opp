@@ -50,8 +50,7 @@ public class AddRouteDialog extends DialogFragment {
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-		ForwardingDaemon.DaemonBinder dBinder = (ForwardingDaemon.DaemonBinder) getArguments().getBinder("ForwardingDaemon");
-		final ForwardingDaemon fwdDaemon = dBinder.getService();
+		final ForwardingDaemon.DaemonBinder fwdDaemon = (ForwardingDaemon.DaemonBinder) getArguments().getBinder("ForwardingDaemon");
 
 		View dialog = View.inflate(getContext(), R.layout.dialog_add_route, null);
 

@@ -18,17 +18,25 @@ import java.net.Socket;
 class OpportunisticChannel {
     private static final String TAG = OpportunisticChannel.class.getSimpleName();
 
-    private final ForwardingDaemon mDaemon;
-    private final Routing mRouting;
+    private final ForwardingDaemon.DaemonBinder mDaemon;
+    private final OpportunisticFaceManager mOppFaceManager;
     private final long mFaceId;
     private final String mUuid;
     private final String mHost;
     private final int mPort;
 
-    OpportunisticChannel(ForwardingDaemon daemon, Routing routing, String uuid, long faceId, String host, int port) {
+    /** Main constructor
+     * @param daemon Binder to the ForwardingDaemon
+     * @param oppFaceMgr Opportunistic Face Manager
+     * @param uuid UUID of the corresponding device
+     * @param faceId FaceId of the Face this channel will be attached to
+     * @param host IP address of the corresponding device
+     * @param port Port number of the corresponding device
+     */
+    OpportunisticChannel(ForwardingDaemon.DaemonBinder daemon, OpportunisticFaceManager oppFaceMgr, String uuid, long faceId, String host, int port) {
         Log.d(TAG, "Creating OpportunisticChannel for " + host + ":" + port);
         mDaemon = daemon;
-        mRouting = routing;
+        mOppFaceManager = oppFaceMgr;
         mFaceId = faceId;
         mUuid = uuid;
         mHost = host;
@@ -42,24 +50,23 @@ class OpportunisticChannel {
         ct.execute();
     }
 
+    /** ConnectionTask is used to perform a transfer with
+     */
     private class ConnectionTask extends AsyncTask<Void, Void, Boolean> {
         private String mHost;
         private int mPort;
         private byte[] mBuffer;
 
-        ConnectionTask(String h, int p, byte[] buf) {
-            mHost = h;
-            mPort = p;
-            mBuffer = buf;
+        ConnectionTask(String host, int port, byte[] buffer) {
+            mHost = host;
+            mPort = port;
+            mBuffer = buffer;
         }
 
-        private String hex(byte[] buf, int limit) {
-            StringBuilder hexStr = new StringBuilder();
-            for(int i = 0; i < limit; i++)
-                hexStr.append(Integer.toHexString(buf[i] & 0xFF)).append(" ");
-            return hexStr.toString();
-        }
-
+        /** Performs the actual transfer of the packet.
+         * @param voids no parameters
+         * @return boolean value reflecting whether the transfer is a success or not
+         */
         @Override
         protected Boolean doInBackground(Void... voids) {
             boolean transferSucceeded;
@@ -69,19 +76,22 @@ class OpportunisticChannel {
                 Log.d(TAG, "Connection established to " + connection.toString() + " ? " + connection.isConnected());
                 DataOutputStream dos = new DataOutputStream(connection.getOutputStream());
                 dos.write(mBuffer, 0, mBuffer.length);
-                Log.d(TAG, "Payload: " + hex(mBuffer, mBuffer.length));
                 dos.flush();
                 dos.close();
                 transferSucceeded = true;
             } catch (IOException e) {
                 Log.d(TAG, "Transfer failed.");
-                mRouting.bringDownFace(mUuid);
+                mOppFaceManager.bringDownFace(mUuid);
                 e.printStackTrace();
                 transferSucceeded = false;
             }
             return transferSucceeded;
         }
 
+        /** After the task completes, used to callback into the NDN Opportunistic Daemon to notify the
+         * requesting Face of the outcome of the transfer.
+         * @param transferSucceeded success result of the transfer
+         */
         @Override
         protected void onPostExecute(Boolean transferSucceeded) {
             mDaemon.sendComplete(mFaceId, transferSucceeded);

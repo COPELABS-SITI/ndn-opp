@@ -1,12 +1,7 @@
-/**
- *  @version 1.0
+/* @version 1.0
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
- * The Router class acts as the pivot between the ContextualManager and the ForwardingDaemon.
- * It fullfills two functions within the App
- * (1) Routing: recomputing the new routes to be installed into the ForwardingDaemon's RIB
- * (2) Face management: translating the changes in neighborhood (i.e. other UMobile nodes availability)
- * into bringing the corresponding Faces AVAILABLE and UNAVAILABLE and establishing the connection that those Faces
- * ought to use for communication.
+ * Implementation of a Routing engine that serves as the interface between the NOD
+ * and the Contextual Manager.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
 package pt.ulusofona.copelabs.ndn.android.umobile;
@@ -43,13 +38,27 @@ import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceRegistrar;
 import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceTracker;
 
 // @TODO: if phone goes to sleep, all the open connections will close.
-public class Routing implements Observer {
-    private static final String TAG = Routing.class.getSimpleName();
+
+/**
+ * The Opportunistic Face Manager acts as the pivot between the ContextualManager and the ForwardingDaemon.
+ * It fullfills two functions within the App
+ * (1) Routing: recomputing the new routes to be installed into the ForwardingDaemon's RIB
+ * (2) Face management: translating the changes in neighborhood (i.e. other UMobile nodes availability)
+ * into bringing the corresponding Faces AVAILABLE and UNAVAILABLE and establishing the connection that those Faces
+ * ought to use for communication.
+ */
+public class OpportunisticFaceManager implements Observer {
+    private static final String TAG = OpportunisticFaceManager.class.getSimpleName();
     private static final int DEFAULT_PORT = 16363;
 
-    private ForwardingDaemon mDaemon;
+    private Context mContext;
+    private ForwardingDaemon.DaemonBinder mDaemon;
+
+    // Associates a NsdService to a UUID
     private Map<String, NsdService> mUmobileServices = new HashMap<>();
+    // Associates a FaceId to a UUID
     private Map<String, Long> mOppFaceIds = new HashMap<>();
+    // Associates a OpportunisticChannel to a UUID
     private Map<String, OpportunisticChannel> mOppChannels = new HashMap<>();
 
     private boolean mEnabled = false;
@@ -58,21 +67,34 @@ public class Routing implements Observer {
     private NsdServiceRegistrar mRegistrar = new NsdServiceRegistrar();
     private ConnectionEventDetector mConnectionDetector = new ConnectionEventDetector();
 
-	void enable(ForwardingDaemon daemon) {
-        mDaemon = daemon;
-        mDaemon.registerReceiver(mConnectionDetector, new IntentFilter(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION));
+    /** Enable the OppFaceManager. When enabled, it reacts to changes in the connection status to a Wi-Fi Direct Group.
+     * As the Group Formation results in the device being assigned an IP address, a listening socket will be opened and
+     * used for the reception of Interest/Data packets from other devices connected to the same Group. Furthermore,
+     * @param context Android-provided context
+     * @param binder Binder to the ForwardingDaemon
+     */
+	void enable(Context context, ForwardingDaemon.DaemonBinder binder) {
+        mDaemon = binder;
+
+        mContext = context;
+        mContext.registerReceiver(mConnectionDetector, new IntentFilter(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION));
     }
 
+    /** Disable the Routing engine. Changes in the connection status of Wi-Fi Direct Groups will be ignored. */
     void disable() {
-        mDaemon.unregisterReceiver(mConnectionDetector);
+        mContext.unregisterReceiver(mConnectionDetector);
         disableService();
     }
 
-    void afterFaceAdd(Face f) {
-        // If this is an opportunistic face, it must be introduced into the RIB for /ndn/multicast.
-        long faceId = f.getFaceId();
-        if(f.getRemoteUri().startsWith("opp://")) {
-            String peerUuid = f.getRemoteUri().substring(6);
+    /** Callback method invoked by the ForwardingDaemon when the creation of a Face has been successful.
+     * @param face a representation of the Face that was created
+     */
+    void afterFaceAdded(Face face) {
+        /* If the created face is an opportunistic one, it must be registered into the data structures used
+           to make the link with the socket on the other side. */
+        if(face.getRemoteUri().startsWith("opp://")) {
+            long faceId = face.getFaceId();
+            String peerUuid = face.getRemoteUri().substring(6);
             mOppFaceIds.put(peerUuid, faceId);
 
             Log.d(TAG, "Registering Opportunistic Face " + faceId + " in RIB for prefix /ndn/multicast.");
@@ -80,6 +102,9 @@ public class Routing implements Observer {
         }
     }
 
+    /** Used to handle when a UMobile peer is detected to bring up its corresponding Face.
+     * @param uuid the UUID of the device that was detected.
+     */
     void bringUpFace(String uuid) {
         Log.d(TAG, "Bringing UP face for " + uuid + " " + mOppFaceIds.containsKey(uuid));
         if(mOppFaceIds.containsKey(uuid)) {
@@ -93,6 +118,9 @@ public class Routing implements Observer {
         }
     }
 
+    /** Used to handle the departure of an NDN-Opp peer from the current Wi-Fi Direct Group
+     * @param uuid the UUID of the NDN-Opp peer which left
+     */
     void bringDownFace(String uuid) {
         Log.d(TAG, "Bringing DOWN face for " + uuid);
         if (mOppFaceIds.containsKey(uuid)) {
@@ -103,6 +131,9 @@ public class Routing implements Observer {
         }
     }
 
+    /** Update service information regarding a NDN-Opp peer
+     * @param current new information to be used for the update
+     */
     private void updateService(NsdService current) {
         if(current.getStatus() == NsdService.Status.AVAILABLE) {
             /* If the peer is unknown (i.e. its UUID is not in the list of UMobile peers,
@@ -120,6 +151,10 @@ public class Routing implements Observer {
         }
     }
 
+    /** Enable the service which enables packets to be transferred. This includes opening a listening socket
+     * on an IP:port combination which can be used to effectively transfer Interest/Data packets among the NDN-Opp peers.
+     * @param assignedIp the IP that has been assigned to the current device within the Wi-Fi Direct Group it is connected to
+     */
     private void enableService(String assignedIp) {
         if(!mEnabled) {
             try {
@@ -128,7 +163,7 @@ public class Routing implements Observer {
                 socket.bind(new InetSocketAddress(assignedIp, DEFAULT_PORT));
                 mConnector = new ConnectionHandler(socket);
                 mConnector.start();
-                mRegistrar.register(mDaemon, mDaemon.getUmobileUuid(), assignedIp, DEFAULT_PORT);
+                mRegistrar.register(mContext, mDaemon.getUmobileUuid(), assignedIp, DEFAULT_PORT);
                 mEnabled = true;
             } catch (IOException e) {
                 Log.e(TAG, "Failed to open listening socket");
@@ -137,6 +172,7 @@ public class Routing implements Observer {
         }
     }
 
+    /** Disable the packet transfer service. */
     private void disableService() {
         if(mEnabled) {
             mConnector.terminate();
@@ -145,6 +181,10 @@ public class Routing implements Observer {
         }
     }
 
+    /** Update the state of the Routing engine based on what the NSD Service Tracker reports
+     * @param observable observable notifying of changes
+     * @param obj optional parameter passed by the observable
+     */
     @Override
     public void update(Observable observable, Object obj) {
         if(observable instanceof NsdServiceTracker) {
@@ -186,6 +226,8 @@ public class Routing implements Observer {
             }
         }
 
+        /** Main thread encapsulating the logic of packet reception
+         */
         @Override
         public void run() {
             mEnabled = true;
@@ -193,25 +235,35 @@ public class Routing implements Observer {
             while(mEnabled) {
                 try {
                     // @TODO: multi-threaded receiver.
+                    // Accept the next connection.
                     Socket connection = mAcceptingSocket.accept();
                     Log.d(TAG, "Connection from " + connection.toString());
                     DataInputStream in = new DataInputStream(connection.getInputStream());
                     int availableBytes = in.available();
+                    // Receive the bytes into the local buffer.
                     int received = in.read(mBuffer, 0, availableBytes);
                     Log.d(TAG, "Received " + received + " bytes of " + availableBytes + " expected.");
+                    // Cleanup
                     in.close();
-                    if(received > 0)
-                        mDaemon.receiveOnFace(identifyUuid(connection.getInetAddress().getHostAddress()), received, mBuffer);
-                    connection.close();
+                    // Pass on the buffer to the Face for which it is intended. The identification is done by
+                    // matching the remote IP with the UUID.
                     /** Use the IP to identify which service (UUID) is on the other end
-                        pass the received packet to the corresponding transport. */
+                     pass the received packet to the corresponding Opportunistic Face. */
+                    if(received > 0)
+                        mDaemon.receiveOnFace(identifyFaceIdFromHostAddress(connection.getInetAddress().getHostAddress()), received, mBuffer);
+                    // Close connection
+                    connection.close();
                 } catch (IOException e) {
                     Log.e(TAG, "Connection went WRONG.");
                 }
             }
         }
 
-        private long identifyUuid(String hostAddress) {
+        /** Returns the FaceId of the Face corresponding to the remote host.
+         * @param hostAddress the host address of the remote point of the connection
+         * @return the FaceId of the Face that points to the remote host
+         */
+        private long identifyFaceIdFromHostAddress(String hostAddress) {
             for(NsdService svc : mUmobileServices.values())
                 if(svc.getHost().equals(hostAddress))
                     return mOppFaceIds.get(svc.getUuid());
@@ -221,6 +273,7 @@ public class Routing implements Observer {
         }
     }
 
+    /** ConnectionEventDetector keeps track of connection events relating to the Wi-Fi Direct Group */
     private class ConnectionEventDetector extends BroadcastReceiver {
         private String mAssignedIpv4 = null;
 

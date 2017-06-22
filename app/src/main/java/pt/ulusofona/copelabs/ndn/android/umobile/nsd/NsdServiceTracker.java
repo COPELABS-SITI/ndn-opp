@@ -29,7 +29,7 @@ import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 
 /** Implementation of a tracker which maintains a list of NSD services detected in the same
  * Wi-Fi Direct Group along with their status. This list is maintained even after the current
- * device leaves the Group.
+ * device leaves the Wi-Fi Direct Group.
  */
 public class NsdServiceTracker extends Observable implements Observer {
     private static final String TAG = NsdServiceTracker.class.getSimpleName();
@@ -60,7 +60,9 @@ public class NsdServiceTracker extends Observable implements Observer {
         return INSTANCE;
     }
 
-    /** Enable this NSD Service Tracker.
+    /** Enable this NSD Service Tracker. When enabled, the tracker will react to Wi-Fi Direct Group
+     * connections by activating service tracking within that Group and update its list of NSD Services
+     * accordingly.
      * @param context the Android context within which the tracker should be activated.
      * @param uuid the UUID of the current device. Used for filtering out from the detected services.
      */
@@ -81,8 +83,7 @@ public class NsdServiceTracker extends Observable implements Observer {
             Log.i(TAG, "Enabling TWICE");
     }
 
-    /** Disable the tracker.
-     */
+    /** Disable the tracker. Future Group connections will be ignored as well as notifigations from the Service Tracker. */
     public synchronized void disable() {
         if (mEnabled) {
             Log.i(TAG, "Disabling");
@@ -98,8 +99,7 @@ public class NsdServiceTracker extends Observable implements Observer {
             Log.i(TAG, "Disabling TWICE");
     }
 
-    /** Starts the tracker; services will be discovered on the current Wi-Fi Direct Group.
-     */
+    /** Starts the tracker; services will be discovered on the current Wi-Fi Direct Group. */
     private synchronized void start() {
         if(mEnabled && !mStarted) {
             Log.i(TAG, "Starting");
@@ -109,8 +109,7 @@ public class NsdServiceTracker extends Observable implements Observer {
             Log.i(TAG, "Starting TWICE");
     }
 
-    /** Stops the tracker; services detected on the current Wi-Fi Direct Group will no longer be updated.
-     */
+    /** Stops the tracker; services detected on the current Wi-Fi Direct Group will no longer be updated. */
     private synchronized void stop() {
         if(mEnabled && mStarted) {
             Log.i(TAG, "Stopping");
@@ -126,8 +125,8 @@ public class NsdServiceTracker extends Observable implements Observer {
             Log.i(TAG, "Stopping TWICE");
     }
 
-    /** Retrieve the list of currently known services.
-     * @return
+    /** Retrieve the list of all NSD services ever detected across all Wi-Fi Direct Groups.
+     * @return list of NSD services
      */
     public Map<String, NsdService> getServices() {
         return mServices;
@@ -154,9 +153,9 @@ public class NsdServiceTracker extends Observable implements Observer {
         setChanged(); notifyObservers(svc);
     }
 
-    /** Observer method to process notifications from Observables. cfr. java.util.Observer.
-     * @param observable
-     * @param obj
+    /** Observer method to process notifications from Observables
+     * @param observable observable which notified of a change
+     * @param obj optional parameter passed by the observable as part of its notification
      */
     @Override
     public void update(Observable observable, Object obj) {

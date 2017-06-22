@@ -22,14 +22,15 @@ import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
 /** Fragment used to display the Forwarder configuration (FIB + SCT) of the running daemon. */
 public class ForwarderConfiguration extends Fragment implements Refreshable {
-	private Table<FibEntry> mFib;
-	private Table<SctEntry> mSct;
+	private Table<FibEntry> mFib = Table.newInstance(R.string.fib, R.layout.item_cell_two);
+	private Table<SctEntry> mSct = Table.newInstance(R.string.sct, R.layout.item_cell_two);
 
-    public ForwarderConfiguration() {
-        mFib = Table.newInstance(R.string.fib, R.layout.item_cell_two);
-		mSct = Table.newInstance(R.string.sct, R.layout.item_cell_two);
-    }
-
+	/** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html
+	 * @param inflater Android-provided layout inflater
+	 * @param parent parent View within the hierarchy
+	 * @param savedInstanceState previously saved state of the View instance
+	 * @return the View to be used
+	 */
     @Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
 		View fwdConfig = inflater.inflate(R.layout.fragment_ndn_table2, parent, false);
@@ -43,17 +44,24 @@ public class ForwarderConfiguration extends Fragment implements Refreshable {
 		return fwdConfig;
 	}
 
+	/** Obtain the title to be displayed for these tables
+	 * @return the title to be displayed
+	 */
     @Override
     public int getTitle() {
         return R.string.forwarderConfiguration;
     }
 
-    @Override
-	public void refresh(@NonNull ForwardingDaemon daemon) {
+	/** Performs a refresh of the contents of the enclosed tables
+	 * @param daemon Binder to the ForwardingDaemon used to retrieve the new entries to update this View with
+	 */
+	@Override
+	public void refresh(@NonNull ForwardingDaemon.DaemonBinder daemon) {
 		mSct.refresh(daemon.getStrategyChoiceTable());
 		mFib.refresh(daemon.getForwardingInformationBase());
 	}
 
+	/** Clear the contents of the enclosed tables */
 	@Override
 	public void clear() {
 		mSct.clear();

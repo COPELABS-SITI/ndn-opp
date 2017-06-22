@@ -38,7 +38,7 @@ public class NsdServiceAdapter extends ArrayAdapter<NsdService> {
      * @param position position of the NsdService for which the View is requested
      * @param convertView available View to be filled with the NsdService details
      * @param parent parent View in the hierarchy
-     * @return
+     * @return the View to be used
      */
     @NonNull
     @Override

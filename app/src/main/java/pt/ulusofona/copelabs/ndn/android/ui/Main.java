@@ -41,10 +41,11 @@ import pt.ulusofona.copelabs.ndn.android.ui.dialog.AddRouteDialog;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.CreateFaceDialog;
 import pt.ulusofona.copelabs.ndn.android.umobile.Utilities;
 
+/** Main interface of NDN-Opp. Brings together the various app sections with the connection to the
+ * ForwardingDaemon. */
 public class Main extends AppCompatActivity {
     private static final String TAG = Main.class.getSimpleName();
 
-    private ViewPager mPager;
     private MainTabListener mTabListener;
     private AppSections mAppSections = new AppSections(getSupportFragmentManager());
 
@@ -54,7 +55,6 @@ public class Main extends AppCompatActivity {
     private final DaemonBroadcastReceiver mDaemonListener = new DaemonBroadcastReceiver();
 
     private TextView mUptime;
-    private ForwardingDaemon mDaemon;
     private ForwardingDaemon.DaemonBinder mDaemonBinder;
     private boolean mDaemonConnected = false;
 
@@ -72,9 +72,9 @@ public class Main extends AppCompatActivity {
 
         mUptime = (TextView) findViewById(R.id.uptime);
 
-        mPager = (ViewPager) findViewById(R.id.root);
-        mTabListener = new MainTabListener(mPager);
-        mPager.setAdapter(mAppSections);
+        ViewPager pager = (ViewPager) findViewById(R.id.root);
+        mTabListener = new MainTabListener(pager);
+        pager.setAdapter(mAppSections);
 
         // Set up the action bar.
         final android.support.v7.app.ActionBar actionBar = getSupportActionBar();
@@ -89,7 +89,7 @@ public class Main extends AppCompatActivity {
                             .setTabListener(mTabListener));
         }
 
-        mPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+        pager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
                 actionBar.setSelectedNavigationItem(position);
@@ -190,14 +190,14 @@ public class Main extends AppCompatActivity {
     private void refreshDisplayed() {
         if(mDaemonConnected) {
             if (mUptime != null) {
-                long uptimeInSeconds = mDaemon.getUptime() / 1000L;
+                long uptimeInSeconds = mDaemonBinder.getUptime() / 1000L;
                 long s = (uptimeInSeconds % 60);
                 long m = (uptimeInSeconds / 60) % 60;
                 long h = (uptimeInSeconds / 3600) % 60;
                 mUptime.setText(String.format(Locale.getDefault(), "%02d:%02d:%02d", h, m, s));
             }
 
-            mAppSections.refresh(mDaemon, mTabListener.getCurrentPosition());
+            mAppSections.refresh(mDaemonBinder, mTabListener.getCurrentPosition());
         }
     }
 
@@ -234,7 +234,7 @@ public class Main extends AppCompatActivity {
             unbindService(mConnection);
             clearDisplayed();
             mDaemonConnected = false;
-            mDaemon = null;
+            mDaemonBinder = null;
         }
     }
 
@@ -243,7 +243,6 @@ public class Main extends AppCompatActivity {
         public void onServiceConnected(ComponentName cn, IBinder bndr) {
             Log.d(TAG, "Service Connected");
             mDaemonBinder = (ForwardingDaemon.DaemonBinder) bndr;
-            mDaemon = mDaemonBinder.getService();
             mDaemonConnected = true;
             startUpdater();
         }
@@ -254,7 +253,7 @@ public class Main extends AppCompatActivity {
             stopUpdater();
             clearDisplayed();
             mDaemonConnected = false;
-            mDaemon = null;
+            mDaemonBinder = null;
         }
     };
 

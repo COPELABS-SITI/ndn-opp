@@ -36,7 +36,7 @@ public class WifiP2pPeerAdapter extends ArrayAdapter<WifiP2pPeer> {
      * @param position position of the WifiP2pPeer for which the View is requested
      * @param convertView available View that can be recycled by filling it with the WifiP2pPeer details
      * @param parent parent View in the hierarchy
-     * @return
+     * @return the View to be used
      */
     @NonNull
     @Override

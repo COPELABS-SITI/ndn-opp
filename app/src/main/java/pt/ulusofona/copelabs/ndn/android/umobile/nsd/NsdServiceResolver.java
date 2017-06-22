@@ -18,8 +18,12 @@ import java.util.Observable;
 import java.util.Queue;
 
 /** Implementation of a resolver which serializes resolution operations upon detection of new
- * services in the same Wi-Fi Direct Group.
- */
+ * services in the same Wi-Fi Direct Group. The resolution operation takes a simple name of a service
+ * instance and performs the necessary operations to obtain the IP address and port number at which
+ * the service is effectively reachable.
+ *
+ * This serialization is done due to the fact that Android may report multiple newly discovered services
+ * that trigger concurrent resolutions, resulting in failure. */
 class NsdServiceResolver extends Observable {
     private static final String TAG = NsdServiceResolver.class.getSimpleName();
 
@@ -31,8 +35,8 @@ class NsdServiceResolver extends Observable {
 
     private Queue<NsdServiceInfo> mQueue = new LinkedList<>();
 
-    /** Enable the resolver; services that are detected will be resolved serially.
-     * @param nsdMgr
+    /** Enable the resolver; services that are subsequently detected will be resolved serially.
+     * @param nsdMgr Android-provided NsdManager
      */
     synchronized void enable(NsdManager nsdMgr) {
         if(!mEnabled) {
@@ -41,8 +45,7 @@ class NsdServiceResolver extends Observable {
         }
     }
 
-    /** Disable the resolver. All pending resolution are dropped.
-     */
+    /** Disable the resolver. All pending resolution are dropped. */
     synchronized void disable() {
         if(mEnabled) {
             mQueue.clear();
@@ -51,7 +54,8 @@ class NsdServiceResolver extends Observable {
         }
     }
 
-    /** Effectively perform the resolution of the next service in the queue.
+    /** Effectively perform the resolution of the next service in the queue. If the queue of pending
+     * resolutions is empty, the resolvers stops. Otherwise, it requests the next resolution from the NsdManager
      */
     private synchronized void resolveNext() {
         if(mQueue.isEmpty()) {
@@ -61,6 +65,7 @@ class NsdServiceResolver extends Observable {
     }
 
     /** Used to request resolution of a service. If a resolution is underway, the resolution is placed in a queue.
+     * Otherwise, the NsdManager is requested to perform its resolution immediately.
      * @param descriptor partial details of the newly discovered service
      */
     synchronized void resolve(NsdServiceInfo descriptor) {
@@ -74,6 +79,7 @@ class NsdServiceResolver extends Observable {
         }
     }
 
+    /** Listener used to handle the resolution completion. */
     private class ResolutionListener implements NsdManager.ResolveListener {
         @Override
         public void onServiceResolved(NsdServiceInfo descriptor) {

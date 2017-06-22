@@ -27,7 +27,7 @@ public class NsdServiceRegistrar {
 
     private String mAssignedUuid;
 
-    /** Register a NsdService which will be advertised on the Wi-Fi Direct Group
+    /** Register a NsdService which will be discoverable within the Wi-Fi Direct Group
      * to which the device is connected
      * @param context context within which the service has to be registered
      * @param uuid UUID of the device to be used as an identifier for the service
@@ -35,19 +35,19 @@ public class NsdServiceRegistrar {
      */
     public synchronized void register(Context context, String uuid, String ipAddress, int port) {
         if(!mRegistered) {
-            Log.v(TAG, "Enabling");
+            Log.v(TAG, "Registering " + uuid + "@" + ipAddress + ":" + port);
             mNsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
 
             mAssignedUuid = uuid;
 
             NsdServiceInfo mDescriptor = new NsdServiceInfo();
             mDescriptor.setServiceName(mAssignedUuid);
+            mDescriptor.setServiceType(NsdService.SERVICE_TYPE);
             try {
                 mDescriptor.setHost(InetAddress.getByName(ipAddress));
             } catch (UnknownHostException e) {
                 e.printStackTrace();
             }
-            mDescriptor.setServiceType(NsdService.SERVICE_TYPE);
             mDescriptor.setPort(port);
 
             Log.d(TAG, "Registering " + mDescriptor);

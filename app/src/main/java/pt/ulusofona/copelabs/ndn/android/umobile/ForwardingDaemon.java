@@ -35,6 +35,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/** JNI wrapper around the NDN Opportunistic Daemon (NOD), which is the modified version of NFD to include the Opportunistic Faces,
+ * and PUSH communications. This class provides an interface entirely through JNI to manage the configuration of the running
+ * NOD including face creation, destruction and addition of routes to the RIB.
+ */
 public class ForwardingDaemon extends Service {
     private static final String TAG = ForwardingDaemon.class.getSimpleName();
 
@@ -44,11 +48,24 @@ public class ForwardingDaemon extends Service {
     private enum State { STARTED , STOPPED }
 
     public class DaemonBinder extends Binder {
-        public ForwardingDaemon getService() {
-            return ForwardingDaemon.this;
-        }
+        public long getUptime() { return (current == State.STARTED) ? System.currentTimeMillis() - startTime : 0L; }
+        public String getUmobileUuid() { return (current == State.STARTED) ? mAssignedUuid : getString(R.string.notAvailable); }
+        public String getVersion() { return jniGetVersion(); }
+        public List<Name> getNameTree() { return jniGetNameTree(); }
+        public List<Face> getFaceTable() { return jniGetFaceTable(); }
+        public void createFace(String faceUri, int persistency, boolean localFields) { jniCreateFace(faceUri, persistency, localFields);}
+        public void bringUpFace(long faceId, OpportunisticChannel oc) { jniBringUpFace(faceId, oc); }
+        public void bringDownFace(long faceId) { jniBringDownFace(faceId); }
+        public void sendComplete(long faceId, boolean success) { jniSendComplete(faceId, success); }
+        public void receiveOnFace(long faceId, int byteCount, byte[] buffer) { jniReceiveOnFace(faceId, byteCount, buffer); }
+        public void destroyFace(long faceId) { jniDestroyFace(faceId); }
+        public List<FibEntry> getForwardingInformationBase() { return jniGetForwardingInformationBase(); }
+        public void addRoute(String prefix, long faceId, long origin, long cost, long flags) { jniAddRoute(prefix, faceId, origin, cost, flags);}
+        public List<PitEntry> getPendingInterestTable() { return jniGetPendingInterestTable(); }
+        public List<CsEntry> getContentStore() { return jniGetContentStore(); }
+        public List<SctEntry> getStrategyChoiceTable() { return jniGetStrategyChoiceTable(); }
     }
-    private final IBinder local = new DaemonBinder();
+    private final DaemonBinder local = new DaemonBinder();
 
     // Start time
 	private long startTime;
@@ -59,14 +76,15 @@ public class ForwardingDaemon extends Service {
     // Assigned UUID
     private String mAssignedUuid;
     // Routing & Contextual Manager
-    private Routing mRouting;
+    private OpportunisticFaceManager mRouting;
     // Configuration
     private String mConfiguration;
 
     private WifiP2pPeerTracker mPeerTracker = WifiP2pPeerTracker.getInstance();
     private NsdServiceTracker mServiceTracker = NsdServiceTracker.getInstance();
 
-    // Replace this logic with a lock.
+    // Custom lock to regulate the transitions between STARTED and STOPPED.
+    // @TODO: Replace this with a standard lock.
     private State current = State.STOPPED;
 	private synchronized State getAndSetState(State nextState) {
 		State oldValue = current;
@@ -74,12 +92,15 @@ public class ForwardingDaemon extends Service {
 		return oldValue;
 	}
 
-    /** Service lifecycle method. See https://developer.android.com/guide/components/services.html */
+    /** Initializes the ForwardingDaemon; retrieve the UUID, initialize the Routing Engine, construct the configuration string.
+     *  Service lifecycle method. See https://developer.android.com/guide/components/services.html */
     @Override
     public void onCreate() {
         super.onCreate();
 
-        mRouting = new Routing();
+        // Initialize the Routing Engine
+        mRouting = new OpportunisticFaceManager();
+        // Retrieve the UUID
         mAssignedUuid = Utilities.obtainUuid(this);
 
         // Retrieve the contents of the configuration file to build a String out of it.
@@ -97,7 +118,8 @@ public class ForwardingDaemon extends Service {
         mConfiguration = configuration.toString();
     }
 
-    /** Service lifecycle method. See https://developer.android.com/guide/components/services.html */
+    /** Starts the NDN Opportunistic Daemon and enables all the software components of NDN-Opp. Service lifecycle method.
+     *  See https://developer.android.com/guide/components/services.html */
     @Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if(State.STOPPED == getAndSetState(State.STARTED)) {
@@ -109,7 +131,7 @@ public class ForwardingDaemon extends Service {
 
             mPeerTracker.enable(this, wifiP2pManager, wifiP2pChannel, mAssignedUuid);
 
-            mRouting.enable(this);
+            mRouting.enable(this, local);
 
             mServiceTracker.addObserver(mRouting);
             mServiceTracker.enable(this, mAssignedUuid);
@@ -126,7 +148,8 @@ public class ForwardingDaemon extends Service {
 		return local;
 	}
 
-    /** Service lifecycle method. See https://developer.android.com/guide/components/services.html */
+    /** Stops the NDN Opportunistic Daemon and disables all the software components of NDN-Opp. Service lifecycle method.
+     * See https://developer.android.com/guide/components/services.html */
 	@Override
 	public void onDestroy() {
 		if(State.STARTED == getAndSetState(State.STOPPED)) {
@@ -145,35 +168,25 @@ public class ForwardingDaemon extends Service {
 		}
 	}
 
+    /** Retrieve a given Face
+     * @param faceId the FaceId for which the Face should be returned
+     * @return the Face or null if no Face has that faceId
+     */
     public Face getFace(long faceId) {
         return mFacetable.get(faceId);
     }
 
     // Called by the C++ daemon when it adds a Face to its FaceTable.
-    private void addFace(Face face) {
+    private void afterFaceAdded(Face face) {
         long faceId = face.getFaceId();
         mFacetable.put(faceId, face);
-        mRouting.afterFaceAdd(face);
+        mRouting.afterFaceAdded(face);
     }
 
-    /**
-     * Uptime of the Forwarding Daemon in milliseconds.
-     * @return Milliseconds that the daemon has been running
+    /** Retrieve the list of currently known NDN-Opp service instances. Can be used to identify which services are running
+     * in the currently connected Wi-Fi Direct Group (if any).
+     * @return the list of all NDN-Opp service instances ever encountered.
      */
-	public long getUptime() {
-		return (current == State.STARTED) ? System.currentTimeMillis() - startTime : 0L;
-	}
-
-    // UMobile UUID used by the ContextualManager.
-
-    /** Retrieve the automatically generated UMobile UUID
-     * @return UUID of the current device
-     */
-    public String getUmobileUuid() {
-        return (current == State.STARTED) ? mAssignedUuid : getString(R.string.notAvailable);
-    }
-
-    // Currently known UMobile Service Devices.
     public Collection<NsdService> getUmobileServices() {
         Collection<NsdService> peers;
 
@@ -194,18 +207,85 @@ public class ForwardingDaemon extends Service {
     private native void jniStart(String homepath, String config);
 	private native void jniStop();
 
-	public native String getVersion();
-    public native List<Name> getNameTree();
-    public native List<Face> getFaceTable();
-    public native void createFace(String faceUri, int persistency, boolean localFields);
-    public native void bringUpFace(long id, OpportunisticChannel oc);
-    public native void bringDownFace(long id);
-    public native void sendComplete(long id, boolean result);
-    public native void receiveOnFace(long id, int receivedBytes, byte[] buffer);
-    public native void destroyFace(long faceId);
-	public native List<FibEntry> getForwardingInformationBase();
-    public native void addRoute(String prefix, long faceId, long origin, long cost, long flags);
-	public native List<PitEntry> getPendingInterestTable();
-	public native List<CsEntry> getContentStore();
-	public native List<SctEntry> getStrategyChoiceTable();
+    /** [JNI] Retrieve the version of the underlying NDN Opportunistic Daemon.
+     * @return build version of the NOD used.
+     */
+	private native String jniGetVersion();
+
+    /** [JNI] Retrieve the Name Tree of the running NDN Opportunistic Daemon.
+     * @return list of all Names in the NameTree of the running NOD.
+     */
+    private native List<Name> jniGetNameTree();
+
+    /** [JNI] Retrieve the FaceTable of the running NDN Opportunistic Daemon.
+     * @return list of all Faces currently registered in the running NOD.
+     */
+    private native List<Face> jniGetFaceTable();
+
+    /** [JNI] Request the creation of a Face by the running NDN Opportunistic Daemon (see https://redmine.named-data.net/projects/nfd/wiki/FaceMgmt)
+     * @param faceUri Face URI to be used as the main parameter for the creation request
+     * @param persistency persistency setting to be used
+     * @param localFields whether local fields are enabled on this face
+     */
+    private native void jniCreateFace(String faceUri, int persistency, boolean localFields);
+
+    /** [JNI] Set the status of an Opportunistic Face to UP and attach an OpportunisticChannel to it
+     * @param id the FaceId of the Face to bring up
+     * @param oc the OpportunisticChannel this Face has to use to transmit packets
+     */
+    private native void jniBringUpFace(long id, OpportunisticChannel oc);
+
+    /** [JNI] Set the status of an Opportunistic Face to DOWN and detach its OpportunisticChannel
+     * @param id the FaceId of the Face to bring down
+     */
+    private native void jniBringDownFace(long id);
+
+    /** [JNI] Used by the OpportunisticChannel to notify its encapsulating Face of the result of the
+     * transmission of the last packet.
+     * @param id the FaceId of the Face to notify
+     * @param success a boolean value indicated success (true) or failure (false) to transmit the last
+     *               packet
+     */
+    private native void jniSendComplete(long id, boolean success);
+
+    /** [JNI] Used by the OpportunisticChannel to notify its encapsulating Face that a packet has been received
+     * @param id the FaceId of the Face to notify
+     * @param receivedBytes the number of bytes received
+     * @param buffer the buffer storing the received bytes
+     */
+    private native void jniReceiveOnFace(long id, int receivedBytes, byte[] buffer);
+
+    /** [JNI] Close a Face
+     * @param faceId the FaceId of the Face to close
+     */
+    private native void jniDestroyFace(long faceId);
+
+    /** [JNI] Retrieve the ForwardingInformationBase of the running NDN Opportunistic Daemon.
+     * @return the list of all FIB entries of the running NOD
+     */
+    private native List<FibEntry> jniGetForwardingInformationBase();
+
+    /** [JNI] Request the addition of a new route into the RoutingInformationBase (see https://redmine.named-data.net/projects/nfd/wiki/RibMgmt)
+     * @param prefix the Name prefix to which the route is associated
+     * @param faceId the FaceId to be included as one of the next-hops
+     * @param origin the origin of this new route (e.g. app, static, nlsr)
+     * @param cost the cost associated to the FaceId
+     * @param flags the route inheritance flags
+     */
+    private native void jniAddRoute(String prefix, long faceId, long origin, long cost, long flags);
+
+    /** [JNI] Retrieve the PendingInterestTable of the running NDN Opportunistic Daemon.
+     * @return the list of all PIT entries of the running NOD
+     */
+    private native List<PitEntry> jniGetPendingInterestTable();
+
+    /** [JNI] Retrieve the ContentStore of the running NDN Opportunistic Daemon.
+     * @return the list of all CS entries of the running NOD
+     */
+    private native List<CsEntry> jniGetContentStore();
+
+    /** [JNI] Retrieve the StrategyChoiceTable of the running NDN Opportunistic Daemon.
+     * @return the list of all SCT entries of the running NOD
+     */
+    private native List<SctEntry> jniGetStrategyChoiceTable();
 }

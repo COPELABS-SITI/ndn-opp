@@ -66,7 +66,7 @@ public class WifiP2pPeerTracker extends Observable implements Observer {
             mWifiP2pDeviceDiscoverer.enable(context, wifiP2pMgr, wifiP2pChn);
 
             mWifiP2pServiceDiscoverer.addObserver(this);
-            mWifiP2pServiceDiscoverer.enable(wifiP2pMgr, wifiP2pChn, uuid);
+            mWifiP2pServiceDiscoverer.enable(context, wifiP2pMgr, wifiP2pChn, uuid);
 
             mEnabled = true;
         } else
@@ -93,6 +93,10 @@ public class WifiP2pPeerTracker extends Observable implements Observer {
 
     public Map<String, WifiP2pPeer> getPeers() {return mPeers;}
 
+    /** Used to process notifications from the two observed instances of device and service discoverers.
+     * @param observable which observable notified this tracker of a change
+     * @param obj optional parameter passed through the notification
+     */
     @Override
     public void update(Observable observable, Object obj) {
         if (observable instanceof WifiP2pDeviceDiscoverer) {
@@ -113,12 +117,18 @@ public class WifiP2pPeerTracker extends Observable implements Observer {
         }
     }
 
+    /** Perform the update of the service instance concerned by a notification
+     * @param svc the new details of the service
+     */
     private void updateService(WifiP2pService svc) {
+        // This implementation works no matter which is detected first; device or service.
         String svcMacAddress = svc.getMacAddress();
 
+        // Overwrite the previous instance of the service
         mServices.put(svcMacAddress, svc);
 
         if(mDevices.containsKey(svcMacAddress)) {
+            // If there is already a device known for this service, update the corresponding peer
             WifiP2pDevice dev = mDevices.get(svcMacAddress);
             String uuid = svc.getUuid();
             if(mPeers.containsKey(uuid)) {
@@ -129,12 +139,18 @@ public class WifiP2pPeerTracker extends Observable implements Observer {
         }
     }
 
+    /** Perform the update of the device instance concerned by a notification
+     * @param dev the new details of the device
+     */
     private void updateDevice(WifiP2pDevice dev) {
+        // This implementation works no matter which is detected first; device or service.
         String devMacAddress = dev.getMacAddress();
 
+        // Overwrite the previous instance of the device
         mDevices.put(devMacAddress, dev);
 
         if(mServices.containsKey(devMacAddress)) {
+            // If there is already a service known for this device, update the corresponding peer
             WifiP2pService svc = mServices.get(devMacAddress);
             String uuid = svc.getUuid();
             if(mPeers.containsKey(uuid)) {

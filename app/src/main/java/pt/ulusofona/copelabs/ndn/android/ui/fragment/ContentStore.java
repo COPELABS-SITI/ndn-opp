@@ -21,12 +21,14 @@ import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
 /** Fragment used to display the ContentStore of the running daemon. */
 public class ContentStore extends Fragment implements Refreshable {
-	private Table<CsEntry> mContentStore;
+	private Table<CsEntry> mContentStore = Table.newInstance(R.string.contentstore, R.layout.item_cell_two);
 
-	public ContentStore() {
-		mContentStore = Table.newInstance(R.string.contentstore, R.layout.item_cell_two);
-	}
-
+	/** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html
+	 * @param inflater Android-provided layout inflater
+	 * @param parent parent View within the hierarchy
+	 * @param savedInstanceState previously saved state of the View instance
+	 * @return the View to be used
+	 */
     @Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
 		View fwdConfig = inflater.inflate(R.layout.fragment_ndn_table, parent, false);
@@ -39,16 +41,23 @@ public class ContentStore extends Fragment implements Refreshable {
 		return fwdConfig;
 	}
 
+	/** Obtain the title to be displayed for this table
+	 * @return the title to be displayed
+	 */
 	@Override
 	public int getTitle() {
 		return R.string.contentstore;
 	}
 
+	/** Performs a refresh of the contents of the enclosed table
+	 * @param daemon Binder to the ForwardingDaemon used to retrieve the new entries to update this View with
+	 */
 	@Override
-	public void refresh(@NonNull ForwardingDaemon daemon) {
+	public void refresh(@NonNull ForwardingDaemon.DaemonBinder daemon) {
 		mContentStore.refresh(daemon.getContentStore());
 	}
 
+	/** Clear the contents of the enclosed table */
 	@Override
 	public void clear() {
 		mContentStore.clear();

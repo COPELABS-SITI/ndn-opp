@@ -1,5 +1,4 @@
-/**
- *  @version 1.0
+/** @version 1.0
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
  * Implementation of the Face entry class.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
@@ -22,6 +21,8 @@ import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 /** The model class used to represent Faces within the Android app.
  * A face has 7 important properties in NDN; Face ID, Local URI, Remote URI, Scope, Persistency, Link Type and State
  * Beside those, our OppFaces include a packet queue so we also include the number of pending packets.
+ * @version 1.0
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
 public class Face implements Table.Entry, Comparable<Face> {
 	private long faceId;

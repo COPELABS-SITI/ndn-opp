@@ -12,6 +12,6 @@ import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
 
 public interface Refreshable {
     int getTitle();
-    void refresh(@NonNull ForwardingDaemon daemon);
+    void refresh(@NonNull ForwardingDaemon.DaemonBinder daemon);
     void clear();
 }

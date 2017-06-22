@@ -60,7 +60,7 @@ static jclass face;
 static jmethodID newFace;
 
 static jclass forwardingDaemon;
-static jmethodID addFace;
+static jmethodID afterFaceAdded;
 
 static jclass fibEntry;
 static jmethodID newFibEntry;
@@ -133,7 +133,7 @@ jobject constructFace(JNIEnv* env, const nfd::Face& current) {
 void afterFaceAdd(const nfd::Face& current) {
     PERFORM_ATTACHED(
         NFD_LOG_INFO("Face added : " << current.getId() << " faceUri=" << current.getRemoteUri());
-        env->CallVoidMethod(forwardingDaemonInstance, addFace, constructFace(env, current));
+        env->CallVoidMethod(forwardingDaemonInstance, afterFaceAdded, constructFace(env, current));
     );
 }
 
@@ -459,22 +459,22 @@ static JNINativeMethod nativeMethods[] = {
 	{ "jniStart", "(Ljava/lang/String;Ljava/lang/String;)V", (void*) jniStart },
 	{ "jniStop", "()V", (void*) jniStop },
 
-	{ "getVersion", "()Ljava/lang/String;", (void*) jniGetVersion },
-	{ "getNameTree"                  , "()Ljava/util/List;" , (void*) jniGetNameTree },
-	{ "getFaceTable"                 , "()Ljava/util/List;" , (void*) jniGetFaceTable },
-	{ "getPendingInterestTable"      , "()Ljava/util/List;" , (void*) jniGetPendingInterestTable },
-	{ "getForwardingInformationBase" , "()Ljava/util/List;" , (void*) jniGetForwardingInformationBase },
-	{ "getStrategyChoiceTable"       , "()Ljava/util/List;" , (void*) jniGetStrategyChoiceTable },
-	{ "getContentStore"              , "()Ljava/util/List;" , (void*) jniGetContentStore },
+	{ "jniGetVersion", "()Ljava/lang/String;", (void*) jniGetVersion },
+	{ "jniGetNameTree"                  , "()Ljava/util/List;" , (void*) jniGetNameTree },
+	{ "jniGetFaceTable"                 , "()Ljava/util/List;" , (void*) jniGetFaceTable },
+	{ "jniGetPendingInterestTable"      , "()Ljava/util/List;" , (void*) jniGetPendingInterestTable },
+	{ "jniGetForwardingInformationBase" , "()Ljava/util/List;" , (void*) jniGetForwardingInformationBase },
+	{ "jniGetStrategyChoiceTable"       , "()Ljava/util/List;" , (void*) jniGetStrategyChoiceTable },
+	{ "jniGetContentStore"              , "()Ljava/util/List;" , (void*) jniGetContentStore },
 
-	{ "createFace", "(Ljava/lang/String;IZ)V", (void*) jniCreateFace },
-	{ "bringUpFace", "(JLpt/ulusofona/copelabs/ndn/android/umobile/OpportunisticChannel;)V", (void*) jniBringUpFace },
-	{ "bringDownFace", "(J)V", (void*) jniBringDownFace },
-	{ "destroyFace", "(J)V", (void*) jniDestroyFace },
-	{ "receiveOnFace", "(JI[B)V", (void*) jniReceiveOnFace },
-    { "sendComplete", "(JZ)V", (void*) jniSendComplete },
+	{ "jniCreateFace", "(Ljava/lang/String;IZ)V", (void*) jniCreateFace },
+	{ "jniBringUpFace", "(JLpt/ulusofona/copelabs/ndn/android/umobile/OpportunisticChannel;)V", (void*) jniBringUpFace },
+	{ "jniBringDownFace", "(J)V", (void*) jniBringDownFace },
+	{ "jniDestroyFace", "(J)V", (void*) jniDestroyFace },
+	{ "jniReceiveOnFace", "(JI[B)V", (void*) jniReceiveOnFace },
+    { "jniSendComplete", "(JZ)V", (void*) jniSendComplete },
 
-	{ "addRoute", "(Ljava/lang/String;JJJJ)V", (void*) jniAddRoute }
+	{ "jniAddRoute", "(Ljava/lang/String;JJJJ)V", (void*) jniAddRoute }
 };
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {
@@ -508,7 +508,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 		newSctEntry = env->GetMethodID(sctEntry, "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
 		newCsEntry  = env->GetMethodID(csEntry, "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
 
-        addFace      = env->GetMethodID(forwardingDaemon, "addFace", "(Lpt/ulusofona/copelabs/ndn/android/models/Face;)V");
+        afterFaceAdded = env->GetMethodID(forwardingDaemon, "afterFaceAdded", "(Lpt/ulusofona/copelabs/ndn/android/models/Face;)V");
 
 		listAdd      = env->GetMethodID(list    , "add"         , "(Ljava/lang/Object;)Z");
 		addNextHop   = env->GetMethodID(fibEntry, "addNextHop"  , "(JI)V");

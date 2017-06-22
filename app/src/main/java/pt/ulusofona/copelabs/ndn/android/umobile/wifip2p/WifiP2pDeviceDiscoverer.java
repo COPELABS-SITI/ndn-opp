@@ -94,7 +94,7 @@ class WifiP2pDeviceDiscoverer extends Observable {
             Log.w(TAG, "Attempt to unregister a second time.");
     }
 
-    /** Start the device discoverer. */
+    /** Start the device discovery */
     private synchronized void start() {
         if(mEnabled && !mDiscovering) {
             Log.d(TAG, "Initiating Peer Discovery");
@@ -103,6 +103,7 @@ class WifiP2pDeviceDiscoverer extends Observable {
             Log.w(TAG, "Attempt to initiating a second time : mEnabled=" + mEnabled + ", mDiscovering=" + mDiscovering);
     }
 
+    /** Stop the device discovery */
     private synchronized void stop() {
         if(mEnabled && mDiscovering) {
             Log.d(TAG, "Stopping Discovery");
@@ -136,12 +137,17 @@ class WifiP2pDeviceDiscoverer extends Observable {
         setChanged(); notifyObservers();
     }
 
+    /** Used to keep track of events broadcasted by Android regarding Wi-Fi P2P State changes,
+     * discovery status changes, peer list changes and connectivity changes.
+     */
     private class DeviceDiscovererEventDetector extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
 
 
+            // When Wi-Fi P2P becomes ON, start device discovery
+            // When Wi-Fi P2P becomes OFF, stop device discovery
             if(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)) {
                 int wifiP2pState = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1);
 
@@ -155,14 +161,16 @@ class WifiP2pDeviceDiscoverer extends Observable {
                 }
 
 
+            // @TODO: Add here a proper strategy to handle the termination of peer discovery by Android
             } else if(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION.equals(action)) {
                 int wifiP2pDiscoveryState = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE, -1);
                 mDiscovering = (wifiP2pDiscoveryState == WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED);
                 Log.v(TAG, "Wi-Fi Discovery : " + (mDiscovering ? "STARTED" : "STOPPED"));
-                if(!mDiscovering)
-                    start();
+                //if(!mDiscovering)
+                //    start();
 
 
+            // Once the Peer List change, pass it on for an update of the peer list of the Discoverer
             } else if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
                 WifiP2pDeviceList devList = intent.getParcelableExtra(WifiP2pManager.EXTRA_P2P_DEVICE_LIST);
                 if(devList != null)
@@ -171,6 +179,8 @@ class WifiP2pDeviceDiscoverer extends Observable {
                     Log.w(TAG, "WIFI_P2P_PEERS_CHANGED_ACTION did not contain a PeerList");
 
 
+            /* Simple logic which turns device discovery back on when the current device leaves
+               the Wi-Fi Direct Group it is connected to. */
             } else if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
                 NetworkInfo netInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
                 boolean wifiP2pConnected = netInfo.isConnected();

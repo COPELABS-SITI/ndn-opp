@@ -27,7 +27,8 @@ public class WifiP2pConnectivityManager {
     private WifiP2pManager.Channel mWifiP2pChannel;
     private boolean mEnabled = false;
 
-    /** Enable the connectivity manager;
+    /** Enable the connectivity manager. When enabled, this manager can be used to perform Group Formations
+     * with other detected NDN-Opp peers.
      * @param context context within which the connection should occur
      * @param wifiP2pMgr Wi-Fi P2P Manager to rely on for establishing connections (groups)
      * @param wifiP2pChn Wi-Fi P2P Channel to use
