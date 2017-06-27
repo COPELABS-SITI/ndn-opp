@@ -35,7 +35,7 @@ import java.util.TimerTask;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.ConnectToNdnDialog;
-import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
+import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.AddRouteDialog;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.CreateFaceDialog;
@@ -55,12 +55,12 @@ public class Main extends AppCompatActivity {
     private final DaemonBroadcastReceiver mDaemonListener = new DaemonBroadcastReceiver();
 
     private TextView mUptime;
-    private ForwardingDaemon.DaemonBinder mDaemonBinder;
+    private OpportunisticDaemon.NodBinder mDaemonBinder;
     private boolean mDaemonConnected = false;
 
     public Main() {
-        mDaemonBroadcastedIntents.addAction(ForwardingDaemon.STARTED);
-        mDaemonBroadcastedIntents.addAction(ForwardingDaemon.STOPPING);
+        mDaemonBroadcastedIntents.addAction(OpportunisticDaemon.STARTED);
+        mDaemonBroadcastedIntents.addAction(OpportunisticDaemon.STOPPING);
     }
 
     @Override
@@ -68,7 +68,7 @@ public class Main extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-        mDaemonIntent = new Intent(getApplicationContext(), ForwardingDaemon.class);
+        mDaemonIntent = new Intent(getApplicationContext(), OpportunisticDaemon.class);
 
         mUptime = (TextView) findViewById(R.id.uptime);
 
@@ -242,7 +242,7 @@ public class Main extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName cn, IBinder bndr) {
             Log.d(TAG, "Service Connected");
-            mDaemonBinder = (ForwardingDaemon.DaemonBinder) bndr;
+            mDaemonBinder = (OpportunisticDaemon.NodBinder) bndr;
             mDaemonConnected = true;
             startUpdater();
         }
@@ -263,16 +263,16 @@ public class Main extends AppCompatActivity {
             String action = intent.getAction();
             Log.d(TAG, "ForwardingDaemon : " + action);
             Toast.makeText(Main.this, "Daemon : " + nicefy(action), Toast.LENGTH_LONG).show();
-            if(action.equals(ForwardingDaemon.STARTED))
+            if(action.equals(OpportunisticDaemon.STARTED))
                 bindService(mDaemonIntent, mConnection, Context.BIND_AUTO_CREATE);
         }
 
         private String nicefy(String action) {
             String result = null;
 
-            if(action.equals(ForwardingDaemon.STARTED))
+            if(action.equals(OpportunisticDaemon.STARTED))
                 result = "STARTED";
-            else if (action.equals(ForwardingDaemon.STOPPING))
+            else if (action.equals(OpportunisticDaemon.STOPPING))
                 result = "STOPPING";
 
             return result;

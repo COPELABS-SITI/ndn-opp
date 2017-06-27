@@ -24,7 +24,7 @@ import android.widget.Spinner;
 
 import pt.ulusofona.copelabs.ndn.R;
 
-import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
+import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 
 public class CreateFaceDialog extends DialogFragment {
 	private Spinner mProtocol;
@@ -36,7 +36,7 @@ public class CreateFaceDialog extends DialogFragment {
 	 * @param binder used to access the locally running daemon
 	 * @return the CreateFaceDialog object
 	 */
-	public static CreateFaceDialog create(ForwardingDaemon.DaemonBinder binder) {
+	public static CreateFaceDialog create(OpportunisticDaemon.NodBinder binder) {
 		CreateFaceDialog fragment = new CreateFaceDialog();
 		Bundle args = new Bundle();
 		args.putBinder("ForwardingDaemon", binder);
@@ -53,7 +53,7 @@ public class CreateFaceDialog extends DialogFragment {
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-		final ForwardingDaemon.DaemonBinder fwdDaemon = (ForwardingDaemon.DaemonBinder) getArguments().getBinder("ForwardingDaemon");
+		final OpportunisticDaemon.NodBinder fwdDaemon = (OpportunisticDaemon.NodBinder) getArguments().getBinder("ForwardingDaemon");
 
 		View dialog = View.inflate(getContext(), R.layout.dialog_create_face, null);
 

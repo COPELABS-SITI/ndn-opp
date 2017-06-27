@@ -17,7 +17,7 @@ import android.widget.CheckBox;
 import android.widget.Spinner;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
+import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 
 /** Dialog for the connection of the running daemon to an NDN node that provides access to the NDN testbed.
  * (cfr. https://named-data.net/ndn-testbed)
@@ -30,7 +30,7 @@ public class ConnectToNdnDialog extends DialogFragment {
 	 * @param binder used to access the locally running daemon
 	 * @return the ConnectToNdnDialog
 	 */
-	public static ConnectToNdnDialog create(ForwardingDaemon.DaemonBinder binder) {
+	public static ConnectToNdnDialog create(OpportunisticDaemon.NodBinder binder) {
 		ConnectToNdnDialog fragment = new ConnectToNdnDialog();
 		Bundle args = new Bundle();
 		args.putBinder("ForwardingDaemon", binder);
@@ -46,7 +46,7 @@ public class ConnectToNdnDialog extends DialogFragment {
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-		final ForwardingDaemon.DaemonBinder fwdDaemon = (ForwardingDaemon.DaemonBinder) getArguments().getBinder("ForwardingDaemon");
+		final OpportunisticDaemon.NodBinder fwdDaemon = (OpportunisticDaemon.NodBinder) getArguments().getBinder("ForwardingDaemon");
 
 		View dialog = View.inflate(getContext(), R.layout.dialog_connect_ndn, null);
 

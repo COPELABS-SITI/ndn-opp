@@ -14,9 +14,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.models.Face;
 import pt.ulusofona.copelabs.ndn.android.models.PitEntry;
-import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
+import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 
 /** Fragment used to display the PendingInterestTable of the running daemon. */
 public class PendingInterestTable extends Fragment implements Refreshable {
@@ -52,7 +51,7 @@ public class PendingInterestTable extends Fragment implements Refreshable {
 	 * @param daemon Binder to the ForwardingDaemon used to retrieve the new entries to update this View with
 	 */
 	@Override
-	public void refresh(@NonNull ForwardingDaemon.DaemonBinder daemon) {
+	public void refresh(@NonNull OpportunisticDaemon.NodBinder daemon) {
 		mPit.refresh(daemon.getPendingInterestTable());
 	}
 

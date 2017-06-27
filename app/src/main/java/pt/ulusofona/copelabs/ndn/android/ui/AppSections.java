@@ -10,22 +10,21 @@ package pt.ulusofona.copelabs.ndn.android.ui;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.util.Log;
 
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.ContentStore;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.FaceTable;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.ForwarderConfiguration;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.NameTree;
-import pt.ulusofona.copelabs.ndn.android.ui.fragment.PeerTracking;
+import pt.ulusofona.copelabs.ndn.android.ui.fragment.OpportunisticPeerTracking;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.PendingInterestTable;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.Refreshable;
-import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
+import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 
 class AppSections extends FragmentPagerAdapter {
     private static final String TAG = AppSections.class.getSimpleName();
 
     // Fragments
-    private final PeerTracking mPeerTracking = new PeerTracking();
+    private final OpportunisticPeerTracking mPeerTracking = new OpportunisticPeerTracking();
     private final PendingInterestTable mPit = new PendingInterestTable();
     private final FaceTable mFaceTable = new FaceTable();
     private final ForwarderConfiguration mFwd = new ForwarderConfiguration();
@@ -81,7 +80,7 @@ class AppSections extends FragmentPagerAdapter {
         return mCurrentlyDisplayedTitle;
     }
 
-    public void refresh(ForwardingDaemon.DaemonBinder daemon, int currentPosition) {
+    public void refresh(OpportunisticDaemon.NodBinder daemon, int currentPosition) {
         Fragment current = getItem(currentPosition);
         if(current instanceof Refreshable) {
             Refreshable refr = (Refreshable) current;

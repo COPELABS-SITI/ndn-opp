@@ -17,8 +17,8 @@ import java.util.Map;
 
 /** Manager for WifiP2p connectivity to take care of everything related to forming groups, connecting
  *  devices together. */
-public class WifiP2pConnectivityManager {
-    private static final String TAG = WifiP2pConnectivityManager.class.getSimpleName();
+public class OpportunisticConnectivityManager {
+    private static final String TAG = OpportunisticConnectivityManager.class.getSimpleName();
 
     private boolean mConnected = false;
     private String mAssignedUuid;
@@ -72,42 +72,43 @@ public class WifiP2pConnectivityManager {
      *
      * @param candidates a map of all peers available around the current device
      */
-    public void join(Map<String, WifiP2pPeer> candidates) {
-        if(!mConnected) {
-            Log.d(TAG, "Selecting Group Owner among " + candidates);
+    public void join(Map<String, OpportunisticPeer> candidates) {
+        if(mEnabled) {
+            if (!mConnected) {
+                Log.d(TAG, "Selecting Group Owner among " + candidates);
 
-            String selectedUuid = mAssignedUuid;
+                String selectedUuid = mAssignedUuid;
 
-            for(WifiP2pPeer peer : candidates.values()) {
-                if(peer.isGroupOwner()) {
-                    selectedUuid = peer.getUuid();
-                    break;
+                for (OpportunisticPeer peer : candidates.values()) {
+                    if (peer.isGroupOwner()) {
+                        selectedUuid = peer.getUuid();
+                        break;
+                    } else if (!peer.hasGroupOwner() && selectedUuid.compareTo(peer.getUuid()) > 0)
+                        selectedUuid = peer.getUuid();
                 }
-                else if (!peer.hasGroupOwner() && selectedUuid.compareTo(peer.getUuid()) > 0)
-                    selectedUuid = peer.getUuid();
-            }
 
-            if (!mAssignedUuid.equals(selectedUuid)) {
-                Log.v(TAG, "Selected : " + selectedUuid);
-                WifiP2pPeer selectedGroupOwner = candidates.get(selectedUuid);
+                if (!mAssignedUuid.equals(selectedUuid)) {
+                    Log.v(TAG, "Selected : " + selectedUuid);
+                    OpportunisticPeer selectedGroupOwner = candidates.get(selectedUuid);
 
-                WifiP2pConfig connConfig = new WifiP2pConfig();
-                connConfig.deviceAddress = selectedGroupOwner.getMacAddress();
-                connConfig.wps.setup = WpsInfo.PBC;
-                connConfig.groupOwnerIntent = 0;
+                    WifiP2pConfig connConfig = new WifiP2pConfig();
+                    connConfig.deviceAddress = selectedGroupOwner.getMacAddress();
+                    connConfig.wps.setup = WpsInfo.PBC;
+                    connConfig.groupOwnerIntent = 0;
 
-                Toast.makeText(mContext, "Connecting to : " + connConfig.deviceAddress, Toast.LENGTH_LONG).show();
-                Log.d(TAG, "Connecting to : " + connConfig.deviceAddress);
+                    Toast.makeText(mContext, "Connecting to : " + connConfig.deviceAddress, Toast.LENGTH_LONG).show();
+                    Log.d(TAG, "Connecting to : " + connConfig.deviceAddress);
 
-                mWifiP2pManager.connect(mWifiP2pChannel, connConfig, afterConnect);
-                mConnected = true;
+                    mWifiP2pManager.connect(mWifiP2pChannel, connConfig, afterConnect);
+                    mConnected = true;
+                } else {
+                    Toast.makeText(mContext, "Aspiring Group Owner", Toast.LENGTH_LONG).show();
+                    Log.d(TAG, "Aspiring Group Owner");
+                }
             } else {
-                Toast.makeText(mContext, "Aspiring Group Owner", Toast.LENGTH_LONG).show();
-                Log.d(TAG, "Aspiring Group Owner");
+                mConnected = false;
+                mWifiP2pManager.removeGroup(mWifiP2pChannel, afterRemoveGroup);
             }
-        } else {
-            mConnected = false;
-            mWifiP2pManager.removeGroup(mWifiP2pChannel, afterRemoveGroup);
         }
     }
 

@@ -6,11 +6,11 @@
  */
 package pt.ulusofona.copelabs.ndn.android.umobile.wifip2p;
 
-/** Wi-Fi P2P Peer implementation for representing other devices running NDN-Opp. A WifiP2pPeer
+/** OpportunisticPeer implementation for representing other devices running NDN-Opp. An OpportunisticPeer
  * encapsulates information from a WifiP2pDevice (Device status, MAC address, is the device
  * a Group Owner or a Client of a Group) and from a WifiP2pService (Service UUID).
  */
-public class WifiP2pPeer {
+public class OpportunisticPeer {
     private WifiP2pDevice mDevice;
     private WifiP2pService mService;
 
@@ -19,8 +19,8 @@ public class WifiP2pPeer {
      * @param svc the service from which the UUID is retrieved
      * @return the Peer containing all the information required from the service and device perspective
      */
-    static WifiP2pPeer create(WifiP2pDevice dev, WifiP2pService svc) {
-        WifiP2pPeer peer = new WifiP2pPeer();
+    static OpportunisticPeer create(WifiP2pDevice dev, WifiP2pService svc) {
+        OpportunisticPeer peer = new OpportunisticPeer();
 
         peer.mDevice = dev;
         peer.mService = svc;

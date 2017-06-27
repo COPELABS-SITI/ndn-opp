@@ -25,8 +25,8 @@ import pt.ulusofona.copelabs.ndn.android.models.Name;
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 import pt.ulusofona.copelabs.ndn.android.models.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.models.SctEntry;
-import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceTracker;
-import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.WifiP2pPeerTracker;
+import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceDiscoverer;
+import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracker;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,15 +39,15 @@ import java.util.List;
  * and PUSH communications. This class provides an interface entirely through JNI to manage the configuration of the running
  * NOD including face creation, destruction and addition of routes to the RIB.
  */
-public class ForwardingDaemon extends Service {
-    private static final String TAG = ForwardingDaemon.class.getSimpleName();
+public class OpportunisticDaemon extends Service {
+    private static final String TAG = OpportunisticDaemon.class.getSimpleName();
 
 	public static final String STARTED = "pt.ulusofona.copelabs.ndn.android.service.STARTED";
 	public static final String STOPPING = "pt.ulusofona.copelabs.ndn.android.service.STOPPING";
 
     private enum State { STARTED , STOPPED }
 
-    public class DaemonBinder extends Binder {
+    public class NodBinder extends Binder {
         public long getUptime() { return (current == State.STARTED) ? System.currentTimeMillis() - startTime : 0L; }
         public String getUmobileUuid() { return (current == State.STARTED) ? mAssignedUuid : getString(R.string.notAvailable); }
         public String getVersion() { return jniGetVersion(); }
@@ -65,7 +65,7 @@ public class ForwardingDaemon extends Service {
         public List<CsEntry> getContentStore() { return jniGetContentStore(); }
         public List<SctEntry> getStrategyChoiceTable() { return jniGetStrategyChoiceTable(); }
     }
-    private final DaemonBinder local = new DaemonBinder();
+    private final NodBinder local = new NodBinder();
 
     // Start time
 	private long startTime;
@@ -76,12 +76,12 @@ public class ForwardingDaemon extends Service {
     // Assigned UUID
     private String mAssignedUuid;
     // Routing & Contextual Manager
-    private OpportunisticFaceManager mRouting;
+    private OpportunisticFaceManager mOppFaceManager;
     // Configuration
     private String mConfiguration;
 
-    private WifiP2pPeerTracker mPeerTracker = WifiP2pPeerTracker.getInstance();
-    private NsdServiceTracker mServiceTracker = NsdServiceTracker.getInstance();
+    private OpportunisticPeerTracker mPeerTracker = OpportunisticPeerTracker.getInstance();
+    private NsdServiceDiscoverer mServiceTracker = NsdServiceDiscoverer.getInstance();
 
     // Custom lock to regulate the transitions between STARTED and STOPPED.
     // @TODO: Replace this with a standard lock.
@@ -99,7 +99,7 @@ public class ForwardingDaemon extends Service {
         super.onCreate();
 
         // Initialize the Routing Engine
-        mRouting = new OpportunisticFaceManager();
+        mOppFaceManager = new OpportunisticFaceManager();
         // Retrieve the UUID
         mAssignedUuid = Utilities.obtainUuid(this);
 
@@ -131,9 +131,9 @@ public class ForwardingDaemon extends Service {
 
             mPeerTracker.enable(this, wifiP2pManager, wifiP2pChannel, mAssignedUuid);
 
-            mRouting.enable(this, local);
+            mOppFaceManager.enable(this, local);
 
-            mServiceTracker.addObserver(mRouting);
+            mServiceTracker.addObserver(mOppFaceManager);
             mServiceTracker.enable(this, mAssignedUuid);
 
             Log.d(TAG, STARTED);
@@ -157,10 +157,10 @@ public class ForwardingDaemon extends Service {
 
             mPeerTracker.disable();
 
-            mRouting.disable();
+            mOppFaceManager.disable();
 
             mServiceTracker.disable();
-            mServiceTracker.deleteObserver(mRouting);
+            mServiceTracker.deleteObserver(mOppFaceManager);
 
 			sendBroadcast(new Intent(STOPPING));
 			stopSelf();
@@ -180,7 +180,7 @@ public class ForwardingDaemon extends Service {
     private void afterFaceAdded(Face face) {
         long faceId = face.getFaceId();
         mFacetable.put(faceId, face);
-        mRouting.afterFaceAdded(face);
+        mOppFaceManager.afterFaceAdded(face);
     }
 
     /** Retrieve the list of currently known NDN-Opp service instances. Can be used to identify which services are running

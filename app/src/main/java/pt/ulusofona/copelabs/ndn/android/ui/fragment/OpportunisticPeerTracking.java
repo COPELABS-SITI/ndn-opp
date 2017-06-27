@@ -33,10 +33,10 @@ import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 import pt.ulusofona.copelabs.ndn.android.ui.adapter.NsdServiceAdapter;
 import pt.ulusofona.copelabs.ndn.android.ui.adapter.WifiP2pPeerAdapter;
 import pt.ulusofona.copelabs.ndn.android.umobile.Utilities;
-import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceTracker;
-import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.WifiP2pConnectivityManager;
-import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.WifiP2pPeer;
-import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.WifiP2pPeerTracker;
+import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceDiscoverer;
+import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticConnectivityManager;
+import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeer;
+import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracker;
 
 /** Interface to the Peer Tracking functionality of NDN-Opp. This Fragment is responsible for integrating
  * the functionalities of the NsdServiceTracker, the WifiP2pPeerTracker and the WifiP2pConnectivityManager.
@@ -47,19 +47,19 @@ import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.WifiP2pPeerTracker;
  * - The Connectivity Manager is used to take care of the formation of a Wi-Fi Direct Group (whether to form a new one or join an existing one)
  * - The NSD Service Tracker is used to know which NDN-Opp daemon can be reached within the Group to which the current device is connected (if it is)
  */
-public class PeerTracking extends Fragment implements Observer {
-    private static final String TAG = PeerTracking.class.getSimpleName();
+public class OpportunisticPeerTracking extends Fragment implements Observer {
+    private static final String TAG = OpportunisticPeerTracking.class.getSimpleName();
 
     // Used for feedback to the user that a peerDiscovery is in progress
     private ProgressBar mDiscoveryInProgress;
     // Used to detect changes to the peerDiscovery process (see WIFI_P2P_DISCOVERY_CHANGED_ACTION)
     private DiscoveryDetector mDiscoveryDetector = new DiscoveryDetector();
 
-    private NsdServiceTracker mServiceTracker = NsdServiceTracker.getInstance();
-    private WifiP2pPeerTracker mWifiP2pPeerTracker = WifiP2pPeerTracker.getInstance();
-    private WifiP2pConnectivityManager mWifiP2pConnectivityManager = new WifiP2pConnectivityManager();
+    private NsdServiceDiscoverer mServiceTracker = NsdServiceDiscoverer.getInstance();
+    private OpportunisticPeerTracker mWifiP2pPeerTracker = OpportunisticPeerTracker.getInstance();
+    private OpportunisticConnectivityManager mWifiP2pConnectivityManager = new OpportunisticConnectivityManager();
 
-    private Map<String, WifiP2pPeer> mPeers = new HashMap<>();
+    private Map<String, OpportunisticPeer> mPeers = new HashMap<>();
     private Map<String, NsdService> mServices = new HashMap<>();
 
     private WifiP2pPeerAdapter mWifiP2pPeerAdapter;
@@ -115,7 +115,7 @@ public class PeerTracking extends Fragment implements Observer {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View viewWifiP2pTracking = inflater.inflate(R.layout.fragment_nsd_over_wifip2p_tracking, container, false);
+        View viewWifiP2pTracking = inflater.inflate(R.layout.fragment_opp_peer_tracking, container, false);
 
         mDiscoveryInProgress = (ProgressBar) viewWifiP2pTracking.findViewById(R.id.discoveryInProgress);
 
@@ -161,7 +161,7 @@ public class PeerTracking extends Fragment implements Observer {
     public void update(Observable observable, Object obj) {
         FragmentActivity act = getActivity();
 
-        if(observable instanceof WifiP2pPeerTracker) {
+        if(observable instanceof OpportunisticPeerTracker) {
             /* When the PeerTracker notifies of some changes to its list, retrieve the new list of Peers
                and use it to update the UI accordingly. */
             mPeers.clear();
@@ -169,7 +169,7 @@ public class PeerTracking extends Fragment implements Observer {
 
             if(act != null)
                 act.runOnUiThread(mPeerUpdater);
-        } else if (observable instanceof NsdServiceTracker) {
+        } else if (observable instanceof NsdServiceDiscoverer) {
             /* When the NSD Service Tracker notifies of some changes to its list, retrieve the new list of services
                and use it to update the UI accordingly. */
             if(obj != null) {

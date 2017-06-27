@@ -20,10 +20,10 @@ import java.util.Observer;
  * The Peer Tracker integrates three components; the DeviceDiscoverer, the ServiceDiscoverer and
  * the ServiceRegistrar.
  */
-public class WifiP2pPeerTracker extends Observable implements Observer {
-    private static final String TAG = WifiP2pPeerTracker.class.getSimpleName();
+public class OpportunisticPeerTracker extends Observable implements Observer {
+    private static final String TAG = OpportunisticPeerTracker.class.getSimpleName();
 
-    private static WifiP2pPeerTracker INSTANCE = null;
+    private static OpportunisticPeerTracker INSTANCE = null;
 
     private boolean mEnabled = false;
 
@@ -32,20 +32,20 @@ public class WifiP2pPeerTracker extends Observable implements Observer {
     private WifiP2pServiceDiscoverer mWifiP2pServiceDiscoverer = new WifiP2pServiceDiscoverer();
 
     // Associates UUID to WifiP2pPeer instance
-    private Map<String, WifiP2pPeer> mPeers = new HashMap<>();
+    private Map<String, OpportunisticPeer> mPeers = new HashMap<>();
     // Associates MAC Address to WifiP2pDevice instance
     private Map<String, WifiP2pDevice> mDevices = new HashMap<>();
     // Associates MAC Address to WifiP2pService instance
     private Map<String, WifiP2pService> mServices = new HashMap<>();
 
-    private WifiP2pPeerTracker() {}
+    private OpportunisticPeerTracker() {}
 
     /** Retrieve the instance of the Peer Tracker.
      * @return singleton instance of Peer Tracker.
      */
-    public static WifiP2pPeerTracker getInstance() {
+    public static OpportunisticPeerTracker getInstance() {
         if(INSTANCE == null)
-            INSTANCE = new WifiP2pPeerTracker();
+            INSTANCE = new OpportunisticPeerTracker();
         return INSTANCE;
     }
 
@@ -91,7 +91,7 @@ public class WifiP2pPeerTracker extends Observable implements Observer {
             Log.w(TAG, "Attempt to unregister a second time.");
     }
 
-    public Map<String, WifiP2pPeer> getPeers() {return mPeers;}
+    public Map<String, OpportunisticPeer> getPeers() {return mPeers;}
 
     /** Used to process notifications from the two observed instances of device and service discoverers.
      * @param observable which observable notified this tracker of a change
@@ -132,10 +132,10 @@ public class WifiP2pPeerTracker extends Observable implements Observer {
             WifiP2pDevice dev = mDevices.get(svcMacAddress);
             String uuid = svc.getUuid();
             if(mPeers.containsKey(uuid)) {
-                WifiP2pPeer peer = mPeers.get(uuid);
+                OpportunisticPeer peer = mPeers.get(uuid);
                 peer.update(dev);
             } else
-                mPeers.put(uuid, WifiP2pPeer.create(dev, svc));
+                mPeers.put(uuid, OpportunisticPeer.create(dev, svc));
         }
     }
 
@@ -154,10 +154,10 @@ public class WifiP2pPeerTracker extends Observable implements Observer {
             WifiP2pService svc = mServices.get(devMacAddress);
             String uuid = svc.getUuid();
             if(mPeers.containsKey(uuid)) {
-                WifiP2pPeer peer = mPeers.get(uuid);
+                OpportunisticPeer peer = mPeers.get(uuid);
                 peer.update(dev);
             } else
-                mPeers.put(uuid, WifiP2pPeer.create(dev, svc));
+                mPeers.put(uuid, OpportunisticPeer.create(dev, svc));
         }
     }
 }

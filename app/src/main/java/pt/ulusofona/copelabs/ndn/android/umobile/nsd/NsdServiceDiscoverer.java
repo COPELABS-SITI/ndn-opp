@@ -31,10 +31,10 @@ import pt.ulusofona.copelabs.ndn.android.models.NsdService;
  * Wi-Fi Direct Group along with their status. This list is maintained even after the current
  * device leaves the Wi-Fi Direct Group.
  */
-public class NsdServiceTracker extends Observable implements Observer {
-    private static final String TAG = NsdServiceTracker.class.getSimpleName();
+public class NsdServiceDiscoverer extends Observable implements Observer {
+    private static final String TAG = NsdServiceDiscoverer.class.getSimpleName();
 
-    private static NsdServiceTracker INSTANCE = null;
+    private static NsdServiceDiscoverer INSTANCE = null;
 
     private Context mContext;
 
@@ -52,11 +52,11 @@ public class NsdServiceTracker extends Observable implements Observer {
     // Associates a UUID to a NsdService.
     private Map<String, NsdService> mServices = new HashMap<>();
 
-    private NsdServiceTracker() {}
+    private NsdServiceDiscoverer() {}
 
-    public static NsdServiceTracker getInstance() {
+    public static NsdServiceDiscoverer getInstance() {
         if(INSTANCE == null)
-            INSTANCE = new NsdServiceTracker();
+            INSTANCE = new NsdServiceDiscoverer();
         return INSTANCE;
     }
 

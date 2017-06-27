@@ -18,7 +18,7 @@ import java.net.Socket;
 class OpportunisticChannel {
     private static final String TAG = OpportunisticChannel.class.getSimpleName();
 
-    private final ForwardingDaemon.DaemonBinder mDaemon;
+    private final OpportunisticDaemon.NodBinder mDaemon;
     private final OpportunisticFaceManager mOppFaceManager;
     private final long mFaceId;
     private final String mUuid;
@@ -33,7 +33,7 @@ class OpportunisticChannel {
      * @param host IP address of the corresponding device
      * @param port Port number of the corresponding device
      */
-    OpportunisticChannel(ForwardingDaemon.DaemonBinder daemon, OpportunisticFaceManager oppFaceMgr, String uuid, long faceId, String host, int port) {
+    OpportunisticChannel(OpportunisticDaemon.NodBinder daemon, OpportunisticFaceManager oppFaceMgr, String uuid, long faceId, String host, int port) {
         Log.d(TAG, "Creating OpportunisticChannel for " + host + ":" + port);
         mDaemon = daemon;
         mOppFaceManager = oppFaceMgr;

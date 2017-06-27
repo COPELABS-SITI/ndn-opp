@@ -28,7 +28,7 @@
         </activity>
 
         <service
-            android:name="pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon"
+            android:name="pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon"
             android:exported="false"
             android:icon="@drawable/ic_launcher"
             android:label="@string/label" />

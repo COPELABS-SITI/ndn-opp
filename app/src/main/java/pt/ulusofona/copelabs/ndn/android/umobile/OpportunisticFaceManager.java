@@ -35,7 +35,7 @@ import java.util.Set;
 import pt.ulusofona.copelabs.ndn.android.models.Face;
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceRegistrar;
-import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceTracker;
+import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceDiscoverer;
 
 // @TODO: if phone goes to sleep, all the open connections will close.
 
@@ -52,7 +52,7 @@ public class OpportunisticFaceManager implements Observer {
     private static final int DEFAULT_PORT = 16363;
 
     private Context mContext;
-    private ForwardingDaemon.DaemonBinder mDaemon;
+    private OpportunisticDaemon.NodBinder mDaemon;
 
     // Associates a NsdService to a UUID
     private Map<String, NsdService> mUmobileServices = new HashMap<>();
@@ -73,7 +73,7 @@ public class OpportunisticFaceManager implements Observer {
      * @param context Android-provided context
      * @param binder Binder to the ForwardingDaemon
      */
-	void enable(Context context, ForwardingDaemon.DaemonBinder binder) {
+	void enable(Context context, OpportunisticDaemon.NodBinder binder) {
         mDaemon = binder;
 
         mContext = context;
@@ -181,13 +181,13 @@ public class OpportunisticFaceManager implements Observer {
         }
     }
 
-    /** Update the state of the Routing engine based on what the NSD Service Tracker reports
+    /** Update the state of the Routing engine based on what the NSD Service Discoverer reports
      * @param observable observable notifying of changes
      * @param obj optional parameter passed by the observable
      */
     @Override
     public void update(Observable observable, Object obj) {
-        if(observable instanceof NsdServiceTracker) {
+        if(observable instanceof NsdServiceDiscoverer) {
             if (obj != null) {
                 if (obj instanceof NsdService) {
                     NsdService svc = (NsdService) obj;
@@ -200,7 +200,7 @@ public class OpportunisticFaceManager implements Observer {
                         updateService(current);
                 }
             } else
-                Log.w(TAG, "Received NULL object from NsdServiceTracker");
+                Log.w(TAG, "Received NULL object from NsdServiceDiscoverer");
         }
     }
 

@@ -15,10 +15,9 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.models.Face;
 import pt.ulusofona.copelabs.ndn.android.models.FibEntry;
 import pt.ulusofona.copelabs.ndn.android.models.SctEntry;
-import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
+import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 
 /** Fragment used to display the Forwarder configuration (FIB + SCT) of the running daemon. */
 public class ForwarderConfiguration extends Fragment implements Refreshable {
@@ -56,7 +55,7 @@ public class ForwarderConfiguration extends Fragment implements Refreshable {
 	 * @param daemon Binder to the ForwardingDaemon used to retrieve the new entries to update this View with
 	 */
 	@Override
-	public void refresh(@NonNull ForwardingDaemon.DaemonBinder daemon) {
+	public void refresh(@NonNull OpportunisticDaemon.NodBinder daemon) {
 		mSct.refresh(daemon.getStrategyChoiceTable());
 		mFib.refresh(daemon.getForwardingInformationBase());
 	}

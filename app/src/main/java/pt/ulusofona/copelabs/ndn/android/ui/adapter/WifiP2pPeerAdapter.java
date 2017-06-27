@@ -16,12 +16,12 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.WifiP2pPeer;
+import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeer;
 
 /** Adapter class for displaying a list of WifiP2pPeers in a View.
  * cfr. https://developer.android.com/reference/android/widget/Adapter.html
  */
-public class WifiP2pPeerAdapter extends ArrayAdapter<WifiP2pPeer> {
+public class WifiP2pPeerAdapter extends ArrayAdapter<OpportunisticPeer> {
     private LayoutInflater mInflater;
 
     /** Main constructor
@@ -47,7 +47,7 @@ public class WifiP2pPeerAdapter extends ArrayAdapter<WifiP2pPeer> {
         else
             entry = mInflater.inflate(R.layout.item_wifi_p2p_peer, null, false);
 
-        WifiP2pPeer peer = getItem(position);
+        OpportunisticPeer peer = getItem(position);
 
         TextView textDeviceStatus = (TextView) entry.findViewById(R.id.text_peer_status);
         TextView textDeviceGroup = (TextView) entry.findViewById(R.id.text_peer_group);

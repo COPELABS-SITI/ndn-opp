@@ -18,7 +18,7 @@ import android.util.Log;
  * logic. Specifically, once enabled, it automatically registers/unregisters the NDN-Opp service as the
  * state of Wi-Fi Direct toggles between ON and OFF.
  */
-public class WifiP2pServiceRegistrar {
+class WifiP2pServiceRegistrar {
     private static final String TAG = WifiP2pServiceRegistrar.class.getSimpleName();
 
     private Context mContext;

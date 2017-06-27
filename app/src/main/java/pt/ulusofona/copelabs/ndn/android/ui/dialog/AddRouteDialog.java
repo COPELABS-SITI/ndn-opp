@@ -22,7 +22,7 @@ import java.util.List;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.models.Face;
-import pt.ulusofona.copelabs.ndn.android.umobile.ForwardingDaemon;
+import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 
 /** Dialog for the addition of a new Route to the RIB and FIB of the running daemon.
  */
@@ -34,7 +34,7 @@ public class AddRouteDialog extends DialogFragment {
 	 * @param binder used to access the locally running daemon
 	 * @return the AddRouteDialog
 	 */
-	public static AddRouteDialog create(ForwardingDaemon.DaemonBinder binder) {
+	public static AddRouteDialog create(OpportunisticDaemon.NodBinder binder) {
 		AddRouteDialog fragment = new AddRouteDialog();
 		Bundle args = new Bundle();
 		args.putBinder("ForwardingDaemon", binder);
@@ -50,7 +50,7 @@ public class AddRouteDialog extends DialogFragment {
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-		final ForwardingDaemon.DaemonBinder fwdDaemon = (ForwardingDaemon.DaemonBinder) getArguments().getBinder("ForwardingDaemon");
+		final OpportunisticDaemon.NodBinder fwdDaemon = (OpportunisticDaemon.NodBinder) getArguments().getBinder("ForwardingDaemon");
 
 		View dialog = View.inflate(getContext(), R.layout.dialog_add_route, null);
 
