@@ -8,19 +8,24 @@
 package pt.ulusofona.copelabs.ndn.android.models;
 
 import android.net.nsd.NsdServiceInfo;
+import android.os.Build;
+import android.util.Log;
+
+import java.util.Map;
 
 /** The class used to represent NsdServices discovered within the Wi-Fi Direct Group to which this device is connected.
  *  A NsdService associates a UUID with a status along with an IP and a port number. The status reflect whether
  *  the service is currently reachable or not at the associated IP and port.
  */
 public class NsdService {
+    private static final String TAG = NsdService.class.getSimpleName();
+
     private static final String UNKNOWN_HOST = "0.0.0.0";
     private static final int UNKNOWN_PORT = 0;
 
     public static final String SERVICE_TYPE = "_nsdtracker._tcp";
 
-    /** Enumeration of possible statuses.
-     */
+    /** Enumeration of possible statuses. */
     public enum Status {
         AVAILABLE("Av"),
         UNAVAILABLE("Un");
@@ -55,7 +60,10 @@ public class NsdService {
     public void resolved(NsdServiceInfo descriptor) {
         currently = Status.AVAILABLE;
         //TODO: check this is an IPv4 ...
+        // Use the broken host resolution implementation on older APIs
         host = descriptor.getHost().getHostAddress();
+        Log.v(TAG, "Resolved " + this.uuid + "@" + this.host);
+
         port = descriptor.getPort();
     }
 

@@ -14,7 +14,7 @@
         android:allowBackup="false"
 	    android:supportsRtl="true"
         android:description="@string/description"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@mipmap/ic_ndn_opp"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity

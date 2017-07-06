@@ -485,7 +485,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 		return JNI_ERR;
 	} else {
 		NFD_LOG_DEBUG("Registering Native methods.");
-		forwardingDaemon = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/umobile/ForwardingDaemon")));
+		forwardingDaemon = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/umobile/OpportunisticDaemon")));
 		env->RegisterNatives(forwardingDaemon, nativeMethods, sizeof(nativeMethods) / sizeof(JNINativeMethod));
 
 		NFD_LOG_DEBUG("Caching JNI classes.");

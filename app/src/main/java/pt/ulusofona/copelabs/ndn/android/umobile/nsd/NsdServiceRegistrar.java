@@ -10,6 +10,7 @@ package pt.ulusofona.copelabs.ndn.android.umobile.nsd;
 import android.content.Context;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.os.Build;
 import android.util.Log;
 
 import java.net.InetAddress;
@@ -43,6 +44,7 @@ public class NsdServiceRegistrar {
             NsdServiceInfo mDescriptor = new NsdServiceInfo();
             mDescriptor.setServiceName(mAssignedUuid);
             mDescriptor.setServiceType(NsdService.SERVICE_TYPE);
+
             try {
                 mDescriptor.setHost(InetAddress.getByName(ipAddress));
             } catch (UnknownHostException e) {

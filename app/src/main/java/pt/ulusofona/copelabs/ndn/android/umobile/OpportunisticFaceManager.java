@@ -158,7 +158,7 @@ public class OpportunisticFaceManager implements Observer {
     private void enableService(String assignedIp) {
         if(!mEnabled) {
             try {
-                Log.v(TAG, "Enabling ServerSocket");
+                Log.v(TAG, "Enabling ServerSocket on " + assignedIp + ":" + DEFAULT_PORT);
                 ServerSocket socket = new ServerSocket();
                 socket.bind(new InetSocketAddress(assignedIp, DEFAULT_PORT));
                 mConnector = new ConnectionHandler(socket);
