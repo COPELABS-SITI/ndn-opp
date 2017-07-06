@@ -12,6 +12,11 @@
             style="@style/piece"
             android:text="@string/groupFormation"/>
 
+        <Button
+            android:id="@+id/button_group_leave"
+            style="@style/piece"
+            android:text="@string/groupLeave"/>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">

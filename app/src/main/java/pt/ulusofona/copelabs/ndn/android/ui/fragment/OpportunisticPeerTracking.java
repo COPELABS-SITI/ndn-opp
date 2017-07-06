@@ -10,6 +10,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 import android.os.Looper;
@@ -58,12 +59,15 @@ public class OpportunisticPeerTracking extends Fragment implements Observer {
     private NsdServiceDiscoverer mServiceTracker = NsdServiceDiscoverer.getInstance();
     private OpportunisticPeerTracker mWifiP2pPeerTracker = OpportunisticPeerTracker.getInstance();
     private OpportunisticConnectivityManager mWifiP2pConnectivityManager = new OpportunisticConnectivityManager();
+    private Button mBtn_groupFormation;
+    private Button mBtn_groupLeave;
 
     private Map<String, OpportunisticPeer> mPeers = new HashMap<>();
     private Map<String, NsdService> mServices = new HashMap<>();
 
     private WifiP2pPeerAdapter mWifiP2pPeerAdapter;
     private NsdServiceAdapter mNsdServiceAdapter;
+
 
     /** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html
      * @param context Android-provided Application context
@@ -76,7 +80,10 @@ public class OpportunisticPeerTracking extends Fragment implements Observer {
         WifiP2pManager.Channel mWifiP2pChannel = mWifiP2pManager.initialize(context, Looper.getMainLooper(), null);
 
         mDiscoveryDetector = new DiscoveryDetector();
-        context.registerReceiver(mDiscoveryDetector, new IntentFilter(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION));
+
+        IntentFilter intentFilter = new IntentFilter(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
+        context.registerReceiver(mDiscoveryDetector, intentFilter);
 
         mWifiP2pPeerAdapter = new WifiP2pPeerAdapter(context);
         mNsdServiceAdapter = new NsdServiceAdapter(context);
@@ -119,11 +126,21 @@ public class OpportunisticPeerTracking extends Fragment implements Observer {
 
         mDiscoveryInProgress = (ProgressBar) viewWifiP2pTracking.findViewById(R.id.discoveryInProgress);
 
-        Button btn_groupFormation = (Button) viewWifiP2pTracking.findViewById(R.id.button_group_formation);
-        btn_groupFormation.setOnClickListener(new View.OnClickListener() {
+        mBtn_groupFormation = (Button) viewWifiP2pTracking.findViewById(R.id.button_group_formation);
+        mBtn_groupFormation.setEnabled(false);
+        mBtn_groupFormation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 mWifiP2pConnectivityManager.join(mWifiP2pPeerTracker.getPeers());
+            }
+        });
+
+        mBtn_groupLeave = (Button) viewWifiP2pTracking.findViewById(R.id.button_group_leave);
+        mBtn_groupLeave.setEnabled(false);
+        mBtn_groupLeave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mWifiP2pConnectivityManager.leave();
             }
         });
 
@@ -166,6 +183,7 @@ public class OpportunisticPeerTracking extends Fragment implements Observer {
                and use it to update the UI accordingly. */
             mPeers.clear();
             mPeers.putAll(mWifiP2pPeerTracker.getPeers());
+            mBtn_groupFormation.setEnabled(!mWifiP2pConnectivityManager.isAspiringGroupOwner(mPeers));
 
             if(act != null)
                 act.runOnUiThread(mPeerUpdater);
@@ -196,6 +214,14 @@ public class OpportunisticPeerTracking extends Fragment implements Observer {
                     mDiscoveryInProgress.setVisibility(View.VISIBLE);
                 else
                     mDiscoveryInProgress.setVisibility(View.INVISIBLE);
+
+
+            } else if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
+                NetworkInfo netInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
+                boolean wifiP2pConnected = netInfo.isConnected();
+                Log.v(TAG, "Connection changed : " + (wifiP2pConnected ? "CONNECTED" : "DISCONNECTED"));
+
+                mBtn_groupLeave.setEnabled(wifiP2pConnected);
             }
         }
     }

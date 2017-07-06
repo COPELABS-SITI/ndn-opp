@@ -55,13 +55,39 @@ public class OpportunisticConnectivityManager {
         }
     }
 
-    /** Initiate a group formation given a list of candidates. This method implements a simple heuristic to perform
-     * a group formation in a way that maximizes the likelihood that most devices within physical proximity agree
-     * on who ought to be the group owner as well as the likelihood that that device will become the group owner.
+    /** Implements a heuristic to select the best candidate to which connection should be performed
+     * among the list of currently available NDN-Opp Peers in the neighborhood.
      *
      * Specifically, the rule is to select a device which:
      * - Is not a Group Owner
      * - Has the highest UUID
+     *
+     * @param candidates the map
+     * @return the UUID of the device who ought to be Group Owner according to the heuristic
+     */
+    private String selectGroupOwner(Map<String, OpportunisticPeer> candidates) {
+        Log.d(TAG, "Selecting Group Owner among " + candidates);
+
+        String selectedUuid = mAssignedUuid;
+
+        for (OpportunisticPeer peer : candidates.values()) {
+            if (peer.isGroupOwner()) {
+                selectedUuid = peer.getUuid();
+                break;
+            } else if (!peer.hasGroupOwner() && selectedUuid.compareTo(peer.getUuid()) > 0)
+                selectedUuid = peer.getUuid();
+        }
+
+        return selectedUuid;
+    }
+
+    public boolean isAspiringGroupOwner(Map<String, OpportunisticPeer> candidates) {
+        return mAssignedUuid.equals(selectGroupOwner(candidates));
+    }
+
+    /** Initiate a group formation given a list of candidates. This method implements a simple heuristic to perform
+     * a group formation in a way that maximizes the likelihood that most devices within physical proximity agree
+     * on who ought to be the group owner as well as the likelihood that that device will become the group owner.
      *
      * Once a candidate has been selected, the current device will attempt a Group Formation (PBC) and set its own
      * Group Owner Intent to 0, thus making it the most likely that the candidate will emerge as Group Owner. This
@@ -75,17 +101,7 @@ public class OpportunisticConnectivityManager {
     public void join(Map<String, OpportunisticPeer> candidates) {
         if(mEnabled) {
             if (!mConnected) {
-                Log.d(TAG, "Selecting Group Owner among " + candidates);
-
-                String selectedUuid = mAssignedUuid;
-
-                for (OpportunisticPeer peer : candidates.values()) {
-                    if (peer.isGroupOwner()) {
-                        selectedUuid = peer.getUuid();
-                        break;
-                    } else if (!peer.hasGroupOwner() && selectedUuid.compareTo(peer.getUuid()) > 0)
-                        selectedUuid = peer.getUuid();
-                }
+                String selectedUuid = selectGroupOwner(candidates);
 
                 if (!mAssignedUuid.equals(selectedUuid)) {
                     Log.v(TAG, "Selected : " + selectedUuid);
@@ -99,23 +115,28 @@ public class OpportunisticConnectivityManager {
                     Toast.makeText(mContext, "Connecting to : " + connConfig.deviceAddress, Toast.LENGTH_LONG).show();
                     Log.d(TAG, "Connecting to : " + connConfig.deviceAddress);
 
-                    mWifiP2pManager.connect(mWifiP2pChannel, connConfig, afterConnect);
                     mConnected = true;
+                    mWifiP2pManager.connect(mWifiP2pChannel, connConfig, afterConnect);
                 } else {
                     Toast.makeText(mContext, "Aspiring Group Owner", Toast.LENGTH_LONG).show();
                     Log.d(TAG, "Aspiring Group Owner");
                 }
-            } else {
-                mConnected = false;
-                mWifiP2pManager.removeGroup(mWifiP2pChannel, afterRemoveGroup);
             }
+        }
+    }
+
+    /** Leave the currently connected Wi-Fi Direct Group */
+    public void leave() {
+        if(mEnabled && mConnected) {
+            mConnected = false;
+            mWifiP2pManager.removeGroup(mWifiP2pChannel, afterRemoveGroup);
         }
     }
 
     // Reporting of connection result.
     private WifiP2pManager.ActionListener afterConnect = new WifiP2pManager.ActionListener() {
-        @Override public void onSuccess() {Log.d(TAG, "Connect success");}
-        @Override public void onFailure(int e) {Log.d(TAG, "Connect failed (" + e + ")");}
+        @Override public void onSuccess() {Log.d(TAG, "Connect success"); mConnected = true;}
+        @Override public void onFailure(int e) {Log.d(TAG, "Connect failed (" + e + ")"); mConnected = false;}
     };
 
     // Reporting of disconnection result.
