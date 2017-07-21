@@ -3,7 +3,6 @@
 #include "daemon/face/face.hpp"
 #include "daemon/face/transport.hpp"
 
-#include "ndn-cxx/encoding/block.hpp"
 #include "ndn-cxx/util/face-uri.hpp"
 
 namespace nfd {
@@ -36,9 +35,23 @@ void OppTransport::doClose() {
 
 void OppTransport::sendNextPacket() {
     if(!m_sendQueue.empty())
-        performSend(this->getFace()->getId(), m_sendQueue.front());
+        performSend(this->getFace()->getId(), m_sendQueue.front().packet);
     else
         NFD_LOG_DEBUG("Queue empty.");
+}
+
+void OppTransport::removePacket(const std::string &nm) {
+    std::deque<Packet>::iterator it = find_if(m_sendQueue.begin(), m_sendQueue.end(),
+    [&nm] (const Packet &current) {
+        ndn::Name pName(current.packet.get(ndn::tlv::Name));
+        NFD_LOG_DEBUG("Packet with Name " << pName.toUri() << " " << nm);
+        return (nm.compare(pName.toUri()) == 0);
+    });
+
+    if(it != m_sendQueue.end()) {
+        NFD_LOG_INFO("Found pending packet in " << getFace()->getId() << " for name " << nm);
+        m_sendQueue.erase(it);
+    }
 }
 
 int OppTransport::getQueueSize() {
@@ -49,7 +62,7 @@ void OppTransport::onSendComplete(bool succeeded) {
     NFD_LOG_INFO("onSendComplete. Succeeded ? " << succeeded);
 
     if(succeeded) {
-        m_sendQueue.pop();
+        m_sendQueue.pop_front();
         sendNextPacket();
     } else NFD_LOG_DEBUG("Packet sending failed.");
 }
@@ -57,7 +70,7 @@ void OppTransport::onSendComplete(bool succeeded) {
 void OppTransport::doSend(Packet&& packet) {
     NFD_LOG_INFO("doSend " << getFace()->getId());
 
-    m_sendQueue.push(packet.packet);
+    m_sendQueue.push_back(packet);
 
     TransportState currently = this->getState();
     if(currently == TransportState::UP && m_sendQueue.size() == 1) {

@@ -1,11 +1,9 @@
 #ifndef COPELABS_NFD_ANDROID_OPP_TRANSPORT_HPP
 #define COPELABS_NFD_ANDROID_OPP_TRANSPORT_HPP
 
-#include <queue>
+#include <deque>
 
 #include "daemon/face/transport.hpp"
-
-#include "ndn-cxx/encoding/block.hpp"
 
 // From nfd-jni.cpp
 void performSend(long, ndn::Block);
@@ -22,6 +20,7 @@ public:
     void onSendComplete(bool succeeded);
 
     int getQueueSize();
+    void removePacket(const std::string &nm);
 
 private:
     virtual void doClose() override;
@@ -29,7 +28,7 @@ private:
     virtual void afterChangePersistency(ndn::nfd::FacePersistency oldP) override;
 
 private:
-    std::queue<Block> m_sendQueue;
+    std::deque<Packet> m_sendQueue;
 };
 
 } // namespace face

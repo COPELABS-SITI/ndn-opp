@@ -137,6 +137,18 @@ void afterFaceAdd(const nfd::Face& current) {
     );
 }
 
+void beforePitEntryRemove(const nfd::pit::Entry& entry) {
+    NFD_LOG_INFO("PitEntry removal : " << entry.getName());
+    for(auto && outEntry : entry.getOutRecords()) {
+        nfd::Face& face = outEntry.getFace();
+        if(face.getRemoteUri().getScheme().compare("opp") == 0) {
+            NFD_LOG_DEBUG("PitEntry.OutRecord [Opp] : " << face.getId());
+            nfd::face::OppTransport *oppTransport = dynamic_cast<nfd::face::OppTransport*>(face.getTransport());
+            oppTransport->removePacket(entry.getName().toUri());
+        }
+    }
+}
+
 static void jniStart(JNIEnv* env, jobject fDaemon, jstring homepath, jstring configuration) {
     COFFEE_TRY_JNI(env,
         // Initialization.
@@ -159,8 +171,9 @@ static void jniStart(JNIEnv* env, jobject fDaemon, jstring homepath, jstring con
         NFD_LOG_INFO("Setting NRD.");
         g_nrd.reset(new nfd::rib::Service(config, g_nfd->m_keyChain));
 
-        NFD_LOG_INFO("Connecting FaceTable.afterAdd signal.");
+        NFD_LOG_INFO("Connecting FaceTable.afterAdd & Pit.beforeRemove signals.");
         g_nfd->getFaceTable().afterAdd.connect(afterFaceAdd);
+        g_nfd->getPendingInterestTable().beforeRemove.connect(beforePitEntryRemove);
 
         NFD_LOG_INFO("Initializing NFD.");
         g_nfd->initialize();
@@ -363,10 +376,12 @@ static jobject jniGetForwardingInformationBase(JNIEnv* env, jobject) {
 }
 
 void onRibUpdateSuccess(const nfd::rib::RibUpdate& update) {
+    NFD_LOG_INFO("RibUpdateSuccess !");
     g_nrd->m_ribManager->onRibUpdateSuccess(update);
 }
 
 void onRibUpdateFailure(const nfd::rib::RibUpdate& update, uint32_t code, const std::string& error) {
+    NFD_LOG_INFO("RibUpdateFailure " << code << " " << error);
     g_nrd->m_ribManager->onRibUpdateFailure(update, code, error);
 }
 
