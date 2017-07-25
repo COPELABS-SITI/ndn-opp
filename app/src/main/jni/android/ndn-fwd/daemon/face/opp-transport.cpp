@@ -40,16 +40,27 @@ void OppTransport::sendNextPacket() {
         NFD_LOG_DEBUG("Queue empty.");
 }
 
-void OppTransport::removePacket(const std::string &nm) {
+void OppTransport::removePacket(uint32_t nonce) {
     std::deque<Packet>::iterator it = find_if(m_sendQueue.begin(), m_sendQueue.end(),
-    [&nm] (const Packet &current) {
-        ndn::Name pName(current.packet.get(ndn::tlv::Name));
-        NFD_LOG_DEBUG("Packet with Name " << pName.toUri() << " " << nm);
-        return (nm.compare(pName.toUri()) == 0);
+    [&nonce] (const Packet &current) {
+        // Only Interest packets have a Nonce. Ignore Data packets.
+        if(current.packet.type() != ndn::tlv::Interest)
+            return false;
+
+        uint32_t currentNonce;
+        Block encodedNonce = current.packet.get(ndn::tlv::Nonce);
+        if (encodedNonce.value_size() == sizeof(uint32_t))
+            currentNonce = *reinterpret_cast<const uint32_t*>(encodedNonce.value());
+        else {
+            currentNonce = readNonNegativeInteger(encodedNonce);
+        }
+
+        NFD_LOG_DEBUG("Packet with Nonce " << currentNonce << " " << nonce);
+        return (nonce == currentNonce);
     });
 
     if(it != m_sendQueue.end()) {
-        NFD_LOG_INFO("Found pending packet in " << getFace()->getId() << " for name " << nm);
+        NFD_LOG_INFO("Found pending packet in " << getFace()->getId());
         m_sendQueue.erase(it);
     }
 }

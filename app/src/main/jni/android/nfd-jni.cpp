@@ -144,9 +144,14 @@ void beforePitEntryRemove(const nfd::pit::Entry& entry) {
         if(face.getRemoteUri().getScheme().compare("opp") == 0) {
             NFD_LOG_DEBUG("PitEntry.OutRecord [Opp] : " << face.getId());
             nfd::face::OppTransport *oppTransport = dynamic_cast<nfd::face::OppTransport*>(face.getTransport());
-            oppTransport->removePacket(entry.getName().toUri());
+            oppTransport->removePacket(outEntry.getLastNonce());
         }
     }
+}
+
+void beforeOutRecordUpdate(uint32_t nonce) {
+    NFD_LOG_INFO("Update to Out-Record : " << nonce << " will be removed.");
+    // Should remove that packet from the queues.
 }
 
 static void jniStart(JNIEnv* env, jobject fDaemon, jstring homepath, jstring configuration) {
@@ -174,6 +179,8 @@ static void jniStart(JNIEnv* env, jobject fDaemon, jstring homepath, jstring con
         NFD_LOG_INFO("Connecting FaceTable.afterAdd & Pit.beforeRemove signals.");
         g_nfd->getFaceTable().afterAdd.connect(afterFaceAdd);
         g_nfd->getPendingInterestTable().beforeRemove.connect(beforePitEntryRemove);
+
+        g_nfd->getForwarder().beforeOutRecordUpdate.connect(beforeOutRecordUpdate);
 
         NFD_LOG_INFO("Initializing NFD.");
         g_nfd->initialize();

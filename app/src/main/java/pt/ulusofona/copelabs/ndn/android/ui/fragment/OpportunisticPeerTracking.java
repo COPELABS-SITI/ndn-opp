@@ -59,6 +59,11 @@ public class OpportunisticPeerTracking extends Fragment implements Observer {
     private NsdServiceDiscoverer mServiceTracker = NsdServiceDiscoverer.getInstance();
     private OpportunisticPeerTracker mWifiP2pPeerTracker = OpportunisticPeerTracker.getInstance();
     private OpportunisticConnectivityManager mWifiP2pConnectivityManager = new OpportunisticConnectivityManager();
+
+    // Two variables to remember whether to Group-related buttons have to be enabled or disabled.
+    private boolean mCanFormGroup = false; // = can find another potential Group Owner in the vicinity
+    private boolean mIsConnectedToGroup = false; // Determines whether the LEAVE button is enabled or not
+
     private Button mBtn_groupFormation;
     private Button mBtn_groupLeave;
 
@@ -122,12 +127,13 @@ public class OpportunisticPeerTracking extends Fragment implements Observer {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.v(TAG, "onCreateView");
         View viewWifiP2pTracking = inflater.inflate(R.layout.fragment_opp_peer_tracking, container, false);
 
         mDiscoveryInProgress = (ProgressBar) viewWifiP2pTracking.findViewById(R.id.discoveryInProgress);
 
         mBtn_groupFormation = (Button) viewWifiP2pTracking.findViewById(R.id.button_group_formation);
-        mBtn_groupFormation.setEnabled(false);
+        mBtn_groupFormation.setEnabled(mCanFormGroup);
         mBtn_groupFormation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -136,7 +142,7 @@ public class OpportunisticPeerTracking extends Fragment implements Observer {
         });
 
         mBtn_groupLeave = (Button) viewWifiP2pTracking.findViewById(R.id.button_group_leave);
-        mBtn_groupLeave.setEnabled(false);
+        mBtn_groupLeave.setEnabled(mIsConnectedToGroup);
         mBtn_groupLeave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -183,7 +189,9 @@ public class OpportunisticPeerTracking extends Fragment implements Observer {
                and use it to update the UI accordingly. */
             mPeers.clear();
             mPeers.putAll(mWifiP2pPeerTracker.getPeers());
-            mBtn_groupFormation.setEnabled(!mWifiP2pConnectivityManager.isAspiringGroupOwner(mPeers));
+
+            mCanFormGroup = !mWifiP2pConnectivityManager.isAspiringGroupOwner(mPeers);
+            mBtn_groupFormation.setEnabled(mCanFormGroup);
 
             if(act != null)
                 act.runOnUiThread(mPeerUpdater);
@@ -221,7 +229,8 @@ public class OpportunisticPeerTracking extends Fragment implements Observer {
                 boolean wifiP2pConnected = netInfo.isConnected();
                 Log.v(TAG, "Connection changed : " + (wifiP2pConnected ? "CONNECTED" : "DISCONNECTED"));
 
-                mBtn_groupLeave.setEnabled(wifiP2pConnected);
+                mIsConnectedToGroup = wifiP2pConnected;
+                mBtn_groupLeave.setEnabled(mIsConnectedToGroup);
             }
         }
     }

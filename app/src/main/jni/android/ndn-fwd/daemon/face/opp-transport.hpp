@@ -20,7 +20,7 @@ public:
     void onSendComplete(bool succeeded);
 
     int getQueueSize();
-    void removePacket(const std::string &nm);
+    void removePacket(uint32_t nonce);
 
 private:
     virtual void doClose() override;

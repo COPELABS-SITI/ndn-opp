@@ -130,6 +130,10 @@ void Nfd::destroyFace(FaceId id) {
 		face->close();
 }
 
+Forwarder& Nfd::getForwarder() {
+    return m_forwarder;
+}
+
 NameTree& Nfd::getNameTree() {
 	return m_forwarder.getNameTree();
 }

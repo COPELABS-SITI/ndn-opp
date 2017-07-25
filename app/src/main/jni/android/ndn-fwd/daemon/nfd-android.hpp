@@ -32,6 +32,7 @@ public:
     void afterCreateFaceFailure(uint32_t status, const std::string& reason);
     void destroyFace(FaceId id);
 
+    Forwarder& getForwarder();
 	NameTree& getNameTree();
 	FaceTable& getFaceTable();
 	Fib& getForwardingInformationBase();
