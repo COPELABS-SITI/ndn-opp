@@ -427,9 +427,9 @@ static jobject jniGetPendingInterestTable(JNIEnv* env, jobject) {
                 jobject jpitEntry = env->NewObject(pitEntry, newPitEntry, env->NewStringUTF(entry.getName().toUri().c_str()));
 
                 for(auto && inEntry : entry.getInRecords())
-                    env->CallVoidMethod(jpitEntry, addInRecord, inEntry.getFace().getId());
+                    env->CallVoidMethod(jpitEntry, addInRecord, inEntry.getFace().getId(), inEntry.getLastNonce());
                 for(auto && outEntry : entry.getOutRecords())
-                    env->CallVoidMethod(jpitEntry, addOutRecord, outEntry.getFace().getId());
+                    env->CallVoidMethod(jpitEntry, addOutRecord, outEntry.getFace().getId(), outEntry.getLastNonce());
 
                 env->CallBooleanMethod(pit, listAdd, jpitEntry);
             }
@@ -534,8 +534,8 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 
 		listAdd      = env->GetMethodID(list    , "add"         , "(Ljava/lang/Object;)Z");
 		addNextHop   = env->GetMethodID(fibEntry, "addNextHop"  , "(JI)V");
-		addInRecord  = env->GetMethodID(pitEntry, "addInRecord" , "(J)V");
-		addOutRecord = env->GetMethodID(pitEntry, "addOutRecord", "(J)V");
+		addInRecord  = env->GetMethodID(pitEntry, "addInRecord" , "(JI)V");
+		addOutRecord = env->GetMethodID(pitEntry, "addOutRecord", "(JI)V");
 
 		mth_send = env->GetMethodID(cls_opp_channel, "send", "([B)V");
 	}

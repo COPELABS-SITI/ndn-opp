@@ -64,4 +64,6 @@
     <string name="ndn_node">NDN Node</string>
     <string name="connect">Connect</string>
     <string name="groupLeave">Leave Group</string>
+    <string name="in">IN</string>
+    <string name="out">OUT</string>
 </resources>

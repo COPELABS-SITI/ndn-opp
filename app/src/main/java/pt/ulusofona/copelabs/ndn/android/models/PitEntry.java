@@ -3,69 +3,61 @@
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
  * Implementation of the Pending Interest Table entry class.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
- */package pt.ulusofona.copelabs.ndn.android.models;
+ */
+package pt.ulusofona.copelabs.ndn.android.models;
 
 import android.support.annotation.NonNull;
-import android.view.LayoutInflater;
-import android.view.View;
 
-import android.widget.TextView;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
+import java.util.HashSet;
+import java.util.Set;
 
 /** The model class used to represent entries from the PendingInterestTable within the Android app.
  *  A PitEntry associates two lists to keep track which Interests arrived on which Faces (Incoming Faces)
  *  and down which Faces they were sent (Outgoing Faces).
  */
-public class PitEntry implements Table.Entry, Comparable<PitEntry> {
+public class PitEntry implements Comparable<PitEntry> {
     private String name;
-	private List<Long> inFaces;
-	private List<Long> outFaces;
+	// Associates a FaceId with the last Nonce received on that Face
+    private Set<FaceRecord> mInRecords = new HashSet<>();
+	// Associates a FaceId with the last Nonce sent out on that Face
+    private Set<FaceRecord> mOutRecords = new HashSet<>();
 
-	/** Main constructor
-	 * @param name the Name of the Interest associated to this entry
-	 */
-	public PitEntry(String name) {
-		this.name = name;
-		inFaces = new ArrayList<>();
-		outFaces = new ArrayList<>();
-	}
+    public PitEntry(String name) {
+        this.name = name;
+    }
 
-	/** Add a new Incoming Face for this PitEntry
+    public String getName() {
+        return this.name;
+    }
+
+	/** Add a new IN-Record for this PitEntry which records the information on the last Interest packet received on a Face
 	 * @param faceId ID of the Incoming Face
+     * @param nonce the nonce of the last Interest packet received on the Face
 	 */
-	public void addInRecord(long faceId) {
-		inFaces.add(faceId);
+	public void addInRecord(long faceId, int nonce) {
+        mInRecords.add(new FaceRecord(faceId, nonce));
 	}
 
-	/** Add a new Outgoing Face for this PitEntry
+    /** Obtain the IN-Records of this PitEntry.
+     * @return the set of all IN-Records of this PitEntry.
+     */
+	public Set<FaceRecord> getInRecords() {
+        return mInRecords;
+    }
+
+	/** Add a new OUT-Record to this PitEntry which records the information on the last Interest packet sent on a Face
 	 * @param faceId ID of the Outgoing Face
+     * @param nonce the nonce of the last Interest packet sent down the Face
 	 */
-	public void addOutRecord(long faceId) {
-		outFaces.add(faceId);
+	public void addOutRecord(long faceId, int nonce) {
+        mOutRecords.add(new FaceRecord(faceId, nonce));
 	}
 
-	/** Constructs the View to use to display an instance of PitEntry.
-	 * @param inflater the system inflater to used for turning the layout file into objects.
-	 * @return the View to be used for displaying an instance of PitEntry.
-	 */
-    @Override
-	public View getView(LayoutInflater inflater) {
-		return inflater.inflate(R.layout.item_pit_entry, null, false);
-	}
-
-	/** Initialize the fields of a View with the values stored in this PitEntry.
-	 * @param entry : the View to use for displaying this PitEntry.
-	 */
-	@Override
-    public void setViewContents(View entry) {
-        ((TextView) entry.findViewById(R.id.name)).setText(this.name);
-        ((TextView) entry.findViewById(R.id.inFaces)).setText(this.inFaces.toString());
-        ((TextView) entry.findViewById(R.id.outFaces)).setText(this.outFaces.toString());
+    /** Obtain the OUT-Records of this PitEntry.
+     * @return the set of all OUT-Records of this PitEntry.
+     */
+	public Set<FaceRecord> getOutRecords() {
+        return mOutRecords;
     }
 
 	/** Comparison of PitEntries based on their Interest Name
@@ -75,5 +67,23 @@ public class PitEntry implements Table.Entry, Comparable<PitEntry> {
 	@Override
     public int compareTo(@NonNull PitEntry that) {
         return this.name.compareTo(that.name);
+    }
+
+	public class FaceRecord {
+		private long faceId;
+		private int nonce;
+
+		FaceRecord(long faceId, int nonce) {
+			this.faceId = faceId;
+			this.nonce = nonce;
+		}
+
+		public long getFaceId() {
+            return faceId;
+        }
+
+        public int getNonce() {
+            return nonce;
+        }
     }
 }

@@ -20,6 +20,8 @@ OppTransport::OppTransport(const FaceUri& uri) : Transport() {
     this->setMtu(MTU_UNLIMITED);
 }
 
+// Used to change the state of this OppTransport. When the state changes to UP, we need to start
+// the process of sending out the packets that are currently queued.
 void OppTransport::commuteState(TransportState newState) {
     NFD_LOG_DEBUG("Commuting state.");
     this->setState(newState);
@@ -27,12 +29,14 @@ void OppTransport::commuteState(TransportState newState) {
         sendNextPacket();
 }
 
+// When the OppTransport closes. Part of the Transport interface.
 void OppTransport::doClose() {
     // This is the result of an explicit close. Allow current packet transmission to complete ?
     // Disallow new sends to occur through this Face but empty the queue if possible.
     this->close();
 }
 
+// Initiates the sending of the next pending packet.
 void OppTransport::sendNextPacket() {
     if(!m_sendQueue.empty())
         performSend(this->getFace()->getId(), m_sendQueue.front().packet);

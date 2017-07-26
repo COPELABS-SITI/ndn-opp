@@ -6,17 +6,14 @@
  */
 package pt.ulusofona.copelabs.ndn.android.ui.fragment;
 
-import android.content.Context;
 import android.os.Bundle;
 
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.LayoutInflater;
 
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.ListView;
 
@@ -37,7 +34,7 @@ public class Table<E extends Table.Entry> extends Fragment {
 
     private int mResIdTitle;
     private int mResIdViews; // Default view to use.
-    private EntryAdapter<E> mAdapter;
+    private TableEntryAdapter<E> mAdapter;
 
     public static Table newInstance(int titleId, int viewId) {
         Table fragment = new Table();
@@ -56,7 +53,7 @@ public class Table<E extends Table.Entry> extends Fragment {
         if(args != null) {
             mResIdTitle = args.getInt(TITLE);
             mResIdViews = args.getInt(DEFAULT_VIEW);
-            mAdapter = new EntryAdapter<>(getContext(), mResIdViews);
+            mAdapter = new TableEntryAdapter<>(getContext(), mResIdViews);
         }
     }
 
@@ -74,25 +71,4 @@ public class Table<E extends Table.Entry> extends Fragment {
 	public void clear() { if(mAdapter != null) mAdapter.clear(); }
 	public void refresh(List<E> entries) { clear(); if (mAdapter != null) mAdapter.addAll(entries); }
 
-    private class EntryAdapter<E extends Entry> extends ArrayAdapter<E> {
-        private LayoutInflater mInflater;
-
-        EntryAdapter(Context context, int resourceId) {
-            super(context, resourceId);
-            mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        }
-
-        @Override @NonNull
-        public View getView(int i, View convertView, @NonNull ViewGroup viewGroup) {
-            View entry;
-            Entry data = getItem(i);
-
-            if(convertView != null) entry = convertView;
-            else entry = data.getView(mInflater);
-
-            data.setViewContents(entry);
-
-            return entry;
-        }
-    }
 }

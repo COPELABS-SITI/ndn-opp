@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ @version 1.0
+  ~ COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017/7/26
+  ~ Layout file for PIT entry's In-Record.
+  ~ @author Seweryn Dynerowicz (COPELABS/ULHT)
+  -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+			  style="@style/match" android:orientation="horizontal">
+    <TextView style="@style/cell" android:text="@string/in"/>
+	<TextView android:id="@+id/faceId" style="@style/cell"/>
+	<TextView android:id="@+id/lastNonce" style="@style/hCell"/>
+</LinearLayout>

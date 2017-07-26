@@ -11,6 +11,8 @@ void performSend(long, ndn::Block);
 namespace nfd {
 namespace face {
 
+// The OppTransport implements the logic of queueing and sending out packets based on whether the corresponding neighbor peer
+// is within transmission range or not.
 class OppTransport : public Transport {
 public:
     OppTransport(const FaceUri& uri);

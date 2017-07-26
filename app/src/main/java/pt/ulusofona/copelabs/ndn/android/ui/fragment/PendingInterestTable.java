@@ -6,12 +6,22 @@
  */
 package pt.ulusofona.copelabs.ndn.android.ui.fragment;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.models.PitEntry;
@@ -19,9 +29,15 @@ import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 
 /** Fragment used to display the PendingInterestTable of the running daemon. */
 public class PendingInterestTable extends Fragment implements Refreshable {
-	private Table<PitEntry> mPit = Table.newInstance(R.string.pit, R.layout.item_pit_entry);
+	private PitEntryAdapter mPitEntriesAdapter;
 
-	/** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mPitEntriesAdapter = new PitEntryAdapter(context, R.layout.item_pit_entry);
+    }
+
+    /** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html
 	 * @param inflater Android-provided layout inflater
 	 * @param parent parent View within the hierarchy
 	 * @param savedInstanceState previously saved state of the View instance
@@ -29,14 +45,12 @@ public class PendingInterestTable extends Fragment implements Refreshable {
 	 */
     @Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
-		View overview = inflater.inflate(R.layout.fragment_ndn_table, parent, false);
+		View pitView = inflater.inflate(R.layout.fragment_table, parent, false);
 
-		getChildFragmentManager()
-			.beginTransaction()
-			.replace(R.id.table, mPit)
-			.commit();
+		((TextView) pitView.findViewById(R.id.title)).setText(R.string.pit);
+		((ListView) pitView.findViewById(R.id.contents)).setAdapter(mPitEntriesAdapter);
 
-		return overview;
+		return pitView;
 	}
 
 	/** Obtain the title to be displayed for this table
@@ -44,7 +58,7 @@ public class PendingInterestTable extends Fragment implements Refreshable {
 	 */
     @Override
     public int getTitle() {
-        return R.string.overview;
+        return R.string.pit;
     }
 
 	/** Performs a refresh of the contents of the enclosed table
@@ -52,12 +66,67 @@ public class PendingInterestTable extends Fragment implements Refreshable {
 	 */
 	@Override
 	public void refresh(@NonNull OpportunisticDaemon.NodBinder daemon) {
-		mPit.refresh(daemon.getPendingInterestTable());
+        mPitEntriesAdapter.clear();
+		mPitEntriesAdapter.addAll(daemon.getPendingInterestTable());
 	}
 
 	/** Clear the contents of the enclosed table */
 	@Override
 	public void clear() {
-		mPit.clear();
+		mPitEntriesAdapter.clear();
 	}
+
+	private class PitEntryAdapter extends ArrayAdapter<PitEntry> {
+        PitEntryAdapter(@NonNull Context context, @LayoutRes int resource) {
+            super(context, resource);
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            if (convertView == null)
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.item_pit_entry, parent, false);
+
+
+            PitEntry entry = getItem(position);
+            RecordAdapter inRecordsAdapter = new RecordAdapter(getContext(), R.layout.item_pit_entry_in_record);
+            RecordAdapter outRecordsAdapter = new RecordAdapter(getContext(), R.layout.item_pit_entry_out_record);
+            if (entry != null) {
+                inRecordsAdapter.clear();
+                inRecordsAdapter.addAll(entry.getInRecords());
+                outRecordsAdapter.clear();
+                outRecordsAdapter.addAll(entry.getOutRecords());
+
+                ((TextView) convertView.findViewById(R.id.name)).setText(entry.getName());
+                ((ListView) convertView.findViewById(R.id.inRecords)).setAdapter(inRecordsAdapter);
+                ((ListView) convertView.findViewById(R.id.outRecords)).setAdapter(outRecordsAdapter);
+            }
+
+            return convertView;
+        }
+    }
+
+    private class RecordAdapter extends ArrayAdapter<PitEntry.FaceRecord> {
+        private int resourceId;
+
+        RecordAdapter(Context context, int resourceId) {
+            super(context, resourceId);
+            this.resourceId = resourceId;
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            if (convertView == null)
+                convertView = LayoutInflater.from(getContext()).inflate(resourceId, parent, false);
+
+            PitEntry.FaceRecord record = getItem(position);
+            if (record != null) {
+                ((TextView) convertView.findViewById(R.id.faceId)).setText(String.format(Locale.getDefault(), "%03d", record.getFaceId()));
+                ((TextView) convertView.findViewById(R.id.lastNonce)).setText(String.format(Locale.getDefault(), "%d", record.getNonce()));
+            }
+
+            return convertView;
+        }
+    }
 }
