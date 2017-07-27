@@ -91,7 +91,9 @@ public class OpportunisticPeerTracker extends Observable implements Observer {
             Log.w(TAG, "Attempt to unregister a second time.");
     }
 
-    public Map<String, OpportunisticPeer> getPeers() {return mPeers;}
+    public Map<String, OpportunisticPeer> getPeers() {
+        return mPeers;
+    }
 
     /** Used to process notifications from the two observed instances of device and service discoverers.
      * @param observable which observable notified this tracker of a change

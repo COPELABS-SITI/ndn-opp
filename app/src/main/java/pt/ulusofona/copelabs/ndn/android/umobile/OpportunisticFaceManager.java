@@ -135,20 +135,19 @@ public class OpportunisticFaceManager implements Observer {
      * @param current new information to be used for the update
      */
     private void updateService(NsdService current) {
-        if(current.getStatus() == NsdService.Status.AVAILABLE) {
-            /* If the peer is unknown (i.e. its UUID is not in the list of UMobile peers,
-             * we request the creation of a Face for it. Then, if the Face has an ID referenced
-             * in the existing Opportunistic faces, bring it up. */
-            if(!mUmobileServices.containsKey(current.getUuid())) {
-                Log.d(TAG, "Requesting Face creation");
-                mDaemon.createFace("opp://" + current.getUuid(), 0, false);
-            }
-            mUmobileServices.put(current.getUuid(), current);
-            bringUpFace(current.getUuid());
-        } else if(current.getStatus() == NsdService.Status.UNAVAILABLE) {
-            mUmobileServices.put(current.getUuid(), current);
-            bringDownFace(current.getUuid());
+        /* If the peer is unknown (i.e. its UUID is not in the list of UMobile peers,
+         * we request the creation of a Face for it. Then, if the Face has an ID referenced
+         * in the existing Opportunistic faces, bring it up. */
+        if(!mUmobileServices.containsKey(current.getUuid())) {
+            Log.d(TAG, "Requesting Face creation");
+            mDaemon.createFace("opp://" + current.getUuid(), 0, false);
         }
+        mUmobileServices.put(current.getUuid(), current);
+
+        if(current.getStatus() == NsdService.Status.AVAILABLE)
+            bringUpFace(current.getUuid());
+        else if(current.getStatus() == NsdService.Status.UNAVAILABLE)
+            bringDownFace(current.getUuid());
     }
 
     /** Enable the service which enables packets to be transferred. This includes opening a listening socket

@@ -14,9 +14,16 @@ import android.content.IntentFilter;
 import android.net.NetworkInfo;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
@@ -48,6 +55,7 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
     private final NsdServiceResolver mResolver = new NsdServiceResolver();
 
     private final ConnectivityEventDetector mConnectivityDetector = new ConnectivityEventDetector();
+    private String mAssignedIpv4 = null;
 
     // Associates a UUID to a NsdService.
     private Map<String, NsdService> mServices = new HashMap<>();
@@ -63,6 +71,7 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
     /** Enable this NSD Service Tracker. When enabled, the tracker will react to Wi-Fi Direct Group
      * connections by activating service tracking within that Group and update its list of NSD Services
      * accordingly.
+     *
      * @param context the Android context within which the tracker should be activated.
      * @param uuid the UUID of the current device. Used for filtering out from the detected services.
      */
@@ -102,7 +111,7 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
     /** Starts the tracker; services will be discovered on the current Wi-Fi Direct Group. */
     private synchronized void start() {
         if(mEnabled && !mStarted) {
-            Log.i(TAG, "Starting");
+            Log.i(TAG, "Starting [" + mAssignedIpv4 + "]");
             mNsdManager.discoverServices(NsdService.SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mListener);
             mStarted = true;
         } else
@@ -134,13 +143,17 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
 
     /** Invoked upon resolution completion to update the NSD service details
      * with the new information available about it.
+     *
      * @param descriptor relevant informations describing the service details that have changed
      */
     private void resolutionCompleted(NsdServiceInfo descriptor) {
         String svcUuid = descriptor.getServiceName();
+        String hostAddress = descriptor.getHost().getCanonicalHostName();
+
+        Log.v(TAG, "Resolution complete : " + descriptor.getServiceName() + "@" + hostAddress);
 
         NsdService svc;
-        if(mServices.containsKey(svcUuid))
+        if (mServices.containsKey(svcUuid))
             svc = mServices.get(descriptor.getServiceName());
         else {
             Log.w(TAG, "Resolution of a Service not found in mServices.");
@@ -148,18 +161,21 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
             mServices.put(svcUuid, svc);
         }
 
-        svc.resolved(descriptor);
+        if(hostAddress.equals(mAssignedIpv4))
+            Log.e(TAG, "Ignoring faulty resolution by Android for UUID : " + svcUuid + ".");
+        else
+            svc.resolved(descriptor);
 
         setChanged(); notifyObservers(svc);
     }
 
     /** Observer method to process notifications from Observables
      * @param observable observable which notified of a change
-     * @param obj optional parameter passed by the observable as part of its notification
+     * @param obj        optional parameter passed by the observable as part of its notification
      */
     @Override
     public void update(Observable observable, Object obj) {
-        if(observable instanceof NsdServiceResolver)
+        if (observable instanceof NsdServiceResolver)
             // Update the NSD Service upon resolution completion
             resolutionCompleted((NsdServiceInfo) obj);
         else
@@ -177,11 +193,13 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
             Log.e(TAG, "Stop err" + error);
         }
 
-        @Override public void onDiscoveryStarted(String regType) {
+        @Override
+        public void onDiscoveryStarted(String regType) {
             Log.d(TAG, "Started : " + regType);
         }
 
-        @Override public void onDiscoveryStopped(String regType) {
+        @Override
+        public void onDiscoveryStopped(String regType) {
             Log.d(TAG, "Stopped : " + regType);
         }
 
@@ -189,25 +207,26 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
         public void onServiceFound(NsdServiceInfo descriptor) {
             String svcUuid = descriptor.getServiceName();
 
-            Log.d(TAG, "ServiceFound " + svcUuid + " @ " + descriptor.getHost() + ":" + descriptor.getPort());
+            Log.d(TAG, "ServiceFound " + svcUuid);
 
-            if( !mAssignedUuid.equals(svcUuid)) {
-                if(!mServices.containsKey(svcUuid)) {
+            if (!mAssignedUuid.equals(svcUuid)) {
+                if (!mServices.containsKey(svcUuid)) {
                     NsdService svc = new NsdService(svcUuid);
                     mServices.put(svcUuid, svc);
                 }
 
                 mResolver.resolve(descriptor);
             }
+
         }
 
         @Override
         public void onServiceLost(NsdServiceInfo descriptor) {
             String svcUuid = descriptor.getServiceName();
-            if( !mAssignedUuid.equals(svcUuid)) {
+            if (!mAssignedUuid.equals(svcUuid)) {
                 Log.d(TAG, "ServiceLost " + svcUuid);
 
-                if(mServices.containsKey(svcUuid)) {
+                if (mServices.containsKey(svcUuid)) {
                     NsdService svc = mServices.get(svcUuid);
                     svc.markAsUnavailable();
                     setChanged(); notifyObservers(svc);
@@ -217,19 +236,62 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
     }
 
     private class ConnectivityEventDetector extends BroadcastReceiver {
+        private String extractIp(WifiP2pGroup group) {
+            String ipAddress = null;
+            String interfaceName = group.getInterface();
+            Log.v(TAG, "Group Interface : " + interfaceName);
+            if (interfaceName != null) {
+                try {
+                    Enumeration<NetworkInterface> allIfaces = NetworkInterface.getNetworkInterfaces();
+                    Log.v(TAG, allIfaces.toString());
+                    while (allIfaces.hasMoreElements()) {
+                        NetworkInterface iface = allIfaces.nextElement();
+                        Log.v(TAG, iface.toString());
+                        if (interfaceName.equals(iface.getName())) {
+                            for (InterfaceAddress ifAddr : iface.getInterfaceAddresses()) {
+                                InetAddress address = ifAddr.getAddress();
+                                if (address instanceof Inet4Address && !address.isAnyLocalAddress())
+                                    ipAddress = address.getHostAddress();
+                            }
+                        }
+                    }
+                } catch (SocketException e) {
+                    e.printStackTrace();
+                }
+            }
+            return ipAddress;
+        }
+
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
 
             if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
                 NetworkInfo netInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
-                boolean wifiP2pConnected = netInfo.isConnected();
-                Log.v(TAG, "Connection changed : " + (wifiP2pConnected ? "CONNECTED" : "DISCONNECTED"));
+                WifiP2pGroup wifip2pGroup = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_GROUP);
 
-                // When the current device joins a Wi-Fi Direct Group, start detecting services,
-                if(wifiP2pConnected) start();
-                // When the current device leaves the Wi-Fi Direct Group, stop detecting services.
-                else stop();
+                Log.v(TAG, "NetworkInfo : " + netInfo);
+                Log.v(TAG, "WifiP2pGroup : " + wifip2pGroup);
+
+                if (netInfo.isConnected()) {
+                    /* When the current device connects to a Group;
+                       1) retrieve the IP it has been assigned and
+                       2) enable the opportunistic service on that IP
+                    */
+                    String newIpv4 = extractIp(wifip2pGroup);
+                    if (mAssignedIpv4 != null) {
+                        // If it was previously connected, and the IP has changed enable the service
+                        if (!mAssignedIpv4.equals(newIpv4)) {
+                            mAssignedIpv4 = newIpv4;
+                        }
+                    } else
+                        mAssignedIpv4 = newIpv4;
+
+                    start();
+                } else {
+                    mAssignedIpv4 = null;
+                    stop();
+                }
             }
         }
     }
