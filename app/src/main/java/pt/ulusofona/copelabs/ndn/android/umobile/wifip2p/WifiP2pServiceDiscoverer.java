@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager.ActionListener;
 import android.net.wifi.p2p.WifiP2pManager.DnsSdServiceResponseListener;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
@@ -90,7 +91,7 @@ class WifiP2pServiceDiscoverer extends Observable {
     /** Processing when a new service is reported by Android. */
     private DnsSdServiceResponseListener svcResponseListener = new DnsSdServiceResponseListener() {
         @Override
-        public void onDnsSdServiceAvailable(String instanceUuid, String registrationType, android.net.wifi.p2p.WifiP2pDevice node) {
+        public void onDnsSdServiceAvailable(String instanceUuid, String registrationType, WifiP2pDevice node) {
             Log.d(TAG, "Service Found : " + instanceUuid + " : " + registrationType + "@" + node.deviceAddress);
 
             // Exclude the UUID of the current device.

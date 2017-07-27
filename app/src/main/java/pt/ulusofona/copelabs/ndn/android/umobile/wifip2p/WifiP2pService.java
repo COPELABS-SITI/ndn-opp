@@ -9,7 +9,7 @@ package pt.ulusofona.copelabs.ndn.android.umobile.wifip2p;
 /** Model for representing a service available on some WifiP2pDevice.
  */
 class WifiP2pService {
-    static final String SVC_INSTANCE_TYPE = "_wifip2ptracker._tcp";
+    static final String SVC_INSTANCE_TYPE = "_ndnopp._tcp";
 
     private Status mCurrently;
     private String mUuid;

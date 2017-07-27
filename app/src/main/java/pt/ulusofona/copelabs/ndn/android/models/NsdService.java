@@ -23,7 +23,7 @@ public class NsdService {
     private static final String UNKNOWN_HOST = "0.0.0.0";
     private static final int UNKNOWN_PORT = 0;
 
-    public static final String SERVICE_TYPE = "_nsdtracker._tcp";
+    public static final String SERVICE_TYPE = "_ndnopp._tcp";
 
     /** Enumeration of possible statuses. */
     public enum Status {
