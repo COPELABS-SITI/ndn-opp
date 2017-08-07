@@ -100,6 +100,12 @@ public: // getter/setter
   MetaInfo&
   setFreshnessPeriod(const time::milliseconds& freshnessPeriod);
 
+  const int
+  isPushed() const;
+
+  MetaInfo&
+  setPushed(bool pushed);
+
   const name::Component&
   getFinalBlockId() const;
 
@@ -186,6 +192,7 @@ public: // EqualityComparable concept
 
 private:
   uint32_t m_type;
+  bool m_pushed;
   time::milliseconds m_freshnessPeriod;
   name::Component m_finalBlockId;
   std::list<Block> m_appMetaInfo;
@@ -208,6 +215,12 @@ inline const time::milliseconds&
 MetaInfo::getFreshnessPeriod() const
 {
   return m_freshnessPeriod;
+}
+
+inline const int
+MetaInfo::isPushed() const
+{
+  return m_pushed;
 }
 
 inline const name::Component&

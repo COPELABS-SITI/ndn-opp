@@ -155,56 +155,46 @@ void beforeOutRecordUpdate(uint32_t nonce) {
 }
 
 static void jniStart(JNIEnv* env, jobject fDaemon, jstring homepath, jstring configuration) {
-    COFFEE_TRY_JNI(env,
-        // Initialization.
-        forwardingDaemonInstance = env->NewGlobalRef(fDaemon);
+    // Initialization.
+    forwardingDaemonInstance = env->NewGlobalRef(fDaemon);
 
-        std::string home = convertString(env, homepath);
-        ::setenv("HOME", home.c_str(), true);
-        NFD_LOG_INFO("Use [" << home << "] as a security storage");
+    std::string home = convertString(env, homepath);
+    ::setenv("HOME", home.c_str(), true);
+    NFD_LOG_INFO("Use [" << home << "] as a security storage");
 
-        NFD_LOG_INFO("Parsing configuration...");
-        nfd::ConfigSection config;
-        std::istringstream input(convertString(env, configuration));
-        boost::property_tree::read_info(input, config);
+    NFD_LOG_INFO("Parsing configuration...");
+    nfd::ConfigSection config;
+    std::istringstream input(convertString(env, configuration));
+    boost::property_tree::read_info(input, config);
 
-        NFD_LOG_INFO("Initializing Logging.");
-        initializeLogging(config);
+    NFD_LOG_INFO("Initializing Logging.");
+    initializeLogging(config);
 
-        NFD_LOG_INFO("Setting NFD.");
-        g_nfd.reset(new nfd::Nfd(config));
-        NFD_LOG_INFO("Setting NRD.");
-        g_nrd.reset(new nfd::rib::Service(config, g_nfd->m_keyChain));
+    NFD_LOG_INFO("Setting NFD.");
+    g_nfd.reset(new nfd::Nfd(config));
+    NFD_LOG_INFO("Setting NRD.");
+    g_nrd.reset(new nfd::rib::Service(config, g_nfd->m_keyChain));
 
-        NFD_LOG_INFO("Connecting FaceTable.afterAdd & Pit.beforeRemove signals.");
-        g_nfd->getFaceTable().afterAdd.connect(afterFaceAdd);
-        g_nfd->getPendingInterestTable().beforeRemove.connect(beforePitEntryRemove);
+    NFD_LOG_INFO("Connecting FaceTable.afterAdd & Pit.beforeRemove signals.");
+    g_nfd->getFaceTable().afterAdd.connect(afterFaceAdd);
+    g_nfd->getPendingInterestTable().beforeRemove.connect(beforePitEntryRemove);
 
-        g_nfd->getForwarder().beforeOutRecordUpdate.connect(beforeOutRecordUpdate);
+    g_nfd->getForwarder().beforeOutRecordUpdate.connect(beforeOutRecordUpdate);
 
-        NFD_LOG_INFO("Initializing NFD.");
-        g_nfd->initialize();
-        NFD_LOG_INFO("Initializing NRD.");
-        g_nrd->initialize();
+    NFD_LOG_INFO("Initializing NFD.");
+    g_nfd->initialize();
+    NFD_LOG_INFO("Initializing NRD.");
+    g_nrd->initialize();
 
-        // Actual start.
-        boost::thread([] {
-            NFD_LOG_INFO("Started secondary thread");
-            try {
-                COFFEE_TRY() {
-                    nfd::getGlobalIoService().run();
-                } COFFEE_CATCH() {
-                    PERFORM_ATTACHED(coffeecatch_throw_exception(env));
-                } COFFEE_END();
-            } catch (const std::exception& e) {
-                NFD_LOG_FATAL("std::exception: " << e.what());
-            } catch (const nfd::PrivilegeHelper::Error& e) {
-                NFD_LOG_FATAL("PrivilegeHelper: " << e.what());
-            } catch (...) {
-                NFD_LOG_FATAL("Unknown fatal error");
-            }
-        });
-    );
+    // Actual start.
+    boost::thread([] {
+        NFD_LOG_INFO("Started secondary thread");
+        try {
+            nfd::getGlobalIoService().run();
+        } catch (const nfd::PrivilegeHelper::Error& e) {
+            NFD_LOG_FATAL("PrivilegeHelper: " << e.what());
+        }
+    });
 }
 
 static void jniStop(JNIEnv* env, jobject) {

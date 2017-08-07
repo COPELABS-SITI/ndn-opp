@@ -27,13 +27,10 @@ public class Table<E extends Table.Entry> extends Fragment {
         void setViewContents(View entry);
     }
 
-    private static final String TAG = Table.class.getSimpleName();
-
     public static final String TITLE = "ResourceIdTitle";
     public static final String DEFAULT_VIEW = "ResourceIdViews";
 
     private int mResIdTitle;
-    private int mResIdViews; // Default view to use.
     private TableEntryAdapter<E> mAdapter;
 
     public static Table newInstance(int titleId, int viewId) {
@@ -52,7 +49,7 @@ public class Table<E extends Table.Entry> extends Fragment {
         Bundle args = getArguments();
         if(args != null) {
             mResIdTitle = args.getInt(TITLE);
-            mResIdViews = args.getInt(DEFAULT_VIEW);
+            int mResIdViews = args.getInt(DEFAULT_VIEW);
             mAdapter = new TableEntryAdapter<>(getContext(), mResIdViews);
         }
     }

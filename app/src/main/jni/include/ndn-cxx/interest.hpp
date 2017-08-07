@@ -391,6 +391,20 @@ public: // Selectors
     return *this;
   }
 
+  int
+  isLongLived() const
+  {
+    return m_selectors.isLongLived();
+  }
+
+  Interest&
+  setLongLived(bool longLived)
+  {
+    m_selectors.setLongLived(longLived);
+    m_wire.reset();
+    return *this;
+  }
+
 public: // EqualityComparable concept
   bool
   operator==(const Interest& other) const

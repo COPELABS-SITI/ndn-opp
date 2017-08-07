@@ -97,8 +97,9 @@ public class OpportunisticFaceManager implements Observer {
             String peerUuid = face.getRemoteUri().substring(6);
             mOppFaceIds.put(peerUuid, faceId);
 
-            Log.d(TAG, "Registering Opportunistic Face " + faceId + " in RIB for prefix /ndn/multicast.");
-            mDaemon.addRoute("/ndn", faceId, 0L, 0L, 1L);
+            Log.d(TAG, "Registering Opportunistic Face " + faceId + " in RIB for prefix /ndn/multicast and /emergency.");
+            mDaemon.addRoute("/ndn/multicast", faceId, 0L, 0L, 1L);
+            mDaemon.addRoute("/emergency", faceId, 0L, 0L, 1L);
         }
     }
 

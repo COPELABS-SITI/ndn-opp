@@ -203,6 +203,14 @@ public:
 
   //
 
+  const int
+  isPushed() const;
+
+  Data&
+  setPushed(const bool pushed);
+
+  //
+
   const name::Component&
   getFinalBlockId() const;
 
@@ -265,8 +273,6 @@ public:
    */
   Data&
   setContent(const ConstBufferPtr& contentValue);
-
-  //
 
   const Signature&
   getSignature() const;
@@ -336,6 +342,12 @@ inline const time::milliseconds&
 Data::getFreshnessPeriod() const
 {
   return m_metaInfo.getFreshnessPeriod();
+}
+
+inline const int
+Data::isPushed() const
+{
+  return m_metaInfo.isPushed();
 }
 
 inline const name::Component&

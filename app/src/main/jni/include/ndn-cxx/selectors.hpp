@@ -129,6 +129,14 @@ public: // getters & setters
   Selectors&
   setMustBeFresh(bool mustBeFresh);
 
+  int
+  isLongLived() const
+  {
+    return m_longLived;
+  }
+
+  Selectors&
+  setLongLived(bool longLived);
 public: // EqualityComparable concept
   bool
   operator==(const Selectors& other) const;
@@ -146,6 +154,7 @@ private:
   Exclude m_exclude;
   int m_childSelector;
   bool m_mustBeFresh;
+  bool m_longLived;
 
   mutable Block m_wire;
 };

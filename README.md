@@ -23,14 +23,13 @@ Furthermore, the project requires the android-support-v7-appcompat library to be
 of that automatically for you if you import the project there. Unfortunately for Eclipse users, this might be more complicated
 to achieve. This is basically me nicely suggesting you to use Android Studio :)
 
-Furthermore, the local.properties file must be created and reference the NDK (Crystax) and SDK locations respectively as
-in the UCLA NFD-Android.
+Furthermore, the local.properties file must be created and reference the NDK (Crystax) and SDK locations respectively.
 
 When cloning the project, Android Studio does not perform recursive initialization and update of the configured submodules.
 Assuming thet ROOT points to the root of the project, the following commands must be issued manually;
 
-# cd ${ROOT}/app/src/main/jni
-# git submodule update --init --recursive
+$ cd ${ROOT}/app/src/main/jni
+$ git submodule update --init --recursive
 
 Currently, the project is configured to only build the native library for the armeabi-v7a architecture.
 This can be changed by modifying the APP_ABI variable located in app/src/main/jni/Application.mk

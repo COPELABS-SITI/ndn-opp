@@ -8,10 +8,7 @@
 package pt.ulusofona.copelabs.ndn.android.models;
 
 import android.net.nsd.NsdServiceInfo;
-import android.os.Build;
 import android.util.Log;
-
-import java.util.Map;
 
 /** The class used to represent NsdServices discovered within the Wi-Fi Direct Group to which this device is connected.
  *  A NsdService associates a UUID with a status along with an IP and a port number. The status reflect whether
