@@ -105,7 +105,6 @@ public class OpportunisticPeerTracker extends Observable implements Observer {
             Log.d(TAG, "Update from Device Discoverer [" + mWifiP2pDeviceDiscoverer.getDevices().size() + "]");
             for (WifiP2pDevice dev : mWifiP2pDeviceDiscoverer.getDevices().values())
                 updateDevice(dev);
-            setChanged(); notifyObservers();
 
 
         } else if (observable instanceof WifiP2pServiceDiscoverer) {
@@ -115,7 +114,6 @@ public class OpportunisticPeerTracker extends Observable implements Observer {
             else
                 for (WifiP2pService svc : mWifiP2pServiceDiscoverer.getServices().values())
                     updateService(svc);
-            setChanged(); notifyObservers();
         }
     }
 
@@ -129,16 +127,9 @@ public class OpportunisticPeerTracker extends Observable implements Observer {
         // Overwrite the previous instance of the service
         mServices.put(svcMacAddress, svc);
 
-        if(mDevices.containsKey(svcMacAddress)) {
-            // If there is already a device known for this service, update the corresponding peer
-            WifiP2pDevice dev = mDevices.get(svcMacAddress);
-            String uuid = svc.getUuid();
-            if(mPeers.containsKey(uuid)) {
-                OpportunisticPeer peer = mPeers.get(uuid);
-                peer.update(dev);
-            } else
-                mPeers.put(uuid, OpportunisticPeer.create(dev, svc));
-        }
+        // If there is already a device known for this service, update the corresponding peer
+        if(mDevices.containsKey(svcMacAddress))
+            updatePeer(mDevices.get(svcMacAddress), svc);
     }
 
     /** Perform the update of the device instance concerned by a notification
@@ -151,15 +142,25 @@ public class OpportunisticPeerTracker extends Observable implements Observer {
         // Overwrite the previous instance of the device
         mDevices.put(devMacAddress, dev);
 
-        if(mServices.containsKey(devMacAddress)) {
-            // If there is already a service known for this device, update the corresponding peer
-            WifiP2pService svc = mServices.get(devMacAddress);
-            String uuid = svc.getUuid();
-            if(mPeers.containsKey(uuid)) {
-                OpportunisticPeer peer = mPeers.get(uuid);
-                peer.update(dev);
-            } else
-                mPeers.put(uuid, OpportunisticPeer.create(dev, svc));
+        // If there is already a service known for this device, update the corresponding peer
+        if(mServices.containsKey(devMacAddress))
+            updatePeer(dev, mServices.get(devMacAddress));
+    }
+
+    /** Perform the update of information concerning a certain peer
+     * @param dev the new details of the device
+     * @param svc the new details of the service
+     */
+    private void updatePeer(WifiP2pDevice dev, WifiP2pService svc) {
+        OpportunisticPeer peer;
+        String uuid = svc.getUuid();
+        if(mPeers.containsKey(uuid)) {
+            peer = mPeers.get(uuid);
+            peer.update(dev);
+        } else {
+            peer = OpportunisticPeer.create(dev, svc);
+            mPeers.put(uuid, peer);
         }
+        setChanged(); notifyObservers(peer);
     }
 }

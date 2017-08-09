@@ -138,6 +138,7 @@ public class OpportunisticDaemon extends Service {
 
             mOppFaceManager.enable(this, local);
 
+            mPeerTracker.addObserver(mOppFaceManager);
             mServiceTracker.addObserver(mOppFaceManager);
             mServiceTracker.enable(this, mAssignedUuid);
 

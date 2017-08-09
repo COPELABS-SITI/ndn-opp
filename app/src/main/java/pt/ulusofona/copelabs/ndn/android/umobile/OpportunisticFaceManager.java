@@ -27,6 +27,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
@@ -36,6 +37,8 @@ import pt.ulusofona.copelabs.ndn.android.models.Face;
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceRegistrar;
 import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceDiscoverer;
+import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeer;
+import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracker;
 
 // @TODO: if phone goes to sleep, all the open connections will close.
 
@@ -54,6 +57,8 @@ public class OpportunisticFaceManager implements Observer {
     private Context mContext;
     private OpportunisticDaemon.NodBinder mDaemon;
 
+    // Associates a UMOBILE peer to a UUID
+    private Map<String, OpportunisticPeer> mUmobilePeers = new HashMap<>();
     // Associates a NsdService to a UUID
     private Map<String, NsdService> mUmobileServices = new HashMap<>();
     // Associates a FaceId to a UUID
@@ -87,8 +92,7 @@ public class OpportunisticFaceManager implements Observer {
     }
 
     /** Callback method invoked by the ForwardingDaemon when the creation of a Face has been successful.
-     * @param face a representation of the Face that was created
-     */
+     * @param face a representation of the Face that was created */
     void afterFaceAdded(Face face) {
         /* If the created face is an opportunistic one, it must be registered into the data structures used
            to make the link with the socket on the other side. */
@@ -136,15 +140,7 @@ public class OpportunisticFaceManager implements Observer {
      * @param current new information to be used for the update
      */
     private void updateService(NsdService current) {
-        /* If the peer is unknown (i.e. its UUID is not in the list of UMobile peers,
-         * we request the creation of a Face for it. Then, if the Face has an ID referenced
-         * in the existing Opportunistic faces, bring it up. */
-        if(!mUmobileServices.containsKey(current.getUuid())) {
-            Log.d(TAG, "Requesting Face creation");
-            mDaemon.createFace("opp://" + current.getUuid(), 0, false);
-        }
         mUmobileServices.put(current.getUuid(), current);
-
         if(current.getStatus() == NsdService.Status.AVAILABLE)
             bringUpFace(current.getUuid());
         else if(current.getStatus() == NsdService.Status.UNAVAILABLE)
@@ -194,13 +190,26 @@ public class OpportunisticFaceManager implements Observer {
                     Log.v(TAG, "Received a PUNCTUAL NsdService UPDATE : " + svc);
                     updateService((NsdService) obj);
                 } else if (obj instanceof Set) {
-                    Set<NsdService> changes = (Set<NsdService>) obj;
+                    Set content = (Set) obj;
+                    Set<NsdService> changes = new HashSet<>();
+                    for(Object svc : content)
+                        changes.add((NsdService) svc);
                     Log.v(TAG, "Received a COMPLETE NsdService UPDATE : " + changes);
                     for (NsdService current : changes)
                         updateService(current);
                 }
             } else
                 Log.w(TAG, "Received NULL object from NsdServiceDiscoverer");
+        } else if (observable instanceof OpportunisticPeerTracker) {
+            OpportunisticPeer peer = (OpportunisticPeer) obj;
+            /* If the peer is unknown (i.e. its UUID is not in the list of UMobile peers,
+             * we request the creation of a Face for it. Then, if the Face has an ID referenced
+             * in the existing Opportunistic faces, bring it up. */
+            if(!mUmobilePeers.containsKey(peer.getUuid())) {
+                Log.d(TAG, "Requesting Face creation");
+                mDaemon.createFace("opp://" + peer.getUuid(), 0, false);
+            }
+            mUmobilePeers.put(peer.getUuid(), peer);
         }
     }
 

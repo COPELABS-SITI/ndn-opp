@@ -50,7 +50,7 @@ class OpportunisticChannel {
         ct.execute();
     }
 
-    /** ConnectionTask is used to perform a transfer with
+    /** ConnectionTask is used to perform a transfer
      */
     private class ConnectionTask extends AsyncTask<Void, Void, Boolean> {
         private String mHost;

@@ -31,6 +31,7 @@ private:
 
 private:
     std::deque<Packet> m_sendQueue;
+    std::deque<Packet> m_dataQueue;
 };
 
 } // namespace face
