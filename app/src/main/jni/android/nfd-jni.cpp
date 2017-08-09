@@ -154,7 +154,7 @@ void beforeOutRecordUpdate(uint32_t nonce) {
     // Should remove that packet from the queues.
 }
 
-static void jniStart(JNIEnv* env, jobject fDaemon, jstring homepath, jstring configuration) {
+JNIEXPORT void JNICALL jniStart(JNIEnv* env, jobject fDaemon, jstring homepath, jstring configuration) {
     // Initialization.
     forwardingDaemonInstance = env->NewGlobalRef(fDaemon);
 
@@ -197,7 +197,7 @@ static void jniStart(JNIEnv* env, jobject fDaemon, jstring homepath, jstring con
     });
 }
 
-static void jniStop(JNIEnv* env, jobject) {
+JNIEXPORT void JNICALL jniStop(JNIEnv* env, jobject) {
     COFFEE_TRY_JNI(env,
         nfd::getGlobalIoService().post( [] {
             NFD_LOG_DEBUG("Stopping I/O service.");
@@ -283,7 +283,6 @@ static void jniSendComplete(JNIEnv* env, jobject, jlong faceId, jboolean result)
             if(current != nullptr) {
                 nfd::face::OppTransport* oppTransport = (nfd::face::OppTransport*) current->getTransport();
                 oppTransport->onSendComplete(result);
-
             } else
                 NFD_LOG_ERROR("Could not retrieve face #" << faceId);
         }
@@ -342,6 +341,13 @@ static void jniBringDownFace(JNIEnv* env, jobject, jlong faceId) {
             }
         }
     );
+}
+
+static void jniPushData(JNIEnv* env, jobject, jlong faceId, jstring name) {
+    NFD_LOG_INFO("PushData " << name);
+    if(g_nfd.get() != nullptr) {
+
+    }
 }
 
 static void jniDestroyFace(JNIEnv* env, jobject, jlong faceId) {
@@ -466,8 +472,6 @@ static jobject jniGetStrategyChoiceTable(JNIEnv* env, jobject) {
 }
 
 static JNINativeMethod nativeMethods[] = {
-//	{ "jniInitialize", "(Ljava/lang/String;Ljava/lang/String;)V", (void*) jniInitialize },
-//	{ "jniCleanUp", "()V", (void*) jniCleanUp },
 	{ "jniStart", "(Ljava/lang/String;Ljava/lang/String;)V", (void*) jniStart },
 	{ "jniStop", "()V", (void*) jniStop },
 
@@ -484,6 +488,7 @@ static JNINativeMethod nativeMethods[] = {
 	{ "jniBringDownFace", "(J)V", (void*) jniBringDownFace },
 	{ "jniDestroyFace", "(J)V", (void*) jniDestroyFace },
 	{ "jniReceiveOnFace", "(JI[B)V", (void*) jniReceiveOnFace },
+	{ "jniPushData", "(JLjava/lang/String;)V", (void*) jniPushData },
     { "jniSendComplete", "(JZ)V", (void*) jniSendComplete },
 
 	{ "jniAddRoute", "(Ljava/lang/String;JJJJ)V", (void*) jniAddRoute }

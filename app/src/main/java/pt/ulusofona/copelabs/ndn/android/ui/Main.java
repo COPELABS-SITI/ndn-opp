@@ -68,7 +68,7 @@ public class Main extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-        mDaemonIntent = new Intent(getApplicationContext(), OpportunisticDaemon.class);
+        mDaemonIntent = new Intent(this, OpportunisticDaemon.class);
 
         mUptime = (TextView) findViewById(R.id.uptime);
 

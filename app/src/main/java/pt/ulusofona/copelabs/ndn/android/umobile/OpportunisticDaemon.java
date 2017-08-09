@@ -12,6 +12,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
@@ -56,6 +57,7 @@ public class OpportunisticDaemon extends Service {
         public void createFace(String faceUri, int persistency, boolean localFields) { jniCreateFace(faceUri, persistency, localFields);}
         public void bringUpFace(long faceId, OpportunisticChannel oc) { jniBringUpFace(faceId, oc); }
         public void bringDownFace(long faceId) { jniBringDownFace(faceId); }
+        public void pushData(long faceId, String name) { jniPushData(faceId, name); }
         public void sendComplete(long faceId, boolean success) { jniSendComplete(faceId, success); }
         public void receiveOnFace(long faceId, int byteCount, byte[] buffer) { jniReceiveOnFace(faceId, byteCount, buffer); }
         public void destroyFace(long faceId) { jniDestroyFace(faceId); }
@@ -123,7 +125,10 @@ public class OpportunisticDaemon extends Service {
     @Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if(State.STOPPED == getAndSetState(State.STARTED)) {
+            Log.v(TAG, "jniStart()");
             jniStart(getFilesDir().getAbsolutePath(), mConfiguration);
+            Log.v(TAG, "jniStarted");
+
 			startTime = System.currentTimeMillis();
 
             WifiP2pManager wifiP2pManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
@@ -190,7 +195,7 @@ public class OpportunisticDaemon extends Service {
     public Collection<NsdService> getUmobileServices() {
         Collection<NsdService> peers;
 
-        if(mServiceTracker != null)
+        if (mServiceTracker != null)
             peers = mServiceTracker.getServices().values();
         else
             peers = new ArrayList<>();
@@ -198,10 +203,11 @@ public class OpportunisticDaemon extends Service {
         return peers;
     }
 
-	// JNI-related declarations.
-	static {
-		System.loadLibrary("nfd-wrapped");
-	}
+    static {
+        System.loadLibrary("gnustl_shared");
+        System.loadLibrary("crystax");
+        System.loadLibrary("nfd-wrapped");
+    }
 
 	// UmobileService related functions.
     private native void jniStart(String homepath, String config);
@@ -239,6 +245,11 @@ public class OpportunisticDaemon extends Service {
      * @param id the FaceId of the Face to bring down
      */
     private native void jniBringDownFace(long id);
+
+    /** [JNI] Send all Pushed-Data present in the ContentStore through a Face
+     * @param id the FaceId of the Face to which data should be pushed
+     */
+    private native void jniPushData(long id, String name);
 
     /** [JNI] Used by the OpportunisticChannel to notify its encapsulating Face of the result of the
      * transmission of the last packet.
