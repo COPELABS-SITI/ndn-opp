@@ -87,10 +87,10 @@ void OppTransport::onSendComplete(bool succeeded) {
 void OppTransport::doSend(Packet&& packet) {
     NFD_LOG_INFO("doSend " << getFace()->getId());
 
-    if(packet.packet.type() == ndn::tlv::Interest)
+    //if(packet.packet.type() == ndn::tlv::Interest)
         m_sendQueue.push_back(packet);
-    else if (packet.packet.type() == ndn::tlv::Data)
-        m_dataQueue.push_back(packet);
+    //else if (packet.packet.type() == ndn::tlv::Data)
+    //    m_dataQueue.push_back(packet);
 
     TransportState currently = this->getState();
     if(currently == TransportState::UP && m_sendQueue.size() == 1) {
