@@ -55,7 +55,7 @@ public class ForwarderConfiguration extends Fragment implements Refreshable {
 	 * @param daemon Binder to the ForwardingDaemon used to retrieve the new entries to update this View with
 	 */
 	@Override
-	public void refresh(@NonNull OpportunisticDaemon.NodBinder daemon) {
+	public void refresh(@NonNull OpportunisticDaemon.Binder daemon) {
 		mSct.refresh(daemon.getStrategyChoiceTable());
 		mFib.refresh(daemon.getForwardingInformationBase());
 	}

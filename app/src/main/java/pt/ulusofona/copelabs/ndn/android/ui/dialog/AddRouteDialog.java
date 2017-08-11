@@ -34,7 +34,7 @@ public class AddRouteDialog extends DialogFragment {
 	 * @param binder used to access the locally running daemon
 	 * @return the AddRouteDialog
 	 */
-	public static AddRouteDialog create(OpportunisticDaemon.NodBinder binder) {
+	public static AddRouteDialog create(OpportunisticDaemon.Binder binder) {
 		AddRouteDialog fragment = new AddRouteDialog();
 		Bundle args = new Bundle();
 		args.putBinder("ForwardingDaemon", binder);
@@ -50,7 +50,7 @@ public class AddRouteDialog extends DialogFragment {
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-		final OpportunisticDaemon.NodBinder fwdDaemon = (OpportunisticDaemon.NodBinder) getArguments().getBinder("ForwardingDaemon");
+		final OpportunisticDaemon.Binder fwdDaemon = (OpportunisticDaemon.Binder) getArguments().getBinder("ForwardingDaemon");
 
 		View dialog = View.inflate(getContext(), R.layout.dialog_add_route, null);
 

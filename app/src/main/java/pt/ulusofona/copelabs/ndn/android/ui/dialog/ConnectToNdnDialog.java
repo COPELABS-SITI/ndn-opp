@@ -30,7 +30,7 @@ public class ConnectToNdnDialog extends DialogFragment {
 	 * @param binder used to access the locally running daemon
 	 * @return the ConnectToNdnDialog
 	 */
-	public static ConnectToNdnDialog create(OpportunisticDaemon.NodBinder binder) {
+	public static ConnectToNdnDialog create(OpportunisticDaemon.Binder binder) {
 		ConnectToNdnDialog fragment = new ConnectToNdnDialog();
 		Bundle args = new Bundle();
 		args.putBinder("ForwardingDaemon", binder);
@@ -46,7 +46,7 @@ public class ConnectToNdnDialog extends DialogFragment {
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-		final OpportunisticDaemon.NodBinder fwdDaemon = (OpportunisticDaemon.NodBinder) getArguments().getBinder("ForwardingDaemon");
+		final OpportunisticDaemon.Binder fwdDaemon = (OpportunisticDaemon.Binder) getArguments().getBinder("ForwardingDaemon");
 
 		View dialog = View.inflate(getContext(), R.layout.dialog_connect_ndn, null);
 

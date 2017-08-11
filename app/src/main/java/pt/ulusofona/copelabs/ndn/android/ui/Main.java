@@ -55,7 +55,7 @@ public class Main extends AppCompatActivity {
     private final DaemonBroadcastReceiver mDaemonListener = new DaemonBroadcastReceiver();
 
     private TextView mUptime;
-    private OpportunisticDaemon.NodBinder mDaemonBinder;
+    private OpportunisticDaemon.Binder mDaemonBinder;
     private boolean mDaemonConnected = false;
 
     public Main() {
@@ -242,7 +242,7 @@ public class Main extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName cn, IBinder bndr) {
             Log.d(TAG, "Service Connected");
-            mDaemonBinder = (OpportunisticDaemon.NodBinder) bndr;
+            mDaemonBinder = (OpportunisticDaemon.Binder) bndr;
             mDaemonConnected = true;
             startUpdater();
         }

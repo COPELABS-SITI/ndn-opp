@@ -12,6 +12,6 @@ import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 
 public interface Refreshable {
     int getTitle();
-    void refresh(@NonNull OpportunisticDaemon.NodBinder daemon);
+    void refresh(@NonNull OpportunisticDaemon.Binder daemon);
     void clear();
 }

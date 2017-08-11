@@ -77,9 +77,6 @@ static jmethodID newSctEntry;
 static jclass csEntry;
 static jmethodID newCsEntry;
 
-static jclass cls_opp_channel;
-static jmethodID mth_send;
-
 void initializeLogging(nfd::ConfigSection& cfg) {
 	nfd::ConfigFile config(&nfd::ConfigFile::ignoreUnknownSection);
 	nfd::LoggerFactory::getInstance().setConfigFile(config);
@@ -256,20 +253,16 @@ static void jniCreateFace(JNIEnv* env, jobject, jstring uri, jint persistency, j
     );
 }
 
-std::map<long, jobject> m_opportunistic_channels;
-
 void performSend(long faceId, ndn::Block bl) {
     PERFORM_ATTACHED(
         NFD_LOG_INFO("Perform Send from Face : " << faceId << " of " << bl.size() << " bytes.");
         nfd::Face *current = g_nfd->getFaceTable().get(faceId);
         if(current != nullptr && current->getTransport()->getState() == nfd::face::TransportState::UP) {
-            jobject oppChannel = m_opportunistic_channels.find(faceId)->second;
             jbyteArray packetBytes = env->NewByteArray(bl.size());
             if(packetBytes != NULL) {
                 NFD_LOG_INFO("Attempting to map ByteArray region.");
                 env->SetByteArrayRegion(packetBytes, 0, bl.size(), (const jbyte*) bl.wire());
-                NFD_LOG_INFO("Calling actual mth_send.");
-                env->CallVoidMethod(oppChannel, mth_send, packetBytes);
+                // Perform actual send here.
             } else
                 NFD_LOG_WARN("Cannot allocate buffer for sending Block.");
         }
@@ -306,17 +299,14 @@ static void jniReceiveOnFace(JNIEnv* env, jobject, jlong faceId, jint receivedBy
     );
 }
 
-static void jniBringUpFace(JNIEnv* env, jobject, jlong faceId, jobject oppChannel) {
+static void jniBringUpFace(JNIEnv* env, jobject, jlong faceId) {
     COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             nfd::Face* current = g_nfd->getFaceTable().get(faceId);
             if(current != nullptr) {
                 nfd::face::OppTransport* oppT = (nfd::face::OppTransport*) current->getTransport();
                 if(oppT->getState() == nfd::face::TransportState::DOWN) {
-                    // Associate faceId to oppChannel so that it is used when OppTransport sends.
-                    // Also when a packet is received it should be passed through that Transport.
-                    NFD_LOG_INFO("Associating OppChannel to face #" << faceId);
-                    m_opportunistic_channels[faceId] = env->NewGlobalRef(oppChannel);
+                    // When a packet is received it should be passed through that Transport.
                     NFD_LOG_INFO("Commuting transport state of face #" << faceId << " to UP.");
                     oppT->commuteState(nfd::face::TransportState::UP);
                 }
@@ -334,9 +324,6 @@ static void jniBringDownFace(JNIEnv* env, jobject, jlong faceId) {
                 if(oppT->getState() == nfd::face::TransportState::UP) {
                     NFD_LOG_INFO("Commuting transport state of face #" << faceId << " to DOWN.");
                     oppT->commuteState(nfd::face::TransportState::DOWN);
-                    NFD_LOG_INFO("Detaching OppChannel from face #" << faceId);
-                    jobject oppChannel = m_opportunistic_channels.find(faceId)->second;
-                    env->DeleteGlobalRef(oppChannel);
                 }
             }
         }
@@ -484,7 +471,7 @@ static JNINativeMethod nativeMethods[] = {
 	{ "jniGetContentStore"              , "()Ljava/util/List;" , (void*) jniGetContentStore },
 
 	{ "jniCreateFace", "(Ljava/lang/String;IZ)V", (void*) jniCreateFace },
-	{ "jniBringUpFace", "(JLpt/ulusofona/copelabs/ndn/android/umobile/OpportunisticChannel;)V", (void*) jniBringUpFace },
+	{ "jniBringUpFace", "(J)V", (void*) jniBringUpFace },
 	{ "jniBringDownFace", "(J)V", (void*) jniBringDownFace },
 	{ "jniDestroyFace", "(J)V", (void*) jniDestroyFace },
 	{ "jniReceiveOnFace", "(JI[B)V", (void*) jniReceiveOnFace },
@@ -515,8 +502,6 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 		sctEntry = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/models/SctEntry")));
 		csEntry  = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/models/CsEntry")));
 
-        cls_opp_channel = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/umobile/OpportunisticChannel")));
-
 		newList = env->GetMethodID(list, "<init>", "()V");
 		newName = env->GetMethodID(name, "<init>", "(Ljava/lang/String;)V");
 		newFace = env->GetMethodID(face, "<init>", "(JLjava/lang/String;IIIII)V");
@@ -531,8 +516,6 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 		addNextHop   = env->GetMethodID(fibEntry, "addNextHop"  , "(JI)V");
 		addInRecord  = env->GetMethodID(pitEntry, "addInRecord" , "(JI)V");
 		addOutRecord = env->GetMethodID(pitEntry, "addOutRecord", "(JI)V");
-
-		mth_send = env->GetMethodID(cls_opp_channel, "send", "([B)V");
 	}
 	return JNI_VERSION_1_6;
 }
@@ -551,7 +534,6 @@ void JNI_OnUnload(JavaVM* vm, void *reserved) {
 			env->DeleteGlobalRef(pitEntry);
 			env->DeleteGlobalRef(sctEntry);
 			env->DeleteGlobalRef(csEntry);
-			env->DeleteGlobalRef(cls_opp_channel);
 		}
 	}
 }

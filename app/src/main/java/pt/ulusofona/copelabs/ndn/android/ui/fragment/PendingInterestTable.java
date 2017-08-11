@@ -63,7 +63,7 @@ public class PendingInterestTable extends Fragment implements Refreshable {
 	 * @param daemon Binder to the ForwardingDaemon used to retrieve the new entries to update this View with
 	 */
 	@Override
-	public void refresh(@NonNull OpportunisticDaemon.NodBinder daemon) {
+	public void refresh(@NonNull OpportunisticDaemon.Binder daemon) {
         mPitEntriesAdapter.clear();
 		mPitEntriesAdapter.addAll(daemon.getPendingInterestTable());
 	}

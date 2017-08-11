@@ -9,7 +9,9 @@ package pt.ulusofona.copelabs.ndn.android.umobile.wifip2p;
 
 import android.content.Context;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.os.Looper;
 import android.util.Log;
+import android.view.View;
 
 import java.util.HashMap;
 import java.util.Map;

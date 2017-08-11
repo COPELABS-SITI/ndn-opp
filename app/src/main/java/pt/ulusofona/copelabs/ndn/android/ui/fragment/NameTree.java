@@ -56,7 +56,7 @@ public class NameTree extends Fragment implements Refreshable {
 	 * @param daemon Binder to the ForwardingDaemon used to retrieve the new entries to update this View with
 	 */
 	@Override
-	public void refresh(@NonNull OpportunisticDaemon.NodBinder daemon) {
+	public void refresh(@NonNull OpportunisticDaemon.Binder daemon) {
         List<Name> names = daemon.getNameTree();
         Collections.sort(names);
 		mNameTree.refresh(names);

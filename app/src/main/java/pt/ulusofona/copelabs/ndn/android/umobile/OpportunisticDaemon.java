@@ -12,8 +12,6 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.p2p.WifiP2pManager;
-import android.os.AsyncTask;
-import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 import android.util.LongSparseArray;
@@ -23,17 +21,13 @@ import pt.ulusofona.copelabs.ndn.android.models.CsEntry;
 import pt.ulusofona.copelabs.ndn.android.models.Face;
 import pt.ulusofona.copelabs.ndn.android.models.FibEntry;
 import pt.ulusofona.copelabs.ndn.android.models.Name;
-import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 import pt.ulusofona.copelabs.ndn.android.models.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.models.SctEntry;
-import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceDiscoverer;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracker;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /** JNI wrapper around the NDN Opportunistic Daemon (NOD), which is the modified version of NFD to include the Opportunistic Faces,
@@ -48,14 +42,14 @@ public class OpportunisticDaemon extends Service {
 
     private enum State { STARTED , STOPPED }
 
-    public class NodBinder extends Binder {
+    public class Binder extends android.os.Binder {
         public long getUptime() { return (current == State.STARTED) ? System.currentTimeMillis() - startTime : 0L; }
         public String getUmobileUuid() { return (current == State.STARTED) ? mAssignedUuid : getString(R.string.notAvailable); }
         public String getVersion() { return jniGetVersion(); }
         public List<Name> getNameTree() { return jniGetNameTree(); }
         public List<Face> getFaceTable() { return jniGetFaceTable(); }
         public void createFace(String faceUri, int persistency, boolean localFields) { jniCreateFace(faceUri, persistency, localFields);}
-        public void bringUpFace(long faceId, OpportunisticChannel oc) { jniBringUpFace(faceId, oc); }
+        public void bringUpFace(long faceId) { jniBringUpFace(faceId); }
         public void bringDownFace(long faceId) { jniBringDownFace(faceId); }
         public void pushData(long faceId, String name) { jniPushData(faceId, name); }
         public void sendComplete(long faceId, boolean success) { jniSendComplete(faceId, success); }
@@ -67,7 +61,7 @@ public class OpportunisticDaemon extends Service {
         public List<CsEntry> getContentStore() { return jniGetContentStore(); }
         public List<SctEntry> getStrategyChoiceTable() { return jniGetStrategyChoiceTable(); }
     }
-    private final NodBinder local = new NodBinder();
+    private final Binder local = new Binder();
 
     // Start time
 	private long startTime;
@@ -83,7 +77,6 @@ public class OpportunisticDaemon extends Service {
     private String mConfiguration;
 
     private OpportunisticPeerTracker mPeerTracker = OpportunisticPeerTracker.getInstance();
-    private NsdServiceDiscoverer mServiceTracker = NsdServiceDiscoverer.getInstance();
 
     // Custom lock to regulate the transitions between STARTED and STOPPED.
     // @TODO: Replace this with a standard lock.
@@ -136,11 +129,9 @@ public class OpportunisticDaemon extends Service {
 
             mPeerTracker.enable(this, wifiP2pManager, wifiP2pChannel, mAssignedUuid);
 
-            mOppFaceManager.enable(this, local);
+            mOppFaceManager.enable(local);
 
             mPeerTracker.addObserver(mOppFaceManager);
-            mServiceTracker.addObserver(mOppFaceManager);
-            mServiceTracker.enable(this, mAssignedUuid);
 
             Log.d(TAG, STARTED);
             sendBroadcast(new Intent(STARTED));
@@ -165,9 +156,6 @@ public class OpportunisticDaemon extends Service {
 
             mOppFaceManager.disable();
 
-            mServiceTracker.disable();
-            mServiceTracker.deleteObserver(mOppFaceManager);
-
 			sendBroadcast(new Intent(STOPPING));
 			stopSelf();
             super.onDestroy();
@@ -187,21 +175,6 @@ public class OpportunisticDaemon extends Service {
         long faceId = face.getFaceId();
         mFacetable.put(faceId, face);
         mOppFaceManager.afterFaceAdded(face);
-    }
-
-    /** Retrieve the list of currently known NDN-Opp service instances. Can be used to identify which services are running
-     * in the currently connected Wi-Fi Direct Group (if any).
-     * @return the list of all NDN-Opp service instances ever encountered.
-     */
-    public Collection<NsdService> getUmobileServices() {
-        Collection<NsdService> peers;
-
-        if (mServiceTracker != null)
-            peers = mServiceTracker.getServices().values();
-        else
-            peers = new ArrayList<>();
-
-        return peers;
     }
 
     static {
@@ -238,9 +211,8 @@ public class OpportunisticDaemon extends Service {
 
     /** [JNI] Set the status of an Opportunistic Face to UP and attach an OpportunisticChannel to it
      * @param id the FaceId of the Face to bring up
-     * @param oc the OpportunisticChannel this Face has to use to transmit packets
      */
-    private native void jniBringUpFace(long id, OpportunisticChannel oc);
+    private native void jniBringUpFace(long id);
 
     /** [JNI] Set the status of an Opportunistic Face to DOWN and detach its OpportunisticChannel
      * @param id the FaceId of the Face to bring down

@@ -36,7 +36,7 @@ public class CreateFaceDialog extends DialogFragment {
 	 * @param binder used to access the locally running daemon
 	 * @return the CreateFaceDialog object
 	 */
-	public static CreateFaceDialog create(OpportunisticDaemon.NodBinder binder) {
+	public static CreateFaceDialog create(OpportunisticDaemon.Binder binder) {
 		CreateFaceDialog fragment = new CreateFaceDialog();
 		Bundle args = new Bundle();
 		args.putBinder("ForwardingDaemon", binder);
@@ -53,7 +53,7 @@ public class CreateFaceDialog extends DialogFragment {
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-		final OpportunisticDaemon.NodBinder fwdDaemon = (OpportunisticDaemon.NodBinder) getArguments().getBinder("ForwardingDaemon");
+		final OpportunisticDaemon.Binder fwdDaemon = (OpportunisticDaemon.Binder) getArguments().getBinder("ForwardingDaemon");
 
 		View dialog = View.inflate(getContext(), R.layout.dialog_create_face, null);
 
