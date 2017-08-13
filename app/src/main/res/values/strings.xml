@@ -9,10 +9,11 @@
 
 	<string name="notAvailable">n/a</string>
     
-    <string name="status">Status</string>
+    <string name="mStatus">Status</string>
     <string name="version">Version</string>
     <string name="uptime">Uptime</string>
 
+    <string name="startPeerDiscovery">Start Peer Discovery</string>
     <string name="nametree">Name Tree</string>
     <string name="facetable">Face Table</string>
     <string name="fib">Forwarding Information Base</string>
@@ -53,8 +54,8 @@
     <string name="groupClient">Cl</string>
     <string name="missingGroup">--</string>
     <string name="groupFormation">Join/Form Group</string>
-    <string name="wifiP2pPeers">WiFi P2P Peers</string>
-    <string name="missingUuid">------------</string>
+    <string name="ndnOppPeers">NDN-Opp Peers</string>
+    <string name="missingUuid">********-****-****-****-************</string>
     <string name="missingStatus">--</string>
     <string name="missingMac">--:--:--:--:--:--</string>
     <string name="peerTracking">UMobile Peer Tracking</string>

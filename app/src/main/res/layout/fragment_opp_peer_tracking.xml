@@ -1,17 +1,16 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:tools="http://schemas.android.com/tools"
-             style="@style/match"
-             tools:context="pt.ulusofona.copelabs.ndn.android.ui.fragment.OpportunisticPeerTracking">
-
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/btn_start_peer_discovery"
-        android:onClick=""/>
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/match">
 
     <LinearLayout
         style="@style/fill"
         android:orientation="vertical">
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/btn_start_peer_discovery"
+            android:text="@string/startPeerDiscovery" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -19,14 +18,13 @@
 
             <TextView
                 style="@style/title"
-                android:text="@string/wifiP2pPeers"/>
+                android:text="@string/ndnOppPeers"/>
 
             <ProgressBar
                 android:id="@+id/discoveryInProgress"
                 android:visibility="invisible"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"/>
-
         </LinearLayout>
 
         <ListView

@@ -17,6 +17,7 @@ import android.util.Log;
 import android.util.LongSparseArray;
 
 import pt.ulusofona.copelabs.ndn.R;
+import pt.ulusofona.copelabs.ndn.android.Utilities;
 import pt.ulusofona.copelabs.ndn.android.models.CsEntry;
 import pt.ulusofona.copelabs.ndn.android.models.Face;
 import pt.ulusofona.copelabs.ndn.android.models.FibEntry;
@@ -127,8 +128,6 @@ public class OpportunisticDaemon extends Service {
             WifiP2pManager wifiP2pManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
             WifiP2pManager.Channel wifiP2pChannel = wifiP2pManager.initialize(this, getMainLooper(), null);
 
-            mPeerTracker.enable(this, wifiP2pManager, wifiP2pChannel, mAssignedUuid);
-
             mOppFaceManager.enable(local);
 
             mPeerTracker.addObserver(mOppFaceManager);
@@ -151,8 +150,6 @@ public class OpportunisticDaemon extends Service {
 	public void onDestroy() {
 		if(State.STARTED == getAndSetState(State.STOPPED)) {
 			jniStop();
-
-            mPeerTracker.disable();
 
             mOppFaceManager.disable();
 

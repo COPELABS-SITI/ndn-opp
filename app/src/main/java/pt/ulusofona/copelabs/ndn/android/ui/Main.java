@@ -39,7 +39,7 @@ import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.AddRouteDialog;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.CreateFaceDialog;
-import pt.ulusofona.copelabs.ndn.android.umobile.Utilities;
+import pt.ulusofona.copelabs.ndn.android.Utilities;
 
 /** Main interface of NDN-Opp. Brings together the various app sections with the connection to the
  * ForwardingDaemon. */

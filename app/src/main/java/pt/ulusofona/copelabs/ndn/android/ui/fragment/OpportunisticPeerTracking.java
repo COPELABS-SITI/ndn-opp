@@ -28,8 +28,8 @@ import java.util.Observable;
 import java.util.Observer;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.ui.adapter.WifiP2pPeerAdapter;
-import pt.ulusofona.copelabs.ndn.android.umobile.Utilities;
+import pt.ulusofona.copelabs.ndn.android.OperationResult;
+import pt.ulusofona.copelabs.ndn.android.ui.adapter.OpportunisticPeerAdapter;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticConnectivityManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracker;
@@ -48,16 +48,15 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
 
     // Used for feedback to the user that a peerDiscovery is in progress
     private ProgressBar mDiscoveryInProgress;
-    // Used to detect changes to the peerDiscovery process (see WIFI_P2P_DISCOVERY_CHANGED_ACTION)
-    private DiscoveryDetector mDiscoveryDetector = new DiscoveryDetector();
 
-    private OpportunisticPeerTracker mWifiP2pPeerTracker = OpportunisticPeerTracker.getInstance();
-    private OpportunisticConnectivityManager mWifiP2pConnectivityManager = new OpportunisticConnectivityManager();
+    private OpportunisticPeerTracker mPeerTracker = OpportunisticPeerTracker.getInstance();
+    private OpportunisticConnectivityManager mConnectivityManager = OpportunisticConnectivityManager.getInstance();
 
     private Map<String, OpportunisticPeer> mPeers = new HashMap<>();
 
-    private WifiP2pPeerAdapter mWifiP2pPeerAdapter;
+    private OpportunisticPeerAdapter mPeerAdapter;
 
+    private Context mContext;
     private WifiP2pManager mWifiP2pManager;
     private WifiP2pManager.Channel mWifiP2pChannel;
 
@@ -68,42 +67,37 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
     public void onAttach(Context context) {
         super.onAttach(context);
 
+        mContext = context;
         mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
         mWifiP2pChannel = mWifiP2pManager.initialize(context, Looper.getMainLooper(), null);
 
-        mDiscoveryDetector = new DiscoveryDetector();
+        mPeerAdapter = new OpportunisticPeerAdapter(mContext);
 
-        IntentFilter intentFilter = new IntentFilter(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
-        intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
-        context.registerReceiver(mDiscoveryDetector, intentFilter);
+        mContext.registerReceiver(mBr, new IntentFilter(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION));
 
-        mWifiP2pPeerAdapter = new WifiP2pPeerAdapter(context);
-
-        mPeers.putAll(mWifiP2pPeerTracker.getPeers());
-
-        mWifiP2pConnectivityManager.enable(context, mWifiP2pManager, mWifiP2pChannel, Utilities.obtainUuid(context));
+        mPeerTracker.addObserver(this);
+        mPeerTracker.enable(context);
+        mConnectivityManager.enable(context);
     }
 
     /** Fragment lifecycle method (see https://developer.android.com/guide/components/fragments.html) */
     @Override
     public void onDetach() {
-        mWifiP2pConnectivityManager.disable();
-        getContext().unregisterReceiver(mDiscoveryDetector);
+        mConnectivityManager.disable();
+        mPeerTracker.disable();
+        mPeerTracker.deleteObserver(this);
+        mContext.unregisterReceiver(mBr);
         super.onDetach();
     }
 
-    /** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html */
+    /** Fragment lifecycle method (see https://developer.android.com/guide/components/fragments.html) */
     @Override
-    public void onResume() {
-        super.onResume();
-        mWifiP2pPeerTracker.addObserver(this);
-    }
-
-    /** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html */
-    @Override
-    public void onPause() {
-        mWifiP2pPeerTracker.deleteObserver(this);
-        super.onPause();
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.btn_start_peer_discovery:
+                mWifiP2pManager.discoverPeers(mWifiP2pChannel, new OperationResult(TAG, "Peer Discovery"));
+                break;
+        }
     }
 
     /** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html */
@@ -113,12 +107,11 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         Log.v(TAG, "onCreateView");
         View viewWifiP2pTracking = inflater.inflate(R.layout.fragment_opp_peer_tracking, container, false);
 
+        viewWifiP2pTracking.findViewById(R.id.btn_start_peer_discovery).setOnClickListener(this);
         mDiscoveryInProgress = (ProgressBar) viewWifiP2pTracking.findViewById(R.id.discoveryInProgress);
 
         ListView listViewWifiP2pPeers = (ListView) viewWifiP2pTracking.findViewById(R.id.list_wifiP2pPeers);
-        listViewWifiP2pPeers.setAdapter(mWifiP2pPeerAdapter);
-        mWifiP2pPeerAdapter.clear();
-        mWifiP2pPeerAdapter.addAll(mPeers.values());
+        listViewWifiP2pPeers.setAdapter(mPeerAdapter);
 
         return viewWifiP2pTracking;
     }
@@ -126,9 +119,8 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
     private Runnable mPeerUpdater = new Runnable() {
         @Override
         public void run() {
-            mWifiP2pPeerAdapter.clear();
-            Log.d(TAG, "New Peer list : " + mPeers.values());
-            mWifiP2pPeerAdapter.addAll(mPeers.values());
+            mPeerAdapter.clear();
+            mPeerAdapter.addAll(mPeers.values());
         }
     };
 
@@ -136,37 +128,17 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
     public void update(Observable observable, Object obj) {
         FragmentActivity act = getActivity();
 
-        if(observable instanceof OpportunisticPeerTracker) {
-            /* When the PeerTracker notifies of some changes to its list, retrieve the new list of Peers
-               and use it to update the UI accordingly. */
-            mPeers.clear();
-            mPeers.putAll(mWifiP2pPeerTracker.getPeers());
+        /* When the PeerTracker notifies of some changes to its list, retrieve the new list of Peers
+           and use it to update the UI accordingly. */
+        mPeers.clear();
+        mPeers.putAll(mPeerTracker.getPeers());
 
-            if(act != null)
-                act.runOnUiThread(mPeerUpdater);
-        }
-    }
-
-    @Override
-    public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.btn_start_peer_discovery:
-                mWifiP2pManager.discoverPeers(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        Log.v(TAG, "Start Peer Discovery : SUCCESS");
-                    }
-
-                    @Override
-                    public void onFailure(int i) {
-                        Log.v(TAG, "Start Peer Discovery : FAILED (" + i + ")");
-                    }
-                });
-        }
+        if(act != null)
+            act.runOnUiThread(mPeerUpdater);
     }
 
     // Used to toggle the visibility of the ProgressBar based on whether peer discovery is running
-    private class DiscoveryDetector extends BroadcastReceiver {
+    private BroadcastReceiver mBr = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -176,9 +148,7 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
                     mDiscoveryInProgress.setVisibility(View.VISIBLE);
                 else
                     mDiscoveryInProgress.setVisibility(View.INVISIBLE);
-
-
             }
         }
-    }
+    };
 }

@@ -4,7 +4,7 @@
  * This class only provides a utility function to retrieve or generate a UUID.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
-package pt.ulusofona.copelabs.ndn.android.umobile;
+package pt.ulusofona.copelabs.ndn.android;
 
 import android.content.Context;
 import android.content.SharedPreferences;

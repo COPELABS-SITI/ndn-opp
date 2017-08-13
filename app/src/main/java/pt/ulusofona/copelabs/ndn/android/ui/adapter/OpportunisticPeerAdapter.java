@@ -1,7 +1,7 @@
 /**
  *  @version 1.0
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
- * The WifiP2pPeerAdapter is used to populate a ListView
+ * The OpportunisticPeerAdapter is used to populate a ListView
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
 package pt.ulusofona.copelabs.ndn.android.ui.adapter;
@@ -21,14 +21,14 @@ import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeer;
 /** Adapter class for displaying a list of WifiP2pPeers in a View.
  * cfr. https://developer.android.com/reference/android/widget/Adapter.html
  */
-public class WifiP2pPeerAdapter extends ArrayAdapter<OpportunisticPeer> {
+public class OpportunisticPeerAdapter extends ArrayAdapter<OpportunisticPeer> {
     private LayoutInflater mInflater;
 
     /** Main constructor
      * @param context Android context within which the Adapter should be created
      */
-    public WifiP2pPeerAdapter(Context context) {
-        super(context, R.layout.item_wifi_p2p_peer);
+    public OpportunisticPeerAdapter(Context context) {
+        super(context, R.layout.item_ndn_opp_peer);
         mInflater = LayoutInflater.from(context);
     }
 
@@ -45,34 +45,19 @@ public class WifiP2pPeerAdapter extends ArrayAdapter<OpportunisticPeer> {
         if (convertView != null)
             entry = convertView;
         else
-            entry = mInflater.inflate(R.layout.item_wifi_p2p_peer, null, false);
+            entry = mInflater.inflate(R.layout.item_ndn_opp_peer, null, false);
 
         OpportunisticPeer peer = getItem(position);
 
         TextView textDeviceStatus = (TextView) entry.findViewById(R.id.text_peer_status);
-        TextView textDeviceGroup = (TextView) entry.findViewById(R.id.text_peer_group);
         TextView textDeviceUuid = (TextView) entry.findViewById(R.id.text_peer_uuid);
-        TextView textDeviceMacAddress = (TextView) entry.findViewById(R.id.text_peer_mac_address);
 
         if(peer != null) {
             textDeviceStatus.setText(peer.getStatus().getSymbol());
-
-            if(peer.isGroupOwner())
-                textDeviceGroup.setText(R.string.groupOwner);
-            else if(peer.hasGroupOwnerField())
-                if(peer.hasGroupOwner())
-                    textDeviceGroup.setText(R.string.groupClient);
-                else textDeviceGroup.setText("  ");
-            else
-                textDeviceGroup.setText(R.string.missingGroup);
-
-            textDeviceUuid.setText(peer.getUuid().substring(24));
-            textDeviceMacAddress.setText(peer.getMacAddress());
+            textDeviceUuid.setText(peer.getUuid());
         } else {
             textDeviceStatus.setText(R.string.missingStatus);
-            textDeviceGroup.setText(R.string.missingGroup);
             textDeviceUuid.setText(R.string.missingUuid);
-            textDeviceMacAddress.setText(R.string.missingMac);
         }
 
         return entry;
