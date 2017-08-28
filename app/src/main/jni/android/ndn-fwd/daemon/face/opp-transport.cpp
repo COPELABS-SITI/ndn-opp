@@ -38,66 +38,86 @@ void OppTransport::doClose() {
     this->close();
 }
 
-// Initiates the sending of the next pending packet.
-void OppTransport::sendNextPacket() {
-    if(!m_sendQueue.empty())
-        performSend(this->getFace()->getId(), m_sendQueue.front().packet);
-    else
-        NFD_LOG_DEBUG("Queue empty.");
+uint32_t extractNonce(const Transport::Packet &pkt) {
+    uint32_t nonce;
+    Block encodedNonce = pkt.packet.get(ndn::tlv::Nonce);
+    if (encodedNonce.value_size() == sizeof(uint32_t))
+        nonce = *reinterpret_cast<const uint32_t*>(encodedNonce.value());
+    else {
+        nonce = readNonNegativeInteger(encodedNonce);
+    }
+    return nonce;
 }
 
-void OppTransport::removePacket(uint32_t nonce) {
-    std::deque<Packet>::iterator it = find_if(m_sendQueue.begin(), m_sendQueue.end(),
-    [&nonce] (const Packet &current) {
-        // Only Interest packets have a Nonce. Ignore Data packets.
-        if(current.packet.type() != ndn::tlv::Interest)
-            return false;
+std::string extractName(const Transport::Packet &pkt) {
+    Name contentName;
+    Block encodedName = pkt.packet.get(ndn::tlv::Name);
+    contentName.wireDecode(encodedName);
+    return contentName.toUri();
+}
 
-        uint32_t currentNonce;
-        Block encodedNonce = current.packet.get(ndn::tlv::Nonce);
-        if (encodedNonce.value_size() == sizeof(uint32_t))
-            currentNonce = *reinterpret_cast<const uint32_t*>(encodedNonce.value());
-        else {
-            currentNonce = readNonNegativeInteger(encodedNonce);
-        }
-
-        NFD_LOG_DEBUG("Packet with Nonce " << currentNonce << " " << nonce);
-        return (nonce == currentNonce);
-    });
-
-    if(it != m_sendQueue.end()) {
-        NFD_LOG_INFO("Found pending packet in " << getFace()->getId());
-        m_sendQueue.erase(it);
-    }
+// Initiates the sending of the next pending packet.
+void OppTransport::sendNextPacket() {
+    if(!m_intrQueue.empty()) {
+        Packet current = m_intrQueue.front();
+        transferInterest(this->getFace()->getId(), extractNonce(current), current.packet);
+    } else if(!m_dataQueue.empty()) {
+        Packet current = m_dataQueue.front();
+        transferData(this->getFace()->getId(), extractName(current), current.packet);
+    } else
+        NFD_LOG_DEBUG("Queues empty.");
 }
 
 int OppTransport::getQueueSize() {
-    return m_sendQueue.size();
+    return m_intrQueue.size() + m_dataQueue.size();
 }
 
-void OppTransport::onSendComplete(bool succeeded) {
-    NFD_LOG_INFO("onSendComplete. Succeeded ? " << succeeded);
+void OppTransport::removeInterest(uint32_t nonce) {
+    std::deque<Packet>::iterator it = find_if(m_intrQueue.begin(), m_intrQueue.end(),
+        [&nonce] (const Packet &current) {
+            return nonce == extractNonce(current);
+        });
 
-    if(succeeded) {
-        m_sendQueue.pop_front();
-        sendNextPacket();
-    } else NFD_LOG_DEBUG("Packet sending failed.");
+    if(it != m_intrQueue.end()) {
+        NFD_LOG_INFO("Found pending packet in " << getFace()->getId());
+        m_intrQueue.erase(it);
+    } else
+        NFD_LOG_DEBUG("Removing Interest for unknown Nonce (probably duplicate ack)");
+}
+
+void OppTransport::removeData(std::string name) {
+    std::deque<Packet>::iterator it = find_if(m_dataQueue.begin(), m_dataQueue.end(),
+        [&name] (const Packet &current) {
+            return name.compare(extractName(current)) == 0;
+        });
+
+    if(it != m_dataQueue.end()) {
+        NFD_LOG_INFO("Found pending packet in " << getFace()->getId());
+        m_dataQueue.erase(it);
+    } else
+        NFD_LOG_DEBUG("Removing Data for unknown Name (probably duplicate ack).");
+}
+
+void OppTransport::onInterestTransferred(uint32_t nonce) {
+    NFD_LOG_INFO("onInterestTransferred : " << nonce);
+    removeInterest(nonce);
+}
+
+void OppTransport::onDataTransferred(std::string name) {
+    NFD_LOG_INFO("onDataTransferred : " << name);
+    removeData(name);
 }
 
 void OppTransport::doSend(Packet&& packet) {
     NFD_LOG_INFO("doSend " << getFace()->getId());
 
-    //if(packet.packet.type() == ndn::tlv::Interest)
-        m_sendQueue.push_back(packet);
-    //else if (packet.packet.type() == ndn::tlv::Data)
-    //    m_dataQueue.push_back(packet);
+    if(packet.packet.type() == ndn::tlv::Interest)
+        m_intrQueue.push_back(packet);
+    else if (packet.packet.type() == ndn::tlv::Data)
+        m_dataQueue.push_back(packet);
 
-    TransportState currently = this->getState();
-    if(currently == TransportState::UP && m_sendQueue.size() == 1) {
-        NFD_LOG_INFO("Transport is UP. Sending.");
+    if(this->getState() == TransportState::UP && getQueueSize() == 1)
         sendNextPacket();
-    } else if(currently == TransportState::DOWN)
-        NFD_LOG_INFO("Transport is DOWN. Queuing.");
 }
 
 void OppTransport::handleReceive(const uint8_t *buffer, size_t buf_size) {

@@ -7,6 +7,7 @@
 package pt.ulusofona.copelabs.ndn.android.umobile;
 
 import android.util.Log;
+import android.util.LongSparseArray;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,7 +38,9 @@ public class OpportunisticFaceManager implements Observer {
     private Map<String, OpportunisticPeer> mUmobilePeers = new HashMap<>();
 
     // Associates a FaceId to a UUID
-    private Map<String, Long> mOppFaceIds = new HashMap<>();
+    private Map<String, Long> mUuidToFaceId = new HashMap<>();
+    // Associates a UUID to a FaceId
+    private LongSparseArray<String> mFaceIdToUuid = new LongSparseArray<>();
 
     /** Enable the OppFaceManager. When enabled, it reacts to changes in the connection status to a Wi-Fi Direct Group.
      * As the Group Formation results in the device being assigned an IP address, a listening socket will be opened and
@@ -60,7 +63,8 @@ public class OpportunisticFaceManager implements Observer {
         if(face.getRemoteUri().startsWith("opp://")) {
             long faceId = face.getFaceId();
             String peerUuid = face.getRemoteUri().substring(6);
-            mOppFaceIds.put(peerUuid, faceId);
+            mUuidToFaceId.put(peerUuid, faceId);
+            mFaceIdToUuid.put(faceId, peerUuid);
 
             Log.d(TAG, "Registering Opportunistic Face " + faceId + " in RIB for prefix /ndn/multicast and /emergency.");
             mDaemonBinder.addRoute("/ndn/multicast", faceId, 0L, 0L, 1L);
@@ -74,9 +78,9 @@ public class OpportunisticFaceManager implements Observer {
      * @param uuid the UUID of the device that was detected.
      */
     void bringUpFace(String uuid) {
-        Log.d(TAG, "Bringing UP face for " + uuid + " " + mOppFaceIds.containsKey(uuid));
-        if(mOppFaceIds.containsKey(uuid))
-            mDaemonBinder.bringUpFace(mOppFaceIds.get(uuid));
+        Log.d(TAG, "Bringing UP face for " + uuid + " " + mUuidToFaceId.containsKey(uuid));
+        if(mUuidToFaceId.containsKey(uuid))
+            mDaemonBinder.bringUpFace(mUuidToFaceId.get(uuid));
     }
 
     /** Used to handle the departure of an NDN-Opp peer from the current Wi-Fi Direct Group
@@ -84,8 +88,8 @@ public class OpportunisticFaceManager implements Observer {
      */
     void bringDownFace(String uuid) {
         Log.d(TAG, "Bringing DOWN face for " + uuid);
-        if (mOppFaceIds.containsKey(uuid))
-            mDaemonBinder.bringDownFace(mOppFaceIds.get(uuid));
+        if (mUuidToFaceId.containsKey(uuid))
+            mDaemonBinder.bringDownFace(mUuidToFaceId.get(uuid));
     }
 
     /** Update the state of the Routing engine based on what the NSD Service Discoverer reports
@@ -106,12 +110,20 @@ public class OpportunisticFaceManager implements Observer {
                     mDaemonBinder.createFace("opp://" + uuid, 0, false);
                 } else {
                     if (peer.getStatus().equals(Status.AVAILABLE))
-                        mDaemonBinder.bringUpFace(mOppFaceIds.get(uuid));
+                        mDaemonBinder.bringUpFace(mUuidToFaceId.get(uuid));
                     else
-                        mDaemonBinder.bringDownFace(mOppFaceIds.get(uuid));
+                        mDaemonBinder.bringDownFace(mUuidToFaceId.get(uuid));
                 }
                 mUmobilePeers.put(uuid, peer);
             }
         }
+    }
+
+    public String getUuid(long faceId) {
+        return mFaceIdToUuid.get(faceId);
+    }
+
+    public Long getFaceId(String uuid) {
+        return mUuidToFaceId.get(uuid);
     }
 }

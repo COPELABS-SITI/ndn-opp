@@ -32,7 +32,7 @@ import pt.ulusofona.copelabs.ndn.android.Utilities;
  */
 public class OpportunisticPeerTracker extends Observable implements WifiP2pManager.ChannelListener {
     private static final String TAG = OpportunisticPeerTracker.class.getSimpleName();
-    static final String SVC_TYPE = "_ndnopp";
+    public static final String SVC_TYPE = "_ndnopp";
 
     private static OpportunisticPeerTracker INSTANCE;
 

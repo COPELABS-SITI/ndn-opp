@@ -9,9 +9,7 @@
 package pt.ulusofona.copelabs.ndn.android.umobile;
 
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
-import android.net.wifi.p2p.WifiP2pManager;
 import android.os.IBinder;
 import android.util.Log;
 import android.util.LongSparseArray;
@@ -53,7 +51,8 @@ public class OpportunisticDaemon extends Service {
         public void bringUpFace(long faceId) { jniBringUpFace(faceId); }
         public void bringDownFace(long faceId) { jniBringDownFace(faceId); }
         public void pushData(long faceId, String name) { jniPushData(faceId, name); }
-        public void sendComplete(long faceId, boolean success) { jniSendComplete(faceId, success); }
+        public void onInterestTransferred(long faceId, int nonce) { jniOnInterestTransferred(faceId, nonce); }
+        public void onDataTransferred(long faceId, String name) { jniOnDataTransferred(faceId, name); }
         public void receiveOnFace(long faceId, int byteCount, byte[] buffer) { jniReceiveOnFace(faceId, byteCount, buffer); }
         public void destroyFace(long faceId) { jniDestroyFace(faceId); }
         public List<FibEntry> getForwardingInformationBase() { return jniGetForwardingInformationBase(); }
@@ -78,6 +77,7 @@ public class OpportunisticDaemon extends Service {
     private String mConfiguration;
 
     private OpportunisticPeerTracker mPeerTracker = OpportunisticPeerTracker.getInstance();
+    private OpportunisticConnectivityManager mConnectivityManager = OpportunisticConnectivityManager.getInstance();
 
     // Custom lock to regulate the transitions between STARTED and STOPPED.
     // @TODO: Replace this with a standard lock.
@@ -119,17 +119,12 @@ public class OpportunisticDaemon extends Service {
     @Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if(State.STOPPED == getAndSetState(State.STARTED)) {
-            Log.v(TAG, "jniStart()");
             jniStart(getFilesDir().getAbsolutePath(), mConfiguration);
-            Log.v(TAG, "jniStarted");
 
 			startTime = System.currentTimeMillis();
 
-            WifiP2pManager wifiP2pManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
-            WifiP2pManager.Channel wifiP2pChannel = wifiP2pManager.initialize(this, getMainLooper(), null);
-
             mOppFaceManager.enable(local);
-
+            mConnectivityManager.attach(this);
             mPeerTracker.addObserver(mOppFaceManager);
 
             Log.d(TAG, STARTED);
@@ -172,6 +167,20 @@ public class OpportunisticDaemon extends Service {
         long faceId = face.getFaceId();
         mFacetable.put(faceId, face);
         mOppFaceManager.afterFaceAdded(face);
+    }
+
+    private void transferInterest(long faceId, int nonce, byte[] payload) {
+        Log.d(TAG, "Transfer Interest : " + faceId + " " + nonce + " (" + ((payload != null) ? payload.length : "NULL") + ")");
+        mConnectivityManager.transferInterest(mOppFaceManager.getUuid(faceId), nonce, payload);
+    }
+
+    private void cancelInterest(long faceId, int nonce) {
+        Log.d(TAG, "Cancel Interest : " + faceId + " " + nonce);
+        mConnectivityManager.cancelInterestTransfer(mOppFaceManager.getUuid(faceId), nonce);
+    }
+
+    private void transferData(long faceId, String name, byte[] payload) {
+        Log.d(TAG, "Transfer Interest : " + faceId + " " + name + " (" + payload.length + ")");
     }
 
     static {
@@ -221,20 +230,26 @@ public class OpportunisticDaemon extends Service {
      */
     private native void jniPushData(long id, String name);
 
-    /** [JNI] Used by the OpportunisticChannel to notify its encapsulating Face of the result of the
-     * transmission of the last packet.
+    /** [JNI] Used by the OpportunisticConnectivityManager to notify its encapsulating Face of the result of the
+     * transmission of an Interest.
      * @param id the FaceId of the Face to notify
-     * @param success a boolean value indicated success (true) or failure (false) to transmit the last
-     *               packet
+     * @param nonce the Nonce of the Interest concerned
      */
-    private native void jniSendComplete(long id, boolean success);
+    private native void jniOnInterestTransferred(long id, int nonce);
+
+    /** [JNI] Used by the OpportunisticConnectivityManager to notify its encapsulating Face of the result of the
+     * transmission of a Data.
+     * @param id the FaceId of the Face to notify
+     * @param name the Name of the Data concerned
+     */
+    private native void jniOnDataTransferred(long id, String name);
 
     /** [JNI] Used by the OpportunisticChannel to notify its encapsulating Face that a packet has been received
      * @param id the FaceId of the Face to notify
      * @param receivedBytes the number of bytes received
      * @param buffer the buffer storing the received bytes
      */
-    private native void jniReceiveOnFace(long id, int receivedBytes, byte[] buffer);
+    native void jniReceiveOnFace(long id, int receivedBytes, byte[] buffer);
 
     /** [JNI] Close a Face
      * @param faceId the FaceId of the Face to close

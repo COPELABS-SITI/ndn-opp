@@ -30,7 +30,7 @@ import java.util.Observer;
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.OperationResult;
 import pt.ulusofona.copelabs.ndn.android.ui.adapter.OpportunisticPeerAdapter;
-import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticConnectivityManager;
+import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticConnectivityManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracker;
 
