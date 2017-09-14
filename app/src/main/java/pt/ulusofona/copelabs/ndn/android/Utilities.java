@@ -17,10 +17,7 @@ import java.util.UUID;
 public class Utilities {
     private static final String PROPERTY_UUID_KEY = "UMOBILE_UUID";
 
-    /** Retrieve the UUID of the installed instance of the app.
-     * @param context Android-provided context from which the UUID can be retrieved
-     * @return UUID of the current device encoded as a Base64 String
-     */
+
     public static String obtainUuid(Context context) {
         String sUuid;
         SharedPreferences storage = context.getSharedPreferences("Configuration", Context.MODE_PRIVATE);
@@ -29,7 +26,7 @@ public class Utilities {
             ByteBuffer bUuid = ByteBuffer.allocate(16);
             bUuid.putLong(0, uuid.getMostSignificantBits());
             bUuid.putLong(8, uuid.getLeastSignificantBits());
-            sUuid = Base64.encodeToString(bUuid.array(), Base64.DEFAULT);
+            sUuid = Base64.encodeToString(bUuid.array(), Base64.NO_PADDING);
             SharedPreferences.Editor editor = storage.edit();
             editor.putString(PROPERTY_UUID_KEY, sUuid);
             editor.apply();

@@ -52,9 +52,7 @@ public class OpportunisticFaceManager implements Observer {
     }
 
     /** Disable the Routing engine. Changes in the connection status of Wi-Fi Direct Groups will be ignored. */
-    void disable() {
-
-    }
+    void disable() {}
 
     /** Callback method invoked by the ForwardingDaemon when the creation of a Face has been successful.
      * @param face a representation of the Face that was created */

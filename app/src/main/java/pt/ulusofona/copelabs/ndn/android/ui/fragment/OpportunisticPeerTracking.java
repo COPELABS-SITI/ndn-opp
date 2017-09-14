@@ -31,6 +31,7 @@ import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.OperationResult;
 import pt.ulusofona.copelabs.ndn.android.ui.adapter.OpportunisticPeerAdapter;
 import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticConnectivityManager;
+import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticFaceManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracker;
 
@@ -46,19 +47,18 @@ import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracke
 public class OpportunisticPeerTracking extends Fragment implements Observer, View.OnClickListener {
     private static final String TAG = OpportunisticPeerTracking.class.getSimpleName();
 
+    private Context mContext;
+    private WifiP2pManager mWifiP2pManager;
+    private WifiP2pManager.Channel mWifiP2pChannel;
+
     // Used for feedback to the user that a peerDiscovery is in progress
     private ProgressBar mDiscoveryInProgress;
 
-    private OpportunisticPeerTracker mPeerTracker = OpportunisticPeerTracker.getInstance();
-    private OpportunisticConnectivityManager mConnectivityManager = OpportunisticConnectivityManager.getInstance();
+    private OpportunisticPeerTracker mPeerTracker = new OpportunisticPeerTracker();
 
     private Map<String, OpportunisticPeer> mPeers = new HashMap<>();
 
     private OpportunisticPeerAdapter mPeerAdapter;
-
-    private Context mContext;
-    private WifiP2pManager mWifiP2pManager;
-    private WifiP2pManager.Channel mWifiP2pChannel;
 
     /** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html
      * @param context Android-provided Application context
@@ -77,13 +77,11 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
 
         mPeerTracker.addObserver(this);
         mPeerTracker.enable(context);
-        mConnectivityManager.enable(context);
     }
 
     /** Fragment lifecycle method (see https://developer.android.com/guide/components/fragments.html) */
     @Override
     public void onDetach() {
-        mConnectivityManager.disable();
         mPeerTracker.disable();
         mPeerTracker.deleteObserver(this);
         mContext.unregisterReceiver(mBr);

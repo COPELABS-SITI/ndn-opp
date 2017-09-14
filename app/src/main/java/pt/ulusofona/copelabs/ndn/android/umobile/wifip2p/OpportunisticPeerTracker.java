@@ -23,18 +23,14 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.regex.Pattern;
 
+import pt.ulusofona.copelabs.ndn.android.Identity;
 import pt.ulusofona.copelabs.ndn.android.OperationResult;
-import pt.ulusofona.copelabs.ndn.android.Utilities;
 
 /** The Peer Tracker is used to maintain up-to-date the lists of all NDN-Opp Peers ever detected.
  * The Peer Tracker integrates three components; the DeviceDiscoverer, the ServiceDiscoverer and
- * the ServiceRegistrar.
- */
+ * the ServiceRegistrar. */
 public class OpportunisticPeerTracker extends Observable implements WifiP2pManager.ChannelListener {
     private static final String TAG = OpportunisticPeerTracker.class.getSimpleName();
-    public static final String SVC_TYPE = "_ndnopp";
-
-    private static OpportunisticPeerTracker INSTANCE;
 
     private Context mContext;
     private WifiP2pManager mWifiP2pManager;
@@ -47,13 +43,6 @@ public class OpportunisticPeerTracker extends Observable implements WifiP2pManag
     // Associates MAC Address to UUID
     private Map<String, String> mDevices = new HashMap<>();
 
-    public static OpportunisticPeerTracker getInstance() {
-        if(INSTANCE == null)
-            INSTANCE = new OpportunisticPeerTracker();
-
-        return INSTANCE;
-    }
-
     public Map<String, OpportunisticPeer> getPeers() {
         return mPeers;
     }
@@ -64,7 +53,7 @@ public class OpportunisticPeerTracker extends Observable implements WifiP2pManag
         mWifiP2pChannel = mWifiP2pManager.initialize(context, Looper.getMainLooper(), this);
         mWifiP2pManager.setDnsSdResponseListeners(mWifiP2pChannel, svcResponseListener, null);
 
-        mAssignedUuid = Utilities.obtainUuid(mContext);
+        mAssignedUuid = Identity.getUuid();
 
         IntentFilter intents = new IntentFilter();
         intents.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
@@ -76,10 +65,7 @@ public class OpportunisticPeerTracker extends Observable implements WifiP2pManag
         mContext.unregisterReceiver(bReceiver);
     }
 
-    @Override
-    public void onChannelDisconnected() {
-
-    }
+    @Override public void onChannelDisconnected() {}
 
     private WifiP2pManager.DnsSdServiceResponseListener svcResponseListener = new WifiP2pManager.DnsSdServiceResponseListener() {
         @Override
@@ -89,7 +75,7 @@ public class OpportunisticPeerTracker extends Observable implements WifiP2pManag
             // Exclude the UUID of the current device
             if (!mAssignedUuid.equals(uuid)) {
                 String[] components = type.split(Pattern.quote("."));
-                if (components.length >= 1 && SVC_TYPE.equals(components[0]) && !mPeers.containsKey(uuid)) {
+                if (components.length >= 1 && Identity.SVC_INSTANCE_TYPE.equals(components[0]) && !mPeers.containsKey(uuid)) {
                     OpportunisticPeer peer = new OpportunisticPeer(uuid, Status.convert(dev.status));
                     mPeers.put(uuid, peer);
                     mDevices.put(dev.deviceAddress, uuid);

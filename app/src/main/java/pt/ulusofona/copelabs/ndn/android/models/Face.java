@@ -104,7 +104,7 @@ public class Face implements Table.Entry, Comparable<Face> {
 
 		// Append the queue size to the RemoteURI in the case of an Opportunistic Face.
 		if(this.remoteUri.startsWith("opp://"))
-			((TextView) entry.findViewById(R.id.remoteUri)).setText("opp://..." + remoteUri.substring(30) + (queueSize > 0 ? " [" + queueSize + "]" : ""));
+			((TextView) entry.findViewById(R.id.remoteUri)).setText(remoteUri + (queueSize > 0 ? " [" + queueSize + "]" : ""));
 		else
 			((TextView) entry.findViewById(R.id.remoteUri)).setText(remoteUri);
 

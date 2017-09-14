@@ -20,20 +20,24 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.view.ViewPager;
 
 import android.support.v7.app.AppCompatActivity;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MenuInflater;
+import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Locale;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import pt.ulusofona.copelabs.ndn.R;
+import pt.ulusofona.copelabs.ndn.android.Identity;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.ConnectToNdnDialog;
 import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 
@@ -67,6 +71,8 @@ public class Main extends AppCompatActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+
+        Identity.initialize(this);
 
         mDaemonIntent = new Intent(this, OpportunisticDaemon.class);
 
@@ -109,8 +115,27 @@ public class Main extends AppCompatActivity {
 		});
 
         TextView uuid = (TextView) findViewById(R.id.umobileUuid);
-        uuid.setText(Utilities.obtainUuid(this));
+        uuid.setText(Identity.getUuid());
 	}
+
+    protected static String generateRandomMessage(int length) {
+        String SALTCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+        StringBuilder salt = new StringBuilder();
+        Random rnd = new Random();
+        while (salt.length() < length) {
+            salt.append(SALTCHARS.charAt((int) (rnd.nextFloat() * SALTCHARS.length())));
+        }
+        String saltStr = salt.toString();
+        return saltStr;
+    }
+
+	public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.send:
+                mDaemonBinder.dummySend(generateRandomMessage(120).getBytes());
+                break;
+        }
+    }
 
     @Override
     protected void onResume() {

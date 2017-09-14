@@ -11,11 +11,14 @@ package pt.ulusofona.copelabs.ndn.android.umobile;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.util.Base64;
 import android.util.Log;
 import android.util.LongSparseArray;
+import android.util.SparseArray;
+import android.widget.Toast;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.Utilities;
+import pt.ulusofona.copelabs.ndn.android.Identity;
 import pt.ulusofona.copelabs.ndn.android.models.CsEntry;
 import pt.ulusofona.copelabs.ndn.android.models.Face;
 import pt.ulusofona.copelabs.ndn.android.models.FibEntry;
@@ -27,13 +30,15 @@ import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracke
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /** JNI wrapper around the NDN Opportunistic Daemon (NOD), which is the modified version of NFD to include the Opportunistic Faces,
  * and PUSH communications. This class provides an interface entirely through JNI to manage the configuration of the running
  * NOD including face creation, destruction and addition of routes to the RIB.
  */
-public class OpportunisticDaemon extends Service {
+public class OpportunisticDaemon extends Service implements ConnectionLessTransferManager.Observer {
     private static final String TAG = OpportunisticDaemon.class.getSimpleName();
 
 	public static final String STARTED = "pt.ulusofona.copelabs.ndn.android.service.STARTED";
@@ -51,15 +56,19 @@ public class OpportunisticDaemon extends Service {
         public void bringUpFace(long faceId) { jniBringUpFace(faceId); }
         public void bringDownFace(long faceId) { jniBringDownFace(faceId); }
         public void pushData(long faceId, String name) { jniPushData(faceId, name); }
-        public void onInterestTransferred(long faceId, int nonce) { jniOnInterestTransferred(faceId, nonce); }
-        public void onDataTransferred(long faceId, String name) { jniOnDataTransferred(faceId, name); }
-        public void receiveOnFace(long faceId, int byteCount, byte[] buffer) { jniReceiveOnFace(faceId, byteCount, buffer); }
         public void destroyFace(long faceId) { jniDestroyFace(faceId); }
         public List<FibEntry> getForwardingInformationBase() { return jniGetForwardingInformationBase(); }
         public void addRoute(String prefix, long faceId, long origin, long cost, long flags) { jniAddRoute(prefix, faceId, origin, cost, flags);}
         public List<PitEntry> getPendingInterestTable() { return jniGetPendingInterestTable(); }
         public List<CsEntry> getContentStore() { return jniGetContentStore(); }
         public List<SctEntry> getStrategyChoiceTable() { return jniGetStrategyChoiceTable(); }
+
+        public void dummySend(byte[] packet) {
+            for(String recipient : mPeerTracker.getPeers().keySet()) {
+                String pktId = mConnectionLessManager.sendPacket(recipient, packet);
+                Log.i(TAG, "Sent packet : " + pktId);
+            }
+        }
     }
     private final Binder local = new Binder();
 
@@ -71,13 +80,24 @@ public class OpportunisticDaemon extends Service {
 
     // Assigned UUID
     private String mAssignedUuid;
-    // Routing & Contextual Manager
-    private OpportunisticFaceManager mOppFaceManager;
-    // Configuration
+    // String containing the configuration stored in /res/raw/nfd_config
     private String mConfiguration;
 
-    private OpportunisticPeerTracker mPeerTracker = OpportunisticPeerTracker.getInstance();
-    private OpportunisticConnectivityManager mConnectivityManager = OpportunisticConnectivityManager.getInstance();
+    private OpportunisticPeerTracker mPeerTracker = new OpportunisticPeerTracker();
+    private OpportunisticFaceManager mOppFaceManager = new OpportunisticFaceManager();
+
+    private OpportunisticConnectivityManager mConnectivityManager = new OpportunisticConnectivityManager();
+
+    private ConnectionLessTransferManager mConnectionLessManager = new ConnectionLessTransferManager();
+    // Maps a Packet ID to a Nonce
+    private SparseArray<String> mPendingInterestIds = new SparseArray<>();
+    // Maps a Nonce to a Packet ID
+    private Map<String, Integer> mPendingInterestNonces = new HashMap<>();
+
+    // Maps a Packet ID to a Name (Data)
+    private Map<String, String> mPendingDataIds = new HashMap<>();
+    // Maps a Name (Data) to a Packet ID
+    private Map<String, String> mPendingDataNames = new HashMap<>();
 
     // Custom lock to regulate the transitions between STARTED and STOPPED.
     // @TODO: Replace this with a standard lock.
@@ -94,10 +114,8 @@ public class OpportunisticDaemon extends Service {
     public void onCreate() {
         super.onCreate();
 
-        // Initialize the Routing Engine
-        mOppFaceManager = new OpportunisticFaceManager();
         // Retrieve the UUID
-        mAssignedUuid = Utilities.obtainUuid(this);
+        mAssignedUuid = Identity.getUuid();
 
         // Retrieve the contents of the configuration file to build a String out of it.
         StringBuilder configuration = new StringBuilder();
@@ -123,9 +141,12 @@ public class OpportunisticDaemon extends Service {
 
 			startTime = System.currentTimeMillis();
 
-            mOppFaceManager.enable(local);
-            mConnectivityManager.attach(this);
             mPeerTracker.addObserver(mOppFaceManager);
+
+            mPeerTracker.enable(this);
+            mOppFaceManager.enable(local);
+            mConnectionLessManager.enable(this);
+            mConnectivityManager.enable(this);
 
             Log.d(TAG, STARTED);
             sendBroadcast(new Intent(STARTED));
@@ -146,7 +167,10 @@ public class OpportunisticDaemon extends Service {
 		if(State.STARTED == getAndSetState(State.STOPPED)) {
 			jniStop();
 
+            mConnectivityManager.disable();
+            mConnectionLessManager.disable();
             mOppFaceManager.disable();
+            mPeerTracker.disable();
 
 			sendBroadcast(new Intent(STOPPING));
 			stopSelf();
@@ -169,18 +193,52 @@ public class OpportunisticDaemon extends Service {
         mOppFaceManager.afterFaceAdded(face);
     }
 
+    // Called from JNI
     private void transferInterest(long faceId, int nonce, byte[] payload) {
         Log.d(TAG, "Transfer Interest : " + faceId + " " + nonce + " (" + ((payload != null) ? payload.length : "NULL") + ")");
-        mConnectivityManager.transferInterest(mOppFaceManager.getUuid(faceId), nonce, payload);
+        //mConnectivityManager.transferInterest(mOppFaceManager.getUuid(faceId), nonce, payload);
+        String pktId = mConnectionLessManager.sendPacket(mOppFaceManager.getUuid(faceId), payload);
+        mPendingInterestIds.put(nonce, pktId);
+        mPendingInterestNonces.put(pktId, nonce);
     }
 
+    // Called from JNI
     private void cancelInterest(long faceId, int nonce) {
         Log.d(TAG, "Cancel Interest : " + faceId + " " + nonce);
-        mConnectivityManager.cancelInterestTransfer(mOppFaceManager.getUuid(faceId), nonce);
+        //mConnectivityManager.cancelInterestTransfer(mOppFaceManager.getUuid(faceId), nonce);
+        mConnectionLessManager.cancelPacket(mOppFaceManager.getUuid(faceId), mPendingInterestIds.get(nonce));
     }
 
+    // Called from JNI
     private void transferData(long faceId, String name, byte[] payload) {
         Log.d(TAG, "Transfer Interest : " + faceId + " " + name + " (" + payload.length + ")");
+        String pktId = mConnectionLessManager.sendPacket(mOppFaceManager.getUuid(faceId), payload);
+        mPendingDataIds.put(name, pktId);
+        mPendingDataNames.put(pktId, name);
+    }
+
+    @Override
+    public void onPacketTransferred(String recipient, String pktId) {
+        Log.i(TAG, "Packet transferred : " + recipient + " [" + pktId + "]");
+        Long faceId = mOppFaceManager.getFaceId(recipient);
+        if(faceId != null) {
+            if (mPendingInterestNonces.containsKey(pktId)) {
+                Integer nonce = mPendingInterestNonces.get(pktId);
+                jniOnInterestTransferred(mOppFaceManager.getFaceId(recipient), nonce);
+            } else if (mPendingDataNames.containsKey(pktId)) {
+                String name = mPendingDataNames.get(pktId);
+                jniOnDataTransferred(mOppFaceManager.getFaceId(recipient), name);
+            }
+        }
+    }
+
+    @Override
+    public void onPacketReceived(String sender, byte[] payload) {
+        Log.i(TAG, "Packet received : " + sender + " [" + payload.length + "]");
+        Toast.makeText(this, "Packet received : " + payload.length, Toast.LENGTH_SHORT).show();
+        Long faceId = mOppFaceManager.getFaceId(sender);
+        if(faceId != null)
+            jniReceiveOnFace(faceId, payload.length, payload);
     }
 
     static {
@@ -232,17 +290,17 @@ public class OpportunisticDaemon extends Service {
 
     /** [JNI] Used by the OpportunisticConnectivityManager to notify its encapsulating Face of the result of the
      * transmission of an Interest.
-     * @param id the FaceId of the Face to notify
+     * @param faceId the FaceId of the Face to notify
      * @param nonce the Nonce of the Interest concerned
      */
-    private native void jniOnInterestTransferred(long id, int nonce);
+    private native void jniOnInterestTransferred(long faceId, int nonce);
 
     /** [JNI] Used by the OpportunisticConnectivityManager to notify its encapsulating Face of the result of the
      * transmission of a Data.
-     * @param id the FaceId of the Face to notify
+     * @param faceId the FaceId of the Face to notify
      * @param name the Name of the Data concerned
      */
-    private native void jniOnDataTransferred(long id, String name);
+    private native void jniOnDataTransferred(long faceId, String name);
 
     /** [JNI] Used by the OpportunisticChannel to notify its encapsulating Face that a packet has been received
      * @param id the FaceId of the Face to notify

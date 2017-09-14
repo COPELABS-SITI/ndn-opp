@@ -13,6 +13,11 @@
         android:layout_gravity="center_horizontal"
         android:text="@string/nfdSwitch" />
 
+    <Button android:id="@+id/send" android:onClick="onClick"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Send"/>
+
     <LinearLayout style="@style/match">
         <TextView style="@style/wrap" android:textColor="@color/white" android:text="@string/uptime"/>
         <TextView style="@style/field" android:textColor="@color/white" android:id="@+id/uptime" android:text="@string/notAvailable"/>
