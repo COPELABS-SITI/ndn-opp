@@ -11,7 +11,6 @@ package pt.ulusofona.copelabs.ndn.android.umobile;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
-import android.util.Base64;
 import android.util.Log;
 import android.util.LongSparseArray;
 import android.util.SparseArray;
@@ -38,7 +37,7 @@ import java.util.Map;
  * and PUSH communications. This class provides an interface entirely through JNI to manage the configuration of the running
  * NOD including face creation, destruction and addition of routes to the RIB.
  */
-public class OpportunisticDaemon extends Service implements ConnectionLessTransferManager.Observer {
+public class OpportunisticDaemon extends Service implements OpportunisticConnectionLessTransferManager.Observer {
     private static final String TAG = OpportunisticDaemon.class.getSimpleName();
 
 	public static final String STARTED = "pt.ulusofona.copelabs.ndn.android.service.STARTED";
@@ -88,7 +87,7 @@ public class OpportunisticDaemon extends Service implements ConnectionLessTransf
 
     private OpportunisticConnectivityManager mConnectivityManager = new OpportunisticConnectivityManager();
 
-    private ConnectionLessTransferManager mConnectionLessManager = new ConnectionLessTransferManager();
+    private OpportunisticConnectionLessTransferManager mConnectionLessManager = new OpportunisticConnectionLessTransferManager();
     // Maps a Packet ID to a Nonce
     private SparseArray<String> mPendingInterestIds = new SparseArray<>();
     // Maps a Nonce to a Packet ID

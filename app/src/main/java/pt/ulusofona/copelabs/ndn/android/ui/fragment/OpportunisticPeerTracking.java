@@ -19,9 +19,24 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import net.named_data.jndn.Data;
+import net.named_data.jndn.Face;
+import net.named_data.jndn.Interest;
+import net.named_data.jndn.InterestFilter;
+import net.named_data.jndn.Name;
+import net.named_data.jndn.OnData;
+import net.named_data.jndn.OnInterestCallback;
+import net.named_data.jndn.OnRegisterFailed;
+import net.named_data.jndn.OnRegisterSuccess;
+import net.named_data.jndn.security.SecurityException;
+
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
@@ -29,9 +44,10 @@ import java.util.Observer;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.OperationResult;
+import pt.ulusofona.copelabs.ndn.android.ui.ExpressInterestTask;
+import pt.ulusofona.copelabs.ndn.android.ui.RegisterPrefixTask;
 import pt.ulusofona.copelabs.ndn.android.ui.adapter.OpportunisticPeerAdapter;
-import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticConnectivityManager;
-import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticFaceManager;
+import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracker;
 
@@ -44,8 +60,9 @@ import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracke
  * - The Connectivity Manager is used to take care of the formation of a Wi-Fi Direct Group (whether to form a new one or join an existing one)
  * - The NSD Service Tracker is used to know which NDN-Opp daemon can be reached within the Group to which the current device is connected (if it is)
  */
-public class OpportunisticPeerTracking extends Fragment implements Observer, View.OnClickListener {
+public class OpportunisticPeerTracking extends Fragment implements Observer, View.OnClickListener, OnInterestCallback, OnRegisterSuccess, OnData {
     private static final String TAG = OpportunisticPeerTracking.class.getSimpleName();
+    private static final String PREFIX = "/ndnopp";
 
     private Context mContext;
     private WifiP2pManager mWifiP2pManager;
@@ -60,6 +77,10 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
 
     private OpportunisticPeerAdapter mPeerAdapter;
 
+    private Face mFace;
+    private Button mSendInterest;
+    private TextView mInterestName;
+
     /** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html
      * @param context Android-provided Application context
      */
@@ -67,13 +88,18 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
     public void onAttach(Context context) {
         super.onAttach(context);
 
+        Log.v(TAG, "onAttach");
         mContext = context;
         mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
         mWifiP2pChannel = mWifiP2pManager.initialize(context, Looper.getMainLooper(), null);
 
         mPeerAdapter = new OpportunisticPeerAdapter(mContext);
 
-        mContext.registerReceiver(mBr, new IntentFilter(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION));
+        IntentFilter mIntentFilter = new IntentFilter();
+        mIntentFilter.addAction(OpportunisticDaemon.STARTED);
+        mIntentFilter.addAction(OpportunisticDaemon.STOPPING);
+        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
+        mContext.registerReceiver(mBr, mIntentFilter);
 
         mPeerTracker.addObserver(this);
         mPeerTracker.enable(context);
@@ -95,6 +121,11 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
             case R.id.btn_start_peer_discovery:
                 mWifiP2pManager.discoverPeers(mWifiP2pChannel, new OperationResult(TAG, "Peer Discovery"));
                 break;
+            case R.id.btn_send_interest:
+                Name name = new Name("/ndnopp/" + mInterestName.getText().toString());
+                Toast.makeText(mContext, "Sending Interest : " + name.toString(), Toast.LENGTH_SHORT).show();
+                new ExpressInterestTask(mFace, name, this).execute();
+                break;
         }
     }
 
@@ -107,6 +138,10 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
 
         viewWifiP2pTracking.findViewById(R.id.btn_start_peer_discovery).setOnClickListener(this);
         mDiscoveryInProgress = (ProgressBar) viewWifiP2pTracking.findViewById(R.id.discoveryInProgress);
+
+        mSendInterest = (Button) viewWifiP2pTracking.findViewById(R.id.btn_send_interest);
+        mSendInterest.setOnClickListener(this);
+        mInterestName = (TextView) viewWifiP2pTracking.findViewById(R.id.interestName);
 
         ListView listViewWifiP2pPeers = (ListView) viewWifiP2pTracking.findViewById(R.id.list_wifiP2pPeers);
         listViewWifiP2pPeers.setAdapter(mPeerAdapter);
@@ -140,13 +175,37 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
+            Log.v(TAG, "Received Intent : " + action);
             if(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION.equals(action)) {
                 int extra = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE, -1);
                 if(extra == WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED)
                     mDiscoveryInProgress.setVisibility(View.VISIBLE);
                 else
                     mDiscoveryInProgress.setVisibility(View.INVISIBLE);
+            } else if (OpportunisticDaemon.STARTED.equals(action)) {
+                mFace = new Face("127.0.0.1", 6363);
+                RegisterPrefixTask rpt = new RegisterPrefixTask(mFace, PREFIX, OpportunisticPeerTracking.this, OpportunisticPeerTracking.this);
+                rpt.execute();
+                mSendInterest.setEnabled(true);
+            } else if (OpportunisticDaemon.STOPPING.equals(action)){
+                mFace = null;
+                mSendInterest.setEnabled(false);
             }
         }
     };
+
+    @Override
+    public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
+        Toast.makeText(mContext, "Received Interest : " + prefix.toString(), Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onRegisterSuccess(Name prefix, long registeredPrefixId) {
+        Log.v(TAG, "Registration Success : " + prefix.toString());
+    }
+
+    @Override
+    public void onData(Interest interest, Data data) {
+        Toast.makeText(mContext, "Received Data : " + data.getName().toString(), Toast.LENGTH_SHORT).show();
+    }
 }

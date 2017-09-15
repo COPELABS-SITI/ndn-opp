@@ -1,16 +1,38 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     style="@style/match">
 
     <LinearLayout
         style="@style/fill"
         android:orientation="vertical">
 
-        <Button
+        <Button android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/btn_start_peer_discovery"
             android:text="@string/startPeerDiscovery" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Interest name: "/>
+
+            <EditText
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/interestName"
+                android:hint="/ndnopp"/>
+
+        </LinearLayout>
+
+        <Button android:enabled="false"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/btn_send_interest"
+            android:text="Send Interest"/>
 
         <LinearLayout
             android:layout_width="match_parent"

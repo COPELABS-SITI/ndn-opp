@@ -67,6 +67,7 @@ public class OpportunisticFaceManager implements Observer {
             Log.d(TAG, "Registering Opportunistic Face " + faceId + " in RIB for prefix /ndn/multicast and /emergency.");
             mDaemonBinder.addRoute("/ndn/multicast", faceId, 0L, 0L, 1L);
             mDaemonBinder.addRoute("/emergency", faceId, 0L, 0L, 1L);
+            mDaemonBinder.addRoute("/ndnopp", faceId, 0L, 0L, 1L);
 
             mDaemonBinder.bringUpFace(faceId);
         }

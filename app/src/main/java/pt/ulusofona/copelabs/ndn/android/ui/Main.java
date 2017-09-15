@@ -20,7 +20,6 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.view.ViewPager;
 
 import android.support.v7.app.AppCompatActivity;
-import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -43,7 +42,6 @@ import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.AddRouteDialog;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.CreateFaceDialog;
-import pt.ulusofona.copelabs.ndn.android.Utilities;
 
 /** Main interface of NDN-Opp. Brings together the various app sections with the connection to the
  * ForwardingDaemon. */

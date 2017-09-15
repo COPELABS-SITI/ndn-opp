@@ -44,6 +44,7 @@ dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support:design:25.3.1'
+    compile 'net.named-data:jndn-android:0.15'
 }
 
 def getNdkDir() {

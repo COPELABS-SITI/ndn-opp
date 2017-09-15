@@ -13,8 +13,11 @@ import android.os.Handler;
 import android.util.Base64;
 import android.util.Log;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -47,13 +50,13 @@ import pt.ulusofona.copelabs.ndn.android.OperationResult;
  *     Using TXT records larger than 1300 bytes is NOT RECOMMENDED at this
  *     time.
  */
-public class ConnectionLessTransferManager implements WifiP2pManager.ChannelListener {
-    public static final String TAG = ConnectionLessTransferManager.class.getSimpleName();
+public class OpportunisticConnectionLessTransferManager implements WifiP2pManager.ChannelListener {
+    public static final String TAG = OpportunisticConnectionLessTransferManager.class.getSimpleName();
 
     /* RESCAN_INTERVAL drives the pace at which we restart discovering peers and services.
        Doing so enables detect services faster than simply starting those discories once
        and leaving them to run. */
-    private static final long RESCAN_INTERVAL = 5000;
+    private static final long RESCAN_INTERVAL = 10000;
 
     // Key used in the TXT-Record to store packets. Packet ID is appended after it.
     private static final String PACKET_KEY_PREFIX = "PKT:";
@@ -116,12 +119,27 @@ public class ConnectionLessTransferManager implements WifiP2pManager.ChannelList
         return PACKET_KEY_PREFIX + msgId;
     }
 
+    private static String digest(byte[] payload) {
+        String sha1 = "FAIL";
+        try {
+            byte[] sha1sum = MessageDigest.getInstance("SHA-1").digest(payload);
+            Formatter fmt = new Formatter();
+            for(byte b : sha1sum)
+                fmt.format("%02x", b);
+            sha1 = fmt.toString();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return sha1;
+    }
+
     /** Request the sending of a packet to an intended recipient.
      * @param recipient the intended recipient of the packet to be sent (UUID)
      * @param payload the bytes of the packet to be sent
      * @return the Packet ID assigned to this transfer by the manager. Used when the acknowledgement arrives.
      */
     public String sendPacket(String recipient, byte[] payload) {
+        Log.i(TAG, "sendPacket [" + payload.length + "] <" + digest(payload) + ">");
         String pktId = generatePacketId();
 
         // Retrieve the packets pending for the recipient.
@@ -286,6 +304,7 @@ public class ConnectionLessTransferManager implements WifiP2pManager.ChannelList
                             if(!pendingAcknowledgements.contains(pktKey)) {
                                 acknowledgmentChanges |= pendingAcknowledgements.add(pktKey);
                                 byte[] payload = Base64.decode(txt.get(pktKey), Base64.NO_PADDING);
+                                Log.i(TAG, "receivedPacket [" + payload.length + "] <" + digest(payload) + ">");
                                 mObservingContext.onPacketReceived(remoteUuid, payload);
                             }
                         /* In the case the packet key equals "ACKs", this is a list of acknowledgements for some of the packets

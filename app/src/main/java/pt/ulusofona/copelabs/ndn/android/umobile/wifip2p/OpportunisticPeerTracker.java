@@ -76,7 +76,7 @@ public class OpportunisticPeerTracker extends Observable implements WifiP2pManag
             if (!mAssignedUuid.equals(uuid)) {
                 String[] components = type.split(Pattern.quote("."));
                 if (components.length >= 1 && Identity.SVC_INSTANCE_TYPE.equals(components[0]) && !mPeers.containsKey(uuid)) {
-                    OpportunisticPeer peer = new OpportunisticPeer(uuid, Status.convert(dev.status));
+                    OpportunisticPeer peer = new OpportunisticPeer(uuid, dev);
                     mPeers.put(uuid, peer);
                     mDevices.put(dev.deviceAddress, uuid);
                     Map<String, OpportunisticPeer> peerList = new HashMap<>();
@@ -132,7 +132,7 @@ public class OpportunisticPeerTracker extends Observable implements WifiP2pManag
                 for(WifiP2pDevice dev : devList.getDeviceList()) {
                     String uuid = mDevices.get(dev.deviceAddress);
                     if (uuid != null) {
-                        OpportunisticPeer peer = new OpportunisticPeer(uuid, Status.convert(dev.status));
+                        OpportunisticPeer peer = new OpportunisticPeer(uuid, dev);
                         mPeers.put(uuid, peer);
                         peerList.put(uuid, peer);
                     }
