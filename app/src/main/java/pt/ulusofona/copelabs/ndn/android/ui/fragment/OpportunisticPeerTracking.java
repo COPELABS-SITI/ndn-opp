@@ -46,6 +46,7 @@ import pt.ulusofona.copelabs.ndn.android.ui.ExpressInterestTask;
 import pt.ulusofona.copelabs.ndn.android.ui.JndnProcessEventTask;
 import pt.ulusofona.copelabs.ndn.android.ui.RegisterPrefixTask;
 import pt.ulusofona.copelabs.ndn.android.ui.adapter.OpportunisticPeerAdapter;
+import pt.ulusofona.copelabs.ndn.android.ui.dialog.RespondToInterest;
 import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracker;
@@ -208,7 +209,7 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
     @Override
     public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
         Log.v(TAG, "Received Interest : " + prefix.toString());
-
+        RespondToInterest.create(face, prefix);
     }
 
     @Override

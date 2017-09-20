@@ -5,7 +5,7 @@
     <TextView style="@style/title" android:text="@string/prefix" />
     <TextView style="@style/field" android:id="@+id/prefix" />
 
-    <TextView style="@style/title" android:text="@string/faceId" />
+    <TextView style="@style/title" android:text="@string/response" />
     <EditText style="@style/field" android:id="@+id/response" />
 
     <Button

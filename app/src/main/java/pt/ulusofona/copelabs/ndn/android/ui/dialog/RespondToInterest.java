@@ -13,31 +13,32 @@ import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.Spinner;
+import android.widget.TextView;
 
-import java.util.ArrayList;
-import java.util.List;
+import net.named_data.jndn.Data;
+import net.named_data.jndn.Face;
+import net.named_data.jndn.Name;
+import net.named_data.jndn.util.Blob;
+
+import java.io.IOException;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.models.Face;
-import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 
 /** Dialog for the addition of a new Route to the RIB and FIB of the running daemon. */
 public class RespondToInterest extends DialogFragment {
-	private EditText mPrefix;
-	private Spinner mFaces;
+	private Face mFace;
+	private Name mName;
+	private TextView mPrefix;
+	private EditText mResponse;
 
 	/** Method to be used for creating a new AddRouteDialog.
-	 * @param binder used to access the locally running daemon
 	 * @return the AddRouteDialog
 	 */
-	public static RespondToInterest create(OpportunisticDaemon.Binder binder) {
+	public static RespondToInterest create(Face face, Name name) {
 		RespondToInterest fragment = new RespondToInterest();
-		Bundle args = new Bundle();
-		args.putBinder("ForwardingDaemon", binder);
-		fragment.setArguments(args);
+		fragment.mFace = face;
+		fragment.mName = name;
 		return fragment;
 	}
 
@@ -49,30 +50,25 @@ public class RespondToInterest extends DialogFragment {
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-		final OpportunisticDaemon.Binder fwdDaemon = (OpportunisticDaemon.Binder) getArguments().getBinder("ForwardingDaemon");
 
 		View dialog = View.inflate(getContext(), R.layout.dialog_add_route, null);
 
 		mPrefix = (EditText) dialog.findViewById(R.id.prefix);
-		mFaces = (Spinner) dialog.findViewById(R.id.faces);
-        List<String> spinnerList = new ArrayList<>();
-        for(Face current : fwdDaemon.getFaceTable())
-            spinnerList.add(Long.toString(current.getFaceId()));
-        mFaces.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, spinnerList));
+		mPrefix.setText(mName.toString());
+		mResponse = (EditText) dialog.findViewById(R.id.response);
 
 		return builder
 			.setView(dialog)
-			.setPositiveButton(R.string.create, new DialogInterface.OnClickListener() {
+			.setPositiveButton(R.string.respond_to_interest, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface di, int id) {
-				String host = mPrefix.getText().toString();
-				String faceId = mFaces.getSelectedItem().toString();
-				if(host.isEmpty())
-					host = getString(R.string.defaultPrefix);
-				if(faceId.isEmpty())
-					faceId = "0";
-				// Issueing
-				fwdDaemon.addRoute(host, Long.decode(faceId), 0L, 0L, 1L);
+				Data data = new Data(mName);
+				data.setContent(new Blob(mResponse.toString()));
+					try {
+						mFace.putData(data);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 			})
 			.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
