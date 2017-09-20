@@ -67,4 +67,5 @@
     <string name="groupLeave">Leave Group</string>
     <string name="in">IN</string>
     <string name="out">OUT</string>
+    <string name="respond_to_interest">Respond to Interest</string>
 </resources>

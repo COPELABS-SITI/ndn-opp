@@ -25,7 +25,7 @@ import pt.ulusofona.copelabs.ndn.android.models.Face;
 import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 
 /** Dialog for the addition of a new Route to the RIB and FIB of the running daemon. */
-public class AddRouteDialog extends DialogFragment {
+public class RespondToInterest extends DialogFragment {
 	private EditText mPrefix;
 	private Spinner mFaces;
 
@@ -33,8 +33,8 @@ public class AddRouteDialog extends DialogFragment {
 	 * @param binder used to access the locally running daemon
 	 * @return the AddRouteDialog
 	 */
-	public static AddRouteDialog create(OpportunisticDaemon.Binder binder) {
-		AddRouteDialog fragment = new AddRouteDialog();
+	public static RespondToInterest create(OpportunisticDaemon.Binder binder) {
+		RespondToInterest fragment = new RespondToInterest();
 		Bundle args = new Bundle();
 		args.putBinder("ForwardingDaemon", binder);
 		fragment.setArguments(args);

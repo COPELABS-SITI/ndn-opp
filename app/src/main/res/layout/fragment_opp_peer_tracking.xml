@@ -6,33 +6,10 @@
         android:orientation="vertical">
 
         <Button android:visibility="gone"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/btn_start_peer_discovery"
-            android:text="@string/startPeerDiscovery" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Interest name: "/>
-
-            <EditText
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/interestName"
-                android:hint="/ndnopp"/>
-
-        </LinearLayout>
-
-        <Button android:enabled="true"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/btn_send_interest"
-            android:text="Send Interest"/>
+                android:id="@+id/btn_start_peer_discovery"
+                android:text="@string/startPeerDiscovery" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -47,11 +24,36 @@
                 android:visibility="invisible"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"/>
+
         </LinearLayout>
 
         <ListView
             android:id="@+id/list_wifiP2pPeers"
             style="@style/piece"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Interest name: "/>
+
+            <EditText
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/interestName"
+            android:hint="/ndnopp"/>
+
+        </LinearLayout>
+
+        <Button android:enabled="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/btn_send_interest"
+        android:text="Send Interest"/>
+
 
     </LinearLayout>
 </FrameLayout>

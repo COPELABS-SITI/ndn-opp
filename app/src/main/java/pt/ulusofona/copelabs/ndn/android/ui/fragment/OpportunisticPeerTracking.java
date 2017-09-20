@@ -208,6 +208,7 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
     @Override
     public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
         Log.v(TAG, "Received Interest : " + prefix.toString());
+
     }
 
     @Override
