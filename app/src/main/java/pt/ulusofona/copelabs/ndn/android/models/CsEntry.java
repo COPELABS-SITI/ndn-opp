@@ -23,7 +23,7 @@ public class CsEntry implements Table.Entry, Comparable<CsEntry> {
 	private String data;
 
     /** Main constructor.
-     * @param name the Name of this entry
+     * @param name the NDN Name associated to this entry
      * @param data a string encoding the Data packet associated to the Name of this entry
      */
 	public CsEntry(String name, String data) {

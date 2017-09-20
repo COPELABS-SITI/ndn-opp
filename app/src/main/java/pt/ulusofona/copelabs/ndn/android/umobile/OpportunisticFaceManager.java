@@ -67,7 +67,7 @@ public class OpportunisticFaceManager implements Observer {
             Log.d(TAG, "Registering Opportunistic Face " + faceId + " in RIB for prefix /ndn/multicast and /emergency.");
             mDaemonBinder.addRoute("/ndn/multicast", faceId, 0L, 0L, 1L);
             mDaemonBinder.addRoute("/emergency", faceId, 0L, 0L, 1L);
-            mDaemonBinder.addRoute("/ndnopp", faceId, 0L, 0L, 1L);
+            mDaemonBinder.addRoute("/ndn", faceId, 0L, 0L, 1L);
 
             mDaemonBinder.bringUpFace(faceId);
         }
@@ -102,18 +102,20 @@ public class OpportunisticFaceManager implements Observer {
             /* If the peer is unknown (i.e. its UUID is not in the list of UMobile peers,
              * we request the creation of a Face for it. Then, if the Face has an ID referenced
              * in the existing Opportunistic faces, bring it up. */
-            for(String uuid : peers.keySet()) {
-                OpportunisticPeer peer = peers.get(uuid);
-                if (!mUmobilePeers.containsKey(uuid)) {
-                    Log.d(TAG, "Requesting Face creation");
-                    mDaemonBinder.createFace("opp://" + uuid, 0, false);
-                } else {
-                    if (peer.getStatus().equals(Status.AVAILABLE))
-                        mDaemonBinder.bringUpFace(mUuidToFaceId.get(uuid));
-                    else
-                        mDaemonBinder.bringDownFace(mUuidToFaceId.get(uuid));
+            if (peers != null) {
+                for (String uuid : peers.keySet()) {
+                    OpportunisticPeer peer = peers.get(uuid);
+                    if (!mUmobilePeers.containsKey(uuid)) {
+                        Log.d(TAG, "Requesting Face creation");
+                        mDaemonBinder.createFace("opp://" + uuid, 0, false);
+                    } else {
+                        if (peer.getStatus().equals(Status.AVAILABLE))
+                            mDaemonBinder.bringUpFace(mUuidToFaceId.get(uuid));
+                        else
+                            mDaemonBinder.bringDownFace(mUuidToFaceId.get(uuid));
+                    }
+                    mUmobilePeers.put(uuid, peer);
                 }
-                mUmobilePeers.put(uuid, peer);
             }
         }
     }

@@ -63,6 +63,8 @@ public class OpportunisticPeerTracker extends Observable implements WifiP2pManag
 
     public void disable() {
         mContext.unregisterReceiver(bReceiver);
+        mPeers.clear();
+        setChanged(); notifyObservers(mPeers);
     }
 
     @Override public void onChannelDisconnected() {}

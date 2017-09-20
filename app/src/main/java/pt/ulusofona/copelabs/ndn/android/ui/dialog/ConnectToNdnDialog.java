@@ -51,6 +51,7 @@ public class ConnectToNdnDialog extends DialogFragment {
 		View dialog = View.inflate(getContext(), R.layout.dialog_connect_ndn, null);
 
 		mNdnNodes = (Spinner) dialog.findViewById(R.id.ndn_nodes);
+		// Select the COPELABS NDN Node by default (entry 33 of arrays.xml)
 		mNdnNodes.setSelection(33);
 
 		mIsPermanent = (CheckBox) dialog.findViewById(R.id.permanent);

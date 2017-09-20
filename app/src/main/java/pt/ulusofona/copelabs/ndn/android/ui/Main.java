@@ -233,8 +233,8 @@ public class Main extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            // TODO: check this does not run all the time ...
-                            refreshDisplayed();
+                        // TODO: check this does not run all the time ...
+                        refreshDisplayed();
                         }
                     });
                 }

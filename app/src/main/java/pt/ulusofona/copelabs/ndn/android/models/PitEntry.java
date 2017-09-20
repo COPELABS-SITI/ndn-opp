@@ -22,15 +22,22 @@ public class PitEntry implements Comparable<PitEntry> {
 	// Associates a FaceId with the last Nonce sent out on that Face
     private Set<FaceRecord> mOutRecords = new HashSet<>();
 
+	/** Main constructor. Refer to NFD Developer's Guide Section 3.4. Pending Interest Table (p. 23) for details about the meaning of the fields
+	 * @param name NDN name associated to this PitEntry.
+	 */
     public PitEntry(String name) {
         this.name = name;
     }
 
-    public String getName() {
+	/** Retrieve the NDN Name of this entry.
+	 * @return NDN Name
+	 */
+	public String getName() {
         return this.name;
     }
 
-	/** Add a new IN-Record for this PitEntry which records the information on the last Interest packet received on a Face
+	/** Add a new IN-Record for this PitEntry which records the information on the last Interest packet received on a Face.
+	 * NOTE: This has no effect on the PIT of the running Daemon, it only updates this object.
 	 * @param faceId ID of the Incoming Face
      * @param nonce the nonce of the last Interest packet received on the Face
 	 */
@@ -45,7 +52,8 @@ public class PitEntry implements Comparable<PitEntry> {
         return mInRecords;
     }
 
-	/** Add a new OUT-Record to this PitEntry which records the information on the last Interest packet sent on a Face
+	/** Add a new OUT-Record to this PitEntry which records the information on the last Interest packet sent on a Face.
+	 * NOTE: This has no effect on the PIT of the running Daemon, it only updates this object.
 	 * @param faceId ID of the Outgoing Face
      * @param nonce the nonce of the last Interest packet sent down the Face
 	 */

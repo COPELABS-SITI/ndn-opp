@@ -192,6 +192,13 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
         mOppFaceManager.afterFaceAdded(face);
     }
 
+    // Called by the C++ daemon when it adds a Face to its FaceTable.
+    private void beforeFaceRemoved(Face face) {
+        long faceId = face.getFaceId();
+        mFacetable.remove(faceId);
+        //mOppFaceManager.afterFaceAdded(face);
+    }
+
     // Called from JNI
     private void transferInterest(long faceId, int nonce, byte[] payload) {
         Log.d(TAG, "Transfer Interest : " + faceId + " " + nonce + " (" + ((payload != null) ? payload.length : "NULL") + ")");
@@ -204,6 +211,7 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
     // Called from JNI
     private void cancelInterest(long faceId, int nonce) {
         Log.d(TAG, "Cancel Interest : " + faceId + " " + nonce);
+        // TODO: remove the PKT ID and Nonce from Pendings.
         //mConnectivityManager.cancelInterestTransfer(mOppFaceManager.getUuid(faceId), nonce);
         mConnectionLessManager.cancelPacket(mOppFaceManager.getUuid(faceId), mPendingInterestIds.get(nonce));
     }

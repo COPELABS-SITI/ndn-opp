@@ -89,12 +89,12 @@ public class RegisterPrefixTask extends AsyncTask<Void, Void, Integer> {
     public void registerPrefix(){
         try {
             Log.v(TAG, "Register prefix ...");
-            mFace.registerPrefix(new Name(mPrefix), mOnInterestCallback, mOnRegistrationSuccess, new OnRegisterFailed() {
+            mFace.registerPrefix(new Name(mPrefix), mOnInterestCallback, new OnRegisterFailed() {
                 @Override
                 public void onRegisterFailed(Name prefix) {
                     Log.e(TAG, "Registration failed : " + prefix);
                 }
-            });
+            }, mOnRegistrationSuccess);
             Log.v(TAG, "Register prefix issued ...");
         } catch (SecurityException e) {
             e.printStackTrace();

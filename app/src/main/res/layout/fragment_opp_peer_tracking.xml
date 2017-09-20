@@ -28,7 +28,7 @@
 
         </LinearLayout>
 
-        <Button android:enabled="false"
+        <Button android:enabled="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/btn_send_interest"

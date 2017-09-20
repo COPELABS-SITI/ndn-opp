@@ -18,13 +18,13 @@ import android.widget.TextView;
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeer;
 
-/** Adapter class for displaying a list of WifiP2pPeers in a View.
+/** Adapter class for displaying a list of OpportunisticPeer in a View.
  * cfr. https://developer.android.com/reference/android/widget/Adapter.html
  */
 public class OpportunisticPeerAdapter extends ArrayAdapter<OpportunisticPeer> {
     private LayoutInflater mInflater;
 
-    /** Main constructor
+    /** Main constructor.
      * @param context Android context within which the Adapter should be created
      */
     public OpportunisticPeerAdapter(Context context) {

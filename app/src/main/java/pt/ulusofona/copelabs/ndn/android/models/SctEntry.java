@@ -22,7 +22,7 @@ public class SctEntry implements Table.Entry, Comparable<SctEntry> {
     private String prefix;
 	private String strategy;
 
-    /** Main constructor.
+    /** Main constructor. Refer to NFD Developer's Guide Section 3.6. Strategy Choice Table (p. 25) for details about the meaning of the fields
      * @param prefix the Name prefix associated with this entry
      * @param strategy the name of the strategy associated with this entry
      */

@@ -62,6 +62,7 @@ static jmethodID newFace;
 
 static jclass forwardingDaemon;
 static jmethodID afterFaceAdded;
+static jmethodID beforeFaceRemoved;
 static jmethodID mth_transfer_intr;
 static jmethodID mth_cancel_intr;
 static jmethodID mth_transfer_data;
@@ -138,6 +139,13 @@ void afterFaceAdd(const nfd::Face& current) {
     );
 }
 
+void beforeFaceRemove(const nfd::Face& current) {
+    PERFORM_ATTACHED(
+        NFD_LOG_INFO("Face added : " << current.getId() << " faceUri=" << current.getRemoteUri());
+        env->CallVoidMethod(forwardingDaemonInstance, beforeFaceRemoved, constructFace(env, current));
+    );
+}
+
 void beforePitEntryRemove(const nfd::pit::Entry& entry) {
     NFD_LOG_INFO("PitEntry removal : " << entry.getName());
     for(auto && outEntry : entry.getOutRecords()) {
@@ -191,6 +199,7 @@ JNIEXPORT void JNICALL jniStart(JNIEnv* env, jobject fDaemon, jstring homepath, 
 
     NFD_LOG_INFO("Connecting FaceTable.afterAdd & Pit.beforeRemove signals.");
     g_nfd->getFaceTable().afterAdd.connect(afterFaceAdd);
+    g_nfd->getFaceTable().beforeRemove.connect(beforeFaceRemove);
     g_nfd->getPendingInterestTable().beforeRemove.connect(beforePitEntryRemove);
 
     g_nfd->getForwarder().beforeOutRecordUpdate.connect(beforeOutRecordUpdate);
@@ -573,6 +582,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 		newCsEntry  = env->GetMethodID(csEntry, "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
 
         afterFaceAdded = env->GetMethodID(forwardingDaemon, "afterFaceAdded", "(Lpt/ulusofona/copelabs/ndn/android/models/Face;)V");
+        beforeFaceRemoved = env->GetMethodID(forwardingDaemon, "beforeFaceRemoved", "(Lpt/ulusofona/copelabs/ndn/android/models/Face;)V");
         mth_transfer_intr = env->GetMethodID(forwardingDaemon, "transferInterest", "(JI[B)V");
         mth_cancel_intr = env->GetMethodID(forwardingDaemon, "cancelInterest", "(JI)V");
         mth_transfer_data = env->GetMethodID(forwardingDaemon, "transferData", "(JLjava/lang/String;[B)V");
