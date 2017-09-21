@@ -1,19 +1,10 @@
-package pt.ulusofona.copelabs.ndn.android.ui;
+package pt.ulusofona.copelabs.ndn.android.ui.tasks;
 
 import android.os.AsyncTask;
 import android.util.Log;
 
 import net.named_data.jndn.Face;
-import net.named_data.jndn.Name;
-import net.named_data.jndn.OnInterestCallback;
-import net.named_data.jndn.OnRegisterFailed;
-import net.named_data.jndn.OnRegisterSuccess;
 import net.named_data.jndn.encoding.EncodingException;
-import net.named_data.jndn.security.KeyChain;
-import net.named_data.jndn.security.SecurityException;
-import net.named_data.jndn.security.identity.IdentityManager;
-import net.named_data.jndn.security.identity.MemoryIdentityStorage;
-import net.named_data.jndn.security.identity.MemoryPrivateKeyStorage;
 
 import java.io.IOException;
 

@@ -69,4 +69,7 @@
     <string name="out">OUT</string>
     <string name="respond_to_interest">Respond to Interest</string>
     <string name="response">Response</string>
+    <string name="lifetime">Lifetime</string>
+    <string name="content">Content</string>
+    <string name="long_lived">Long-Lived</string>
 </resources>

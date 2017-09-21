@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" style="@style/wrap" android:padding="@dimen/fragment_padding">
+
+    <TextView style="@style/title" android:text="@string/prefix" />
+    <TextView style="@style/field" android:id="@+id/prefix" />
+
+    <TextView style="@style/title" android:text="@string/content" />
+    <TextView style="@style/field" android:id="@+id/content" android:maxLines="3" />
+
+</LinearLayout>

@@ -16,11 +16,12 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -33,7 +34,9 @@ import net.named_data.jndn.InterestFilter;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.OnData;
 import net.named_data.jndn.OnInterestCallback;
+import net.named_data.jndn.OnPushedDataCallback;
 import net.named_data.jndn.OnRegisterSuccess;
+import net.named_data.jndn.util.Blob;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,11 +45,13 @@ import java.util.Observer;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.OperationResult;
-import pt.ulusofona.copelabs.ndn.android.ui.ExpressInterestTask;
-import pt.ulusofona.copelabs.ndn.android.ui.JndnProcessEventTask;
-import pt.ulusofona.copelabs.ndn.android.ui.RegisterPrefixTask;
 import pt.ulusofona.copelabs.ndn.android.ui.adapter.OpportunisticPeerAdapter;
-import pt.ulusofona.copelabs.ndn.android.ui.dialog.RespondToInterest;
+import pt.ulusofona.copelabs.ndn.android.ui.dialog.DisplayData;
+import pt.ulusofona.copelabs.ndn.android.ui.tasks.ExpressInterestTask;
+import pt.ulusofona.copelabs.ndn.android.ui.tasks.JndnProcessEventTask;
+import pt.ulusofona.copelabs.ndn.android.ui.tasks.RegisterPrefixForPushedDataTask;
+import pt.ulusofona.copelabs.ndn.android.ui.tasks.RegisterPrefixTask;
+import pt.ulusofona.copelabs.ndn.android.ui.tasks.RespondToInterestTask;
 import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracker;
@@ -60,11 +65,13 @@ import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracke
  * - The Connectivity Manager is used to take care of the formation of a Wi-Fi Direct Group (whether to form a new one or join an existing one)
  * - The NSD Service Tracker is used to know which NDN-Opp daemon can be reached within the Group to which the current device is connected (if it is)
  */
-public class OpportunisticPeerTracking extends Fragment implements Observer, View.OnClickListener, OnInterestCallback, OnRegisterSuccess, OnData {
+public class OpportunisticPeerTracking extends Fragment implements Observer, View.OnClickListener, OnInterestCallback, OnRegisterSuccess, OnData, OnPushedDataCallback {
     private static final String TAG = OpportunisticPeerTracking.class.getSimpleName();
     private static final String PREFIX = "/ndn/opp";
+    private static final String EMERGENCY = PREFIX + "/emergency";
 
     private static int PROCESS_INTERVAL = 1000;
+    private static double INTEREST_LIFETIME = 600000;
 
     private Context mContext;
     private WifiP2pManager mWifiP2pManager;
@@ -72,17 +79,19 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
 
     // Used for feedback to the user that a peerDiscovery is in progress
     private ProgressBar mDiscoveryInProgress;
+    private CheckBox mLongLived;
+    private CheckBox mPushData;
 
     private OpportunisticPeerTracker mPeerTracker = new OpportunisticPeerTracker();
 
     private Map<String, OpportunisticPeer> mPeers = new HashMap<>();
 
     private OpportunisticPeerAdapter mPeerAdapter;
-
     private Face mFace;
-    private Button mSendInterest;
-    private int mInterestSequence = 0;
     private TextView mInterestName;
+    private TextView mDataName;
+    private TextView mDataContent;
+    private int mDataSequence = 0;
 
     /** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html
      * @param context Android-provided Application context
@@ -115,22 +124,6 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         super.onDetach();
     }
 
-    /** Fragment lifecycle method (see https://developer.android.com/guide/components/fragments.html) */
-    @Override
-    public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.btn_start_peer_discovery:
-                mWifiP2pManager.discoverPeers(mWifiP2pChannel, new OperationResult(TAG, "Peer Discovery"));
-                break;
-            case R.id.btn_send_interest:
-                Name name = new Name(PREFIX + "/" + mInterestName.getText().toString() + "/" + mInterestSequence);
-                mInterestSequence += 1;
-                Toast.makeText(mContext, "Sending Interest : " + name.toString(), Toast.LENGTH_SHORT).show();
-                new ExpressInterestTask(mFace, name, this).execute();
-                break;
-        }
-    }
-
     /** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -140,15 +133,51 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
 
         viewWifiP2pTracking.findViewById(R.id.btn_start_peer_discovery).setOnClickListener(this);
         mDiscoveryInProgress = (ProgressBar) viewWifiP2pTracking.findViewById(R.id.discoveryInProgress);
+        mLongLived = (CheckBox) viewWifiP2pTracking.findViewById(R.id.long_lived);
+        mPushData = (CheckBox) viewWifiP2pTracking.findViewById(R.id.pushed_data);
 
-        mSendInterest = (Button) viewWifiP2pTracking.findViewById(R.id.btn_send_interest);
-        mSendInterest.setOnClickListener(this);
+        viewWifiP2pTracking.findViewById(R.id.btn_send_interest).setOnClickListener(this);
+        viewWifiP2pTracking.findViewById(R.id.btn_send_data).setOnClickListener(this);
+
         mInterestName = (TextView) viewWifiP2pTracking.findViewById(R.id.interestName);
+        mDataName = (TextView) viewWifiP2pTracking.findViewById(R.id.dataName);
+        mDataContent = (TextView) viewWifiP2pTracking.findViewById(R.id.dataContent);
 
         ListView listViewWifiP2pPeers = (ListView) viewWifiP2pTracking.findViewById(R.id.list_wifiP2pPeers);
         listViewWifiP2pPeers.setAdapter(mPeerAdapter);
 
         return viewWifiP2pTracking;
+    }
+
+    /** Fragment lifecycle method (see https://developer.android.com/guide/components/fragments.html) */
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.btn_start_peer_discovery:
+                mWifiP2pManager.discoverPeers(mWifiP2pChannel, new OperationResult(TAG, "Peer Discovery"));
+                break;
+            case R.id.btn_send_interest:
+                if(mFace != null) {
+                    Name name = new Name(PREFIX + "/" + mInterestName.getText().toString());
+                    Interest interest = new Interest(name, INTEREST_LIFETIME);
+                    interest.setLongLived(mLongLived.isChecked());
+                    Toast.makeText(mContext, "Sending Interest : " + name.toString(), Toast.LENGTH_SHORT).show();
+                    new ExpressInterestTask(mFace, interest, this).execute();
+                }
+                break;
+            case R.id.btn_send_data:
+                if (mFace != null) {
+                    Name dName = new Name(PREFIX + "/" + mDataName.getText().toString() + "/" + mDataSequence);
+                    mDataSequence += 1;
+                    Data data = new Data(dName);
+                    data.setPushed(mPushData.isChecked());
+                    Blob blob = new Blob(mDataContent.getText().toString());
+                    Log.v(TAG, "Blob : " + mDataContent.getText().toString() + " > " + Base64.encodeToString(blob.getImmutableArray(), Base64.NO_PADDING));
+                    data.setContent(blob);
+                    new RespondToInterestTask(mFace, data).execute();
+                }
+                break;
+        }
     }
 
     @Override
@@ -193,23 +222,22 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
             } else if (OpportunisticDaemon.STARTED.equals(action)) {
                 mPeerTracker.enable(context);
                 mFace = new Face("127.0.0.1", 6363);
-                RegisterPrefixTask rpt = new RegisterPrefixTask(mFace, PREFIX, OpportunisticPeerTracking.this, OpportunisticPeerTracking.this);
-                rpt.execute();
-                mSendInterest.setEnabled(true);
+                new RegisterPrefixTask(mFace, PREFIX, OpportunisticPeerTracking.this, OpportunisticPeerTracking.this).execute();
+                new RegisterPrefixForPushedDataTask(mFace, EMERGENCY, OpportunisticPeerTracking.this, OpportunisticPeerTracking.this).execute();
                 mHandler.postDelayed(mJndnProcessor, PROCESS_INTERVAL);
             } else if (OpportunisticDaemon.STOPPING.equals(action)){
                 mPeerTracker.disable();
                 mHandler.removeCallbacks(mJndnProcessor);
                 mFace = null;
-                mSendInterest.setEnabled(false);
             }
         }
     };
 
     @Override
     public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
-        Log.v(TAG, "Received Interest : " + prefix.toString());
-        RespondToInterest.create(face, prefix);
+        Log.v(TAG, "Received Interest : " + interest.getName() + " [" + interest.getInterestLifetimeMilliseconds() + "]");
+        //RespondToInterest dialog = RespondToInterest.create(face, interest);
+        //dialog.show(getChildFragmentManager(), dialog.getTag());
     }
 
     @Override
@@ -219,7 +247,16 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
 
     @Override
     public void onData(Interest interest, Data data) {
-        Log.v(TAG, "Received Data : " + data.getName().toString());
+        Log.v(TAG, "Received Data : " + data.getName().toString() + " > " + data.getContent().toString());
+        DisplayData dialog = DisplayData.create(data);
+        dialog.show(getChildFragmentManager(), dialog.getTag());
+    }
+
+    @Override
+    public void onPushedData(Data data) {
+        Log.v(TAG, "Push Data Received : " + data.getName().toString());
+        DisplayData dialog = DisplayData.create(data);
+        dialog.show(getChildFragmentManager(), dialog.getTag());
     }
 
     private Handler mHandler = new Handler();

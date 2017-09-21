@@ -11,6 +11,7 @@ package pt.ulusofona.copelabs.ndn.android.umobile;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.util.Base64;
 import android.util.Log;
 import android.util.LongSparseArray;
 import android.util.SparseArray;
@@ -218,7 +219,7 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
 
     // Called from JNI
     private void transferData(long faceId, String name, byte[] payload) {
-        Log.d(TAG, "Transfer Interest : " + faceId + " " + name + " (" + payload.length + ")");
+        Log.d(TAG, "Transfer Data : " + faceId + " " + name + " (" + payload.length + ") [" + Base64.encodeToString(payload, Base64.NO_PADDING) + "]");
         String pktId = mConnectionLessManager.sendPacket(mOppFaceManager.getUuid(faceId), payload);
         mPendingDataIds.put(name, pktId);
         mPendingDataNames.put(pktId, name);

@@ -139,7 +139,7 @@ public class OpportunisticConnectionLessTransferManager implements WifiP2pManage
      * @return the Packet ID assigned to this transfer by the manager. Used when the acknowledgement arrives.
      */
     public String sendPacket(String recipient, byte[] payload) {
-        Log.i(TAG, "sendPacket [" + payload.length + "] <" + digest(payload) + ">");
+        Log.i(TAG, "sendPacket [sha1sum=" + payload.length + "] <" + digest(payload) + ">");
         String pktId = generatePacketId();
 
         // Retrieve the packets pending for the recipient.

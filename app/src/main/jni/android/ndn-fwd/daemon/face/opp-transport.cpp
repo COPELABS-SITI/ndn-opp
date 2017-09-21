@@ -116,7 +116,7 @@ void OppTransport::doSend(Packet&& packet) {
     else if (packet.packet.type() == ndn::tlv::Data)
         m_dataQueue.push_back(packet);
 
-    if(this->getState() == TransportState::UP && getQueueSize() == 1)
+    if(this->getState() == TransportState::UP)
         sendNextPacket();
 }
 

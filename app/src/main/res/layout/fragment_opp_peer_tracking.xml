@@ -36,24 +36,75 @@
             android:layout_height="wrap_content">
 
             <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Interest name: "/>
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Interest name: "/>
 
             <EditText
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/interestName"
-            android:hint="/ndnopp"/>
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/interestName"
+                android:hint="/ndn/opp"/>
 
         </LinearLayout>
 
-        <Button android:enabled="true"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/btn_send_interest"
-        android:text="Send Interest"/>
+        <CheckBox
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/long_lived"
+            android:text="Long-Lived Interest"/>
 
+        <Button android:enabled="true"
+            android:onClick="onClick"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/btn_send_interest"
+            android:text="Send Interest"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Data name: "/>
+
+            <EditText
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/dataName"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Data content: "/>
+
+            <EditText
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/dataContent"/>
+
+        </LinearLayout>
+
+        <CheckBox
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/pushed_data"
+            android:text="Pushed Data"/>
+
+        <Button android:enabled="true"
+                android:onClick="onClick"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/btn_send_data"
+                android:text="Send Data"/>
 
     </LinearLayout>
 </FrameLayout>

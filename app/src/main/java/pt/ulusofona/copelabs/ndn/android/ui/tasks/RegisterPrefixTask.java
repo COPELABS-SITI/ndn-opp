@@ -1,4 +1,4 @@
-package pt.ulusofona.copelabs.ndn.android.ui;
+package pt.ulusofona.copelabs.ndn.android.ui.tasks;
 
 import android.os.AsyncTask;
 import android.util.Log;

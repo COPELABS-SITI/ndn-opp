@@ -2,15 +2,19 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" style="@style/wrap" android:padding="@dimen/fragment_padding">
 
+    <TextView android:layout_height="wrap_content" android:layout_width="match_parent" android:gravity="center"
+        android:text="Received Interest"/>
+
     <TextView style="@style/title" android:text="@string/prefix" />
     <TextView style="@style/field" android:id="@+id/prefix" />
 
-    <TextView style="@style/title" android:text="@string/response" />
-    <EditText style="@style/field" android:id="@+id/response" />
+    <TextView style="@style/title" android:text="@string/lifetime"/>
+    <TextView style="@style/field" android:id="@+id/lifetime"/>
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/btn_respond_to_interest"
-        android:text="@string/respond_to_interest"/>
+    <TextView style="@style/title" android:text="@string/long_lived"/>
+    <TextView style="@style/field" android:id="@+id/is_long_lived"/>
+
+    <TextView style="@style/title" android:text="@string/response" />
+    <EditText style="@style/field" android:id="@+id/response" android:lines="5" />
+
 </LinearLayout>

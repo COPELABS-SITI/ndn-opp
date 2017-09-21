@@ -44,7 +44,7 @@ dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support:design:25.3.1'
-    compile 'net.named-data:jndn:0.14'
+    compile files ('libs/copelabs-jndn.jar')
 }
 
 def getNdkDir() {

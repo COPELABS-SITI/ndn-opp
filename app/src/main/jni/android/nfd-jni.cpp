@@ -312,14 +312,18 @@ void transferData(long faceId, std::string name, ndn::Block bl) {
         if(current != nullptr) {
             jbyteArray payload = env->NewByteArray(bl.size());
             if(payload != NULL) {
-                jbyte* packetBytes = env->GetByteArrayElements(payload, 0);
+                NFD_LOG_INFO("Attempting to map ByteArray region.");
+                env->SetByteArrayRegion(payload, 0, bl.size(), (const jbyte*) bl.wire());
+                NFD_LOG_INFO("Mapping succeeded. Issueing send request.");
+                env->CallVoidMethod(forwardingDaemonInstance, mth_transfer_data, (jlong) faceId, env->NewStringUTF(name.c_str()), payload);
+                /*jbyte* packetBytes = env->GetByteArrayElements(payload, 0);
                 NFD_LOG_INFO("Attempting to map ByteArray region.");
                 const uint8_t* buffer = bl.wire();
                 for(int i = 0; i < bl.size(); i++)
                     packetBytes[i] = buffer[i];
                 NFD_LOG_INFO("Mapping succeeded. Issueing send request.");
                 env->CallVoidMethod(forwardingDaemonInstance, mth_transfer_data, (jlong) faceId, env->NewStringUTF(name.c_str()), payload);
-                env->ReleaseByteArrayElements(payload, packetBytes, JNI_ABORT);
+                env->ReleaseByteArrayElements(payload, packetBytes, JNI_ABORT);*/
             } else
                 NFD_LOG_WARN("Cannot allocate buffer for sending Block.");
         }
