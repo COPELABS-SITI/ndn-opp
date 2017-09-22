@@ -50,6 +50,6 @@ public class Name implements Table.Entry, Comparable<Name> {
 	 */
 	@Override
 	public void setViewContents(View entry) {
-		((TextView) entry.findViewById(R.id.name)).setText(this.name);
+		((TextView) entry.findViewById(R.id.text_name)).setText(this.name);
 	}
 }

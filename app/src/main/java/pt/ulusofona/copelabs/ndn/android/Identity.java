@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class Identity {
-    public static final String SVC_INSTANCE_TYPE = "_ndnopp3";
+    public static final String SVC_INSTANCE_TYPE = "_ndnoppcl";
     public static final String SVC_TRANSFER_TYPE = SVC_INSTANCE_TYPE + "transfer" ;
 
     private static final String PROPERTY_UUID_KEY = "UMOBILE_UUID";

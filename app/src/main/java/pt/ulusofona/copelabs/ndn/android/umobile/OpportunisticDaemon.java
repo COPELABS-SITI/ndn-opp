@@ -243,7 +243,7 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
     @Override
     public void onPacketReceived(String sender, byte[] payload) {
         Log.i(TAG, "Packet received : " + sender + " [" + payload.length + "]");
-        Toast.makeText(this, "Packet received : " + payload.length, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "Packet received : " + payload.length, Toast.LENGTH_SHORT).show();
         Long faceId = mOppFaceManager.getFaceId(sender);
         if(faceId != null)
             jniReceiveOnFace(faceId, payload.length, payload);

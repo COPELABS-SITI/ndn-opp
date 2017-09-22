@@ -2,16 +2,14 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/match" android:orientation="vertical">
 
-	<TextView android:id="@+id/text_name" style="@style/hCell" android:gravity="center"/>
+	<TextView android:id="@+id/text_name"
+			  android:layout_width="match_parent"
+			  android:layout_height="wrap_content"
+			  android:gravity="start"/>
 
-	<ListView
+	<TextView android:id="@+id/text_lifetime"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:id="@+id/inRecords"/>
-
-	<ListView
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:id="@+id/outRecords"/>
+		android:gravity="end"/>
 
 </LinearLayout>

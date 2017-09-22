@@ -10,38 +10,35 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-
 import android.content.ServiceConnection;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
-
 import android.os.IBinder;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.view.ViewPager;
-
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MenuInflater;
-import android.view.View;
+import android.view.MenuItem;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Locale;
-import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.Identity;
-import pt.ulusofona.copelabs.ndn.android.ui.dialog.ConnectToNdnDialog;
-import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
-
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.AddRouteDialog;
+import pt.ulusofona.copelabs.ndn.android.ui.dialog.ConnectToNdnDialog;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.CreateFaceDialog;
+import pt.ulusofona.copelabs.ndn.android.ui.dialog.ExpressInterestDialog;
+import pt.ulusofona.copelabs.ndn.android.ui.dialog.SendDataDialog;
+import pt.ulusofona.copelabs.ndn.android.ui.fragment.OpportunisticPeerTracking;
+import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 
 /** Main interface of NDN-Opp. Brings together the various app sections with the connection to the
  * ForwardingDaemon. */
@@ -50,6 +47,7 @@ public class Main extends AppCompatActivity {
 
     private MainTabListener mTabListener;
     private AppSections mAppSections = new AppSections(getSupportFragmentManager());
+    private OpportunisticPeerTracking mPeerTracking;
 
     // ForwardingDaemon service
     private Intent mDaemonIntent;
@@ -93,6 +91,8 @@ public class Main extends AppCompatActivity {
                             .setTabListener(mTabListener));
         }
 
+        mPeerTracking = mAppSections.getPeerTracking();
+
         pager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
@@ -115,25 +115,6 @@ public class Main extends AppCompatActivity {
         TextView uuid = (TextView) findViewById(R.id.umobileUuid);
         uuid.setText(Identity.getUuid());
 	}
-
-    protected static String generateRandomMessage(int length) {
-        String SALTCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-        StringBuilder salt = new StringBuilder();
-        Random rnd = new Random();
-        while (salt.length() < length) {
-            salt.append(SALTCHARS.charAt((int) (rnd.nextFloat() * SALTCHARS.length())));
-        }
-        String saltStr = salt.toString();
-        return saltStr;
-    }
-
-	public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.send:
-                mDaemonBinder.dummySend(generateRandomMessage(120).getBytes());
-                break;
-        }
-    }
 
     @Override
     protected void onResume() {
@@ -180,14 +161,23 @@ public class Main extends AppCompatActivity {
 	public boolean onOptionsItemSelected(MenuItem item) {
         DialogFragment dialog = null;
 
-        int itemId = item.getItemId();
-
-        if(item.getItemId() == R.id.createFace)
-            dialog = CreateFaceDialog.create(mDaemonBinder);
-        else if (itemId == R.id.addRoute)
-            dialog = AddRouteDialog.create(mDaemonBinder);
-        else if (itemId == R.id.connectNdn)
-            dialog = ConnectToNdnDialog.create(mDaemonBinder);
+        switch (item.getItemId()) {
+            case R.id.createFace:
+                dialog = CreateFaceDialog.create(mDaemonBinder);
+                break;
+            case R.id.addRoute:
+                dialog = AddRouteDialog.create(mDaemonBinder);
+                break;
+            case R.id.connectNdn:
+                dialog = ConnectToNdnDialog.create(mDaemonBinder);
+                break;
+            case R.id.expressInterest:
+                dialog = ExpressInterestDialog.create(mPeerTracking.getFace(), mPeerTracking);
+                break;
+            case R.id.sendPushedData:
+                dialog = SendDataDialog.create(mPeerTracking.getFace());
+                break;
+        }
 
         if(dialog != null)
             dialog.show(getSupportFragmentManager(), dialog.getTag());
@@ -293,9 +283,10 @@ public class Main extends AppCompatActivity {
         private String nicefy(String action) {
             String result = null;
 
-            if(action.equals(OpportunisticDaemon.STARTED))
+            if(action.equals(OpportunisticDaemon.STARTED)) {
                 result = "STARTED";
-            else if (action.equals(OpportunisticDaemon.STOPPING))
+
+            } else if (action.equals(OpportunisticDaemon.STOPPING))
                 result = "STOPPING";
 
             return result;

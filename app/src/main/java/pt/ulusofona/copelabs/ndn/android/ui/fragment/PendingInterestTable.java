@@ -95,7 +95,7 @@ public class PendingInterestTable extends Fragment implements Refreshable {
                 outRecordsAdapter.clear();
                 outRecordsAdapter.addAll(entry.getOutRecords());
 
-                ((TextView) convertView.findViewById(R.id.name)).setText(entry.getName());
+                ((TextView) convertView.findViewById(R.id.text_name)).setText(entry.getName());
                 ((ListView) convertView.findViewById(R.id.inRecords)).setAdapter(inRecordsAdapter);
                 ((ListView) convertView.findViewById(R.id.outRecords)).setAdapter(outRecordsAdapter);
             }

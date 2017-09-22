@@ -35,6 +35,10 @@ class AppSections extends FragmentPagerAdapter {
         super(fm);
     }
 
+    public OpportunisticPeerTracking getPeerTracking() {
+        return mPeerTracking;
+    }
+
     @Override
     public Fragment getItem(int id) {
         Fragment mCurrentlyDisplayed = null;
