@@ -316,14 +316,6 @@ void transferData(long faceId, std::string name, ndn::Block bl) {
                 env->SetByteArrayRegion(payload, 0, bl.size(), (const jbyte*) bl.wire());
                 NFD_LOG_INFO("Mapping succeeded. Issueing send request.");
                 env->CallVoidMethod(forwardingDaemonInstance, mth_transfer_data, (jlong) faceId, env->NewStringUTF(name.c_str()), payload);
-                /*jbyte* packetBytes = env->GetByteArrayElements(payload, 0);
-                NFD_LOG_INFO("Attempting to map ByteArray region.");
-                const uint8_t* buffer = bl.wire();
-                for(int i = 0; i < bl.size(); i++)
-                    packetBytes[i] = buffer[i];
-                NFD_LOG_INFO("Mapping succeeded. Issueing send request.");
-                env->CallVoidMethod(forwardingDaemonInstance, mth_transfer_data, (jlong) faceId, env->NewStringUTF(name.c_str()), payload);
-                env->ReleaseByteArrayElements(payload, packetBytes, JNI_ABORT);*/
             } else
                 NFD_LOG_WARN("Cannot allocate buffer for sending Block.");
         }
@@ -408,6 +400,19 @@ JNIEXPORT void JNICALL jniPushData(JNIEnv* env, jobject, jlong faceId, jstring n
     NFD_LOG_INFO("PushData " << name);
     if(g_nfd.get() != nullptr) {
 
+    }
+}
+
+JNIEXPORT void JNICALL jniPassInterests(JNIEnv* env, jobject, jlong faceId, jstring name) {
+    NFD_LOG_INFO("Passing Interests Opportunistically " << name);
+    if(g_nfd.get() != nullptr) {
+        std::string nameUri = convertString(env, name);
+        for(auto&& entry : g_nfd->getPendingInterestTable()) {
+            ndn::Name nameCpp(nameUri);
+            if(entry.getName().isPrefixOf(nameCpp)) {
+                NFD_LOG_INFO("Found matching Interests : " << entry.getName().toUri().c_str());
+            }
+        }
     }
 }
 
@@ -550,6 +555,7 @@ static JNINativeMethod nativeMethods[] = {
 	{ "jniDestroyFace", "(J)V", (void*) jniDestroyFace },
 	{ "jniReceiveOnFace", "(JI[B)V", (void*) jniReceiveOnFace },
 	{ "jniPushData", "(JLjava/lang/String;)V", (void*) jniPushData },
+	{ "jniPassInterests", "(JLjava/lang/String;)V", (void*) jniPassInterests },
     { "jniOnInterestTransferred", "(JI)V", (void*) jniOnInterestTransferred },
     { "jniOnDataTransferred", "(JLjava/lang/String;)V", (void*) jniOnDataTransferred },
 

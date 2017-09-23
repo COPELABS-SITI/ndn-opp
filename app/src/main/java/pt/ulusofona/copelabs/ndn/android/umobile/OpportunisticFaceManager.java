@@ -6,6 +6,7 @@
  */
 package pt.ulusofona.copelabs.ndn.android.umobile;
 
+import android.os.Handler;
 import android.util.Log;
 import android.util.LongSparseArray;
 
@@ -59,7 +60,7 @@ public class OpportunisticFaceManager implements Observer {
     void afterFaceAdded(Face face) {
         /* If the created face is an opportunistic one, it must be configured at the RIB/FIB level */
         if(face.getRemoteUri().startsWith("opp://")) {
-            long faceId = face.getFaceId();
+            final long faceId = face.getFaceId();
             String peerUuid = face.getRemoteUri().substring(6);
             mUuidToFaceId.put(peerUuid, faceId);
             mFaceIdToUuid.put(faceId, peerUuid);
@@ -68,6 +69,13 @@ public class OpportunisticFaceManager implements Observer {
             mDaemonBinder.addRoute("/ndn/multicast", faceId, 0L, 0L, 1L);
             mDaemonBinder.addRoute("/ndn/opp/emergency", faceId, 0L, 0L, 1L);
             mDaemonBinder.addRoute("/ndn", faceId, 0L, 0L, 1L);
+
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mDaemonBinder.passInterests(faceId, "/ndn/multicast/opp");
+                }
+            }, 500);
 
             mDaemonBinder.bringUpFace(faceId);
         }

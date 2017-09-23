@@ -56,6 +56,7 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
         public void bringUpFace(long faceId) { jniBringUpFace(faceId); }
         public void bringDownFace(long faceId) { jniBringDownFace(faceId); }
         public void pushData(long faceId, String name) { jniPushData(faceId, name); }
+        public void passInterests(long faceId, String name) { jniPassInterests(faceId, name); }
         public void destroyFace(long faceId) { jniDestroyFace(faceId); }
         public List<FibEntry> getForwardingInformationBase() { return jniGetForwardingInformationBase(); }
         public void addRoute(String prefix, long faceId, long origin, long cost, long flags) { jniAddRoute(prefix, faceId, origin, cost, flags);}
@@ -295,6 +296,8 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
      * @param id the FaceId of the Face to which data should be pushed
      */
     private native void jniPushData(long id, String name);
+
+    private native void jniPassInterests(long id, String name);
 
     /** [JNI] Used by the OpportunisticConnectivityManager to notify its encapsulating Face of the result of the
      * transmission of an Interest.
