@@ -27,4 +27,8 @@
 		android:orderInCategory="4"
 		android:title="@string/send_pushed_data"/>
 
+	<item
+		android:id="@+id/scenarioConfiguration"
+		android:orderInCategory="5"
+		android:title="@string/demo_configuration"/>
 </menu>

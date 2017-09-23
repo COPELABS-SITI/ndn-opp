@@ -4,6 +4,16 @@
         <item>tcp</item>
         <item>udp</item>
     </string-array>
+    <string-array name="demo_scenario_device_names">
+        <item>R</item>
+        <item>K</item>
+        <item>U</item>
+    </string-array>
+    <string-array name="demo_scenario_device_uuids">
+        <item>09d4b98a–0c5d–41b3-acf4-5c80691a33f2</item>
+        <item>0964bbe3–9480-4aaf-a275-8629174223b6</item>
+        <item>3aedd764-5655-4ab5-b24f-7a9b504c5c43</item>
+    </string-array>
     <string-array name="ndn_nodes_names">
         <item>UFPA</item>
         <item>BASEL</item>

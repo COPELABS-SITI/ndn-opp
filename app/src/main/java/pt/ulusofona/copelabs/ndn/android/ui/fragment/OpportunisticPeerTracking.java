@@ -125,6 +125,10 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         super.onDetach();
     }
 
+    public void addPeer(String peerUuid) {
+        mPeerTracker.addPeer(peerUuid);
+    }
+
     /** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,

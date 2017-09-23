@@ -36,6 +36,7 @@ import pt.ulusofona.copelabs.ndn.android.ui.dialog.AddRouteDialog;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.ConnectToNdnDialog;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.CreateFaceDialog;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.ExpressInterestDialog;
+import pt.ulusofona.copelabs.ndn.android.ui.dialog.ScenarioConfigurationDialog;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.SendDataDialog;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.OpportunisticPeerTracking;
 import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
@@ -154,6 +155,9 @@ public class Main extends AppCompatActivity {
             else
                 menu.getItem(i).setEnabled(mDaemonConnected);
 
+        // Enable Scenario configuration entry.
+        menu.getItem(5).setEnabled(true);
+
         return true;
     }
 
@@ -176,6 +180,9 @@ public class Main extends AppCompatActivity {
                 break;
             case R.id.sendPushedData:
                 dialog = SendDataDialog.create(mPeerTracking.getFace());
+                break;
+            case R.id.scenarioConfiguration:
+                dialog = ScenarioConfigurationDialog.create();
                 break;
         }
 
@@ -258,6 +265,11 @@ public class Main extends AppCompatActivity {
             mDaemonBinder = (OpportunisticDaemon.Binder) bndr;
             mDaemonConnected = true;
             startUpdater();
+            String knownPeer = Identity.getScenarioKnownPeers();
+            if(knownPeer != null) {
+                mDaemonBinder.addPeer(knownPeer);
+                mPeerTracking.addPeer(knownPeer);
+            }
         }
 
         @Override

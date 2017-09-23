@@ -81,4 +81,5 @@
     <string name="send_pushed_data">Send Pushed Data</string>
     <string name="received_interests">Received Interests</string>
     <string name="send">Send</string>
+    <string name="demo_configuration">Demo Configuration</string>
 </resources>

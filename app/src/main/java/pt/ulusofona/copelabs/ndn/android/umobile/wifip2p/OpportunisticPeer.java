@@ -21,9 +21,14 @@ public class OpportunisticPeer {
     private String mUuid;
     private String mMacAddress;
 
-    private boolean mIsGroupOwner;
-    private boolean mHasGroupOwnerField;
+    private boolean mIsGroupOwner = false;
+    private boolean mHasGroupOwnerField = false;
     private String mGroupOwnerMacAddress;
+
+    OpportunisticPeer(String uu, Status st) {
+        mStatus = st;
+        mUuid = uu;
+    }
 
     /** Create a Peer from a Device and a Service.
      * @param uu UUID of the NDN-Opp

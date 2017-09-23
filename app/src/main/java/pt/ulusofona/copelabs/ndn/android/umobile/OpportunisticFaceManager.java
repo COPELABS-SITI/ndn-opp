@@ -77,7 +77,8 @@ public class OpportunisticFaceManager implements Observer {
                 }
             }, 500);
 
-            mDaemonBinder.bringUpFace(faceId);
+            if(mUmobilePeers.get(peerUuid).getStatus() == Status.AVAILABLE)
+                mDaemonBinder.bringUpFace(faceId);
         }
     }
 
@@ -115,6 +116,7 @@ public class OpportunisticFaceManager implements Observer {
                     OpportunisticPeer peer = peers.get(uuid);
                     if (!mUmobilePeers.containsKey(uuid)) {
                         Log.d(TAG, "Requesting Face creation");
+                        mUmobilePeers.put(uuid, peer);
                         mDaemonBinder.createFace("opp://" + uuid, 0, false);
                     } else {
                         Long faceId = mUuidToFaceId.get(uuid);

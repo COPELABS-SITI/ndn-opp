@@ -10,6 +10,7 @@ package pt.ulusofona.copelabs.ndn.android.umobile;
 
 import android.app.Service;
 import android.content.Intent;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Base64;
 import android.util.Log;
@@ -25,6 +26,7 @@ import pt.ulusofona.copelabs.ndn.android.models.FibEntry;
 import pt.ulusofona.copelabs.ndn.android.models.Name;
 import pt.ulusofona.copelabs.ndn.android.models.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.models.SctEntry;
+import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracker;
 
 import java.io.BufferedReader;
@@ -63,7 +65,9 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
         public List<PitEntry> getPendingInterestTable() { return jniGetPendingInterestTable(); }
         public List<CsEntry> getContentStore() { return jniGetContentStore(); }
         public List<SctEntry> getStrategyChoiceTable() { return jniGetStrategyChoiceTable(); }
-
+        public void addPeer(String uuid) {
+            mPeerTracker.addPeer(uuid);
+        }
         public void dummySend(byte[] packet) {
             for(String recipient : mPeerTracker.getPeers().keySet()) {
                 String pktId = mConnectionLessManager.sendPacket(recipient, packet);
@@ -150,12 +154,18 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
             mConnectionLessManager.enable(this);
             mConnectivityManager.enable(this);
 
-            Log.d(TAG, STARTED);
-            sendBroadcast(new Intent(STARTED));
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Log.d(TAG, STARTED);
+                    sendBroadcast(new Intent(STARTED));
+                }
+            }, 250);
 		}
 		return START_NOT_STICKY;
 	}
 
+	private Handler mHandler = new Handler();
     /** Service lifecycle method. See https://developer.android.com/guide/components/services.html */
 	@Override
     public IBinder onBind(Intent in) {

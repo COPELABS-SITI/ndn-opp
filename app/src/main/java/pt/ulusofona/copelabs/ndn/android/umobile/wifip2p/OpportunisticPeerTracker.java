@@ -67,6 +67,11 @@ public class OpportunisticPeerTracker extends Observable implements WifiP2pManag
         setChanged(); notifyObservers(mPeers);
     }
 
+    public void addPeer(String uuid) {
+        mPeers.put(uuid, new OpportunisticPeer(uuid, Status.UNAVAILABLE));
+        setChanged(); notifyObservers(mPeers);
+    }
+
     @Override public void onChannelDisconnected() {}
 
     private WifiP2pManager.DnsSdServiceResponseListener svcResponseListener = new WifiP2pManager.DnsSdServiceResponseListener() {
@@ -77,7 +82,7 @@ public class OpportunisticPeerTracker extends Observable implements WifiP2pManag
             // Exclude the UUID of the current device
             if (!mAssignedUuid.equals(uuid)) {
                 String[] components = type.split(Pattern.quote("."));
-                if (components.length >= 1 && Identity.SVC_INSTANCE_TYPE.equals(components[0]) && !mPeers.containsKey(uuid)) {
+                if (components.length >= 1 && Identity.SVC_INSTANCE_TYPE.equals(components[0])) {
                     OpportunisticPeer peer = new OpportunisticPeer(uuid, dev);
                     mPeers.put(uuid, peer);
                     mDevices.put(dev.deviceAddress, uuid);
