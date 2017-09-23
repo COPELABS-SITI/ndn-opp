@@ -117,10 +117,13 @@ public class OpportunisticFaceManager implements Observer {
                         Log.d(TAG, "Requesting Face creation");
                         mDaemonBinder.createFace("opp://" + uuid, 0, false);
                     } else {
-                        if (peer.getStatus().equals(Status.AVAILABLE))
-                            mDaemonBinder.bringUpFace(mUuidToFaceId.get(uuid));
-                        else
-                            mDaemonBinder.bringDownFace(mUuidToFaceId.get(uuid));
+                        Long faceId = mUuidToFaceId.get(uuid);
+                        if(faceId != null) {
+                            if (peer.getStatus().equals(Status.AVAILABLE))
+                                mDaemonBinder.bringUpFace(mUuidToFaceId.get(uuid));
+                            else
+                                mDaemonBinder.bringDownFace(mUuidToFaceId.get(uuid));
+                        }
                     }
                     mUmobilePeers.put(uuid, peer);
                 }

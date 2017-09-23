@@ -22,11 +22,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 import pt.ulusofona.copelabs.ndn.android.Identity;
 import pt.ulusofona.copelabs.ndn.android.OperationResult;
+import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeer;
+import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracker;
+import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.Status;
 
 /** Manages the transfer of small payload packets through the TXT record of Wifi P2P Services.
  *  note that per http://www.drjukka.com/blog/wordpress/?p=127 (), this is not a sensible transfer
@@ -50,7 +55,7 @@ import pt.ulusofona.copelabs.ndn.android.OperationResult;
  *     Using TXT records larger than 1300 bytes is NOT RECOMMENDED at this
  *     time.
  */
-public class OpportunisticConnectionLessTransferManager implements WifiP2pManager.ChannelListener {
+public class OpportunisticConnectionLessTransferManager implements Observer, WifiP2pManager.ChannelListener {
     public static final String TAG = OpportunisticConnectionLessTransferManager.class.getSimpleName();
 
     /* RESCAN_INTERVAL drives the pace at which we restart discovering peers and services.
@@ -75,6 +80,8 @@ public class OpportunisticConnectionLessTransferManager implements WifiP2pManage
 
     private Observer mObservingContext;
     private String mAssignedUuid;
+
+    private Set<String> mKnownPeers = new HashSet<>();
 
     // Associates the UUID of a recipient with the packets pending for it (PKT:ID, PAYLOAD)
     private Map<String, Map<String, String>> mPendingPackets = new HashMap<>();
@@ -273,7 +280,7 @@ public class OpportunisticConnectionLessTransferManager implements WifiP2pManage
                  * - Our assigned UUID matches that of the intended recipient (i.e. this TXT Record is intended for us)
                  * - The service type is the one we're interested in (i.e. NDN-Opp) */
 
-                if ((!mAssignedUuid.equals(remoteUuid)) && mAssignedUuid.equals(localUuid) && Identity.SVC_TRANSFER_TYPE.equals(serviceType)) {
+                if (mKnownPeers.contains(remoteUuid) && !mAssignedUuid.equals(remoteUuid) && mAssignedUuid.equals(localUuid) && Identity.SVC_TRANSFER_TYPE.equals(serviceType)) {
                     Log.i(TAG, "Received from <" + fulldomain + "> : " + txt.toString());
 
                     // Perform an update to the acknowledgements we advertise to the remote UUID.
@@ -381,6 +388,18 @@ public class OpportunisticConnectionLessTransferManager implements WifiP2pManage
             }
         }
     };
+
+    @Override
+    public void update(Observable observable, Object obj) {
+        if (observable instanceof OpportunisticPeerTracker) {
+            Map<String, OpportunisticPeer> peers = (Map<String, OpportunisticPeer>) obj;
+            /* If the peer is unknown (i.e. its UUID is not in the list of UMobile peers,
+             * we request the creation of a Face for it. Then, if the Face has an ID referenced
+             * in the existing Opportunistic faces, bring it up. */
+            if(peers != null)
+                mKnownPeers.addAll(peers.keySet());
+        }
+    }
 
     public interface Observer {
         void onPacketTransferred(String recipient, String pktId);

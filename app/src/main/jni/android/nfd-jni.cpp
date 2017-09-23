@@ -410,7 +410,10 @@ JNIEXPORT void JNICALL jniPassInterests(JNIEnv* env, jobject, jlong faceId, jstr
         for(auto&& entry : g_nfd->getPendingInterestTable()) {
             ndn::Name nameCpp(nameUri);
             if(entry.getName().isPrefixOf(nameCpp)) {
-                NFD_LOG_INFO("Found matching Interests : " << entry.getName().toUri().c_str());
+                NFD_LOG_INFO("Found matching Interests : " << entry.getName().toUri().c_str() << " for FaceId " << faceId);
+                nfd::Face *face = g_nfd->getFaceTable().get(faceId);
+                auto &interest = entry.getInterest();
+                g_nfd->getForwarder().onOutgoingInterestCustom(const_cast<nfd::pit::Entry&>(entry), *face, interest);
             }
         }
     }

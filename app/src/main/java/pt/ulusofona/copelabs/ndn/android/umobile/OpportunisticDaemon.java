@@ -143,6 +143,7 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
 			startTime = System.currentTimeMillis();
 
             mPeerTracker.addObserver(mOppFaceManager);
+            mPeerTracker.addObserver(mConnectionLessManager);
 
             mPeerTracker.enable(this);
             mOppFaceManager.enable(local);
