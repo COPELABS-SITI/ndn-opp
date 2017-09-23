@@ -19,7 +19,7 @@
         android:id="@+id/dataName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="@string/ndn_opp"
+        android:hint="@string/ndn_opp_prefix"
         app:layout_constraintBottom_toTopOf="@+id/dataContent"
         app:layout_constraintLeft_toRightOf="@+id/dataNameTitle"
         app:layout_constraintRight_toRightOf="parent"

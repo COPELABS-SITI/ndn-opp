@@ -177,6 +177,9 @@ public class Main extends AppCompatActivity {
             case R.id.sendPushedData:
                 dialog = SendDataDialog.create(mPeerTracking.getFace());
                 break;
+            case R.id.scenarioConfiguration:
+                dialog = ScenarioConfigurationDialog.create(mPeerTracking);
+                break;
         }
 
         if(dialog != null)

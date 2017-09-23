@@ -56,7 +56,7 @@ public class OpportunisticConnectionLessTransferManager implements WifiP2pManage
     /* RESCAN_INTERVAL drives the pace at which we restart discovering peers and services.
        Doing so enables detect services faster than simply starting those discories once
        and leaving them to run. */
-    private static final long RESCAN_INTERVAL = 10000;
+    private static final long RESCAN_INTERVAL = 15000;
 
     // Key used in the TXT-Record to store packets. Packet ID is appended after it.
     private static final String PACKET_KEY_PREFIX = "PKT:";

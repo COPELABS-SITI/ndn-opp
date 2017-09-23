@@ -76,7 +76,7 @@
     <string name="interest_name">Name:</string>
     <string name="express_interest">Express Interest</string>
     <string name="express">Express</string>
-    <string name="ndn_opp">/ndn/opp</string>
+    <string name="ndn_opp_prefix">/ndn/multipcast/opp</string>
     <string name="pushed_data">Pushed Data</string>
     <string name="send_pushed_data">Send Pushed Data</string>
     <string name="received_interests">Received Interests</string>

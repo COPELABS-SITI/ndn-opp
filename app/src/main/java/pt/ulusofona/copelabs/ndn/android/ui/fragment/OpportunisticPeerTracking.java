@@ -68,7 +68,7 @@ import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracke
 public class OpportunisticPeerTracking extends Fragment implements Observer, View.OnClickListener, OnInterestCallback, OnData, OnRegisterSuccess, OnPushedDataCallback {
     private static final String TAG = OpportunisticPeerTracking.class.getSimpleName();
 
-    public static final String PREFIX = "/ndn/opp";
+    public static final String PREFIX = "/ndn/multicast/opp";
     public static final String EMERGENCY = PREFIX + "/emergency";
 
     private static int PROCESS_INTERVAL = 1000;
