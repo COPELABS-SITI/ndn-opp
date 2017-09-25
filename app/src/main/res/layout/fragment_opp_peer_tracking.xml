@@ -1,23 +1,27 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/match">
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent">
 
     <LinearLayout
-        style="@style/fill"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent">
 
-        <Button android:visibility="gone"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/btn_start_peer_discovery"
-                android:text="@string/startPeerDiscovery" />
+        <Button android:id="@+id/btn_start_peer_discovery"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/startPeerDiscovery" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
             <TextView
-                style="@style/title"
-                android:text="@string/ndnOppPeers"/>
+                android:text="@string/ndnOppPeers"
+                android:layout_height="wrap_content"
+                android:textColor="@color/black"
+                android:layout_width="wrap_content"
+                android:textAllCaps="true"/>
 
             <ProgressBar
                 android:id="@+id/discoveryInProgress"
@@ -31,8 +35,12 @@
             android:id="@+id/list_wifiP2pPeers"
             style="@style/piece"/>
 
-        <TextView style="@style/title"
-            android:text="@string/received_interests"/>
+        <TextView
+            android:text="@string/received_interests"
+            android:layout_height="wrap_content"
+            android:textColor="@color/black"
+            android:layout_width="wrap_content"
+            android:textAllCaps="true"/>
 
         <ListView android:id="@+id/list_pending_interests"
             style="@style/piece"/>

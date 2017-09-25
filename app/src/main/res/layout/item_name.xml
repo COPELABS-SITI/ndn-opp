@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/match">
+			  android:layout_height="wrap_content"
+			  android:layout_width="match_parent">
 
-	<TextView android:id="@+id/text_name" style="@style/hCell" android:gravity="start"/>
+	<TextView android:id="@+id/text_name"
+              android:gravity="start"
+              android:padding="2dp"
+              android:fontFamily="sans-serif"
+              android:layout_margin="1dp"
+              android:layout_width="fill_parent"
+              android:background="@color/lightgray"/>
 </LinearLayout>

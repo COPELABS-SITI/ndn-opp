@@ -112,7 +112,7 @@ public class Main extends AppCompatActivity {
 			}
 		});
 
-        TextView uuid = (TextView) findViewById(R.id.umobileUuid);
+        TextView uuid = (TextView) findViewById(R.id.uuid);
         uuid.setText(Identity.getUuid());
 	}
 

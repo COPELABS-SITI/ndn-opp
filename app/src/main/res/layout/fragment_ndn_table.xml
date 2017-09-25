@@ -3,8 +3,9 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="pt.ulusofona.copelabs.ndn.android.ui.fragment.NameTree"
-    style="@style/match"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent">
 
     <FrameLayout
         android:id="@+id/table"

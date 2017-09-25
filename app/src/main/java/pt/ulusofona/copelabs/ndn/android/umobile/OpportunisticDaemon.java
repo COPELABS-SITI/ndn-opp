@@ -63,13 +63,6 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
         public List<PitEntry> getPendingInterestTable() { return jniGetPendingInterestTable(); }
         public List<CsEntry> getContentStore() { return jniGetContentStore(); }
         public List<SctEntry> getStrategyChoiceTable() { return jniGetStrategyChoiceTable(); }
-
-        public void dummySend(byte[] packet) {
-            for(String recipient : mPeerTracker.getPeers().keySet()) {
-                String pktId = mConnectionLessManager.sendPacket(recipient, packet);
-                Log.i(TAG, "Sent packet : " + pktId);
-            }
-        }
     }
     private final Binder local = new Binder();
 

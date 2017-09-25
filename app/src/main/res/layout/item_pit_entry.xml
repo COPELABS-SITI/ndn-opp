@@ -1,17 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/match" android:orientation="vertical">
+<layout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
 
-	<TextView android:id="@+id/text_name" style="@style/hCell" android:gravity="center"/>
-
-	<ListView
-		android:layout_width="match_parent"
+	<android.support.constraint.ConstraintLayout
 		android:layout_height="wrap_content"
-		android:id="@+id/inRecords"/>
+		android:layout_width="match_parent">
 
-	<ListView
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:id="@+id/outRecords"/>
+		<TextView android:id="@+id/text_name"
+			android:fontFamily="sans-serif"
+			android:gravity="center"
+			android:layout_height="0dp"
+			android:layout_width="match_parent"
+			app:layout_constraintBottom_toTopOf="@+id/list_in_records"
+			app:layout_constraintRight_toRightOf="parent"
+			app:layout_constraintLeft_toLeftOf="parent"
+			app:layout_constraintTop_toTopOf="parent"/>
 
-</LinearLayout>
+		<ListView android:id="@+id/list_in_records"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			app:layout_constraintTop_toBottomOf="@+id/text_name"
+			app:layout_constraintBottom_toTopOf="@+id/list_out_records"
+			app:layout_constraintRight_toRightOf="parent"
+			app:layout_constraintLeft_toLeftOf="parent"/>
+
+		<ListView android:id="@+id/list_out_records"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintRight_toRightOf="@+id/list_in_records"
+			app:layout_constraintTop_toBottomOf="parent"
+			app:layout_constraintLeft_toLeftOf="@+id/list_in_records"/>
+
+	</android.support.constraint.ConstraintLayout>
+</layout>

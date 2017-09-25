@@ -24,7 +24,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
@@ -47,7 +46,7 @@ import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.OperationResult;
 import pt.ulusofona.copelabs.ndn.android.ui.adapter.OpportunisticPeerAdapter;
 import pt.ulusofona.copelabs.ndn.android.ui.adapter.PendingInterestAdapter;
-import pt.ulusofona.copelabs.ndn.android.ui.dialog.DisplayData;
+import pt.ulusofona.copelabs.ndn.android.ui.dialog.DisplayDataDialog;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.RespondToInterestDialog;
 import pt.ulusofona.copelabs.ndn.android.ui.tasks.JndnProcessEventTask;
 import pt.ulusofona.copelabs.ndn.android.ui.tasks.RegisterPrefixForPushedDataTask;
@@ -254,14 +253,14 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
     @Override
     public void onData(Interest interest, Data data) {
         Log.v(TAG, "Received Data : " + data.getName().toString() + " > " + data.getContent().toString());
-        DisplayData dialog = DisplayData.create(data);
+        DisplayDataDialog dialog = DisplayDataDialog.create(data);
         dialog.show(getChildFragmentManager(), dialog.getTag());
     }
 
     @Override
     public void onPushedData(Data data) {
         Log.v(TAG, "Push Data Received : " + data.getName().toString());
-        DisplayData dialog = DisplayData.create(data);
+        DisplayDataDialog dialog = DisplayDataDialog.create(data);
         dialog.show(getChildFragmentManager(), dialog.getTag());
     }
 }

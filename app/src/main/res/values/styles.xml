@@ -17,54 +17,27 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
 
-    <style name="wrap">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-    </style>
-
-    <style name="fill">
-        <item name="android:layout_width">fill_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-    </style>
-
-    <style name="match">
+    <style name="piece">
+        <item name="android:layout_marginBottom">10dp</item>
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
     </style>
 
-    <style name="title" parent="@style/wrap">
-        <item name="android:textColor">@color/black</item>
-         <item name="android:textAllCaps">true</item>
-    </style>
-
-    <style name="field" parent="@style/fill">
-        <item name="android:textColorHint">@color/lightgray</item>
-		<item name="android:gravity">end</item>
-    </style>
-
-    <style name="piece" parent="@style/match">
-        <item name="android:layout_marginBottom">10dp</item>
-    </style>
-
-	<style name="cell" parent="@style/wrap">
-	    <item name="android:layout_margin">1dp</item>
-	    <item name="android:paddingStart">4dp</item>
-	    <item name="android:paddingEnd">4dp</item>
-	    <item name="android:background">@color/lightgray</item>
-        <item name="android:fontFamily">monospace</item>
-	</style>
-
-	<style name="dCell" parent="@style/cell">
+    <style name="dCell">
 		<item name="android:layout_weight">1</item>
-	</style>
+        <item name="android:background">@color/lightgray</item>
+        <item name="android:padding">2dp</item>
+        <item name="android:layout_margin">1dp</item>
+        <item name="android:fontFamily">monospace</item>
+    </style>
 
-	<style name="vCell" parent="@style/cell">
+	<style name="vCell">
         <item name="android:layout_height">fill_parent</item>
 		<item name="android:gravity">center</item>
-	</style>
+        <item name="android:background">@color/lightgray</item>
+        <item name="android:padding">2dp</item>
+        <item name="android:layout_margin">1dp</item>
+        <item name="android:fontFamily">monospace</item>
+    </style>
 
-	<style name="hCell" parent="@style/cell">
-        <item name="android:layout_width">fill_parent</item>
-        <item name="android:fontFamily">sans-serif</item>
-	</style>
 </resources>

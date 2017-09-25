@@ -43,14 +43,6 @@ public class ForwarderConfiguration extends Fragment implements Refreshable {
 		return fwdConfig;
 	}
 
-	/** Obtain the title to be displayed for these tables
-	 * @return the title to be displayed
-	 */
-    @Override
-    public int getTitle() {
-        return R.string.forwarderConfiguration;
-    }
-
 	/** Performs a refresh of the contents of the enclosed tables
 	 * @param daemon Binder to the ForwardingDaemon used to retrieve the new entries to update this View with
 	 */

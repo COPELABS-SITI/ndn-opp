@@ -18,6 +18,10 @@ android {
         }
     }
 
+    dataBinding {
+        enabled true
+    }
+
     sourceSets.main.jni.srcDirs = []
     sourceSets.main.jniLibs.srcDir 'src/main/libs'
 

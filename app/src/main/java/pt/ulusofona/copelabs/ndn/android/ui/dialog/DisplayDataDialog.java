@@ -12,22 +12,17 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
-import android.util.Base64;
-import android.util.Log;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.TextView;
 
 import net.named_data.jndn.Data;
-import net.named_data.jndn.Face;
-import net.named_data.jndn.util.Blob;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.ui.tasks.RespondToInterestTask;
+import pt.ulusofona.copelabs.ndn.databinding.DialogDisplayDataBinding;
 
 /** Dialog for the addition of a new Route to the RIB and FIB of the running daemon. */
-public class DisplayData extends DialogFragment {
-	private static final String TAG = DisplayData.class.getSimpleName();
+public class DisplayDataDialog extends DialogFragment {
+	private static final String TAG = DisplayDataDialog.class.getSimpleName();
 	private Data mData;
 	private TextView mPrefix;
 	private TextView mContent;
@@ -35,8 +30,8 @@ public class DisplayData extends DialogFragment {
 	/** Method to be used for creating a new AddRouteDialog.
 	 * @return the AddRouteDialog
 	 */
-	public static DisplayData create(Data data) {
-		DisplayData fragment = new DisplayData();
+	public static DisplayDataDialog create(Data data) {
+		DisplayDataDialog fragment = new DisplayDataDialog();
 		fragment.mData = data;
 		return fragment;
 	}
@@ -48,22 +43,16 @@ public class DisplayData extends DialogFragment {
 	 */
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-
-		View dialog = View.inflate(getContext(), R.layout.dialog_display_data, null);
-
-		mPrefix = (TextView) dialog.findViewById(R.id.prefix);
-		mPrefix.setText(mData.getName().toString());
-		mContent = (TextView) dialog.findViewById(R.id.content);
-		mContent.setText(mData.getContent().toString());
+		DialogDisplayDataBinding dialogBinding = DialogDisplayDataBinding.inflate(getActivity().getLayoutInflater());
+		dialogBinding.setDataPacket(mData);
 
 		StringBuilder title = new StringBuilder("Received ");
 		if(mData.isPushed())
 			title.append("Pushed ");
 		title.append("Data");
 
-		return builder
-			.setView(dialog)
+		return new AlertDialog.Builder(getActivity())
+			.setView(dialogBinding.getRoot())
 			.setTitle(title.toString())
 			.setPositiveButton("Close", new DialogInterface.OnClickListener() {
 				@Override public void onClick(DialogInterface di, int id) {}

@@ -28,6 +28,7 @@ import net.named_data.jndn.util.Blob;
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.OpportunisticPeerTracking;
 import pt.ulusofona.copelabs.ndn.android.ui.tasks.RespondToInterestTask;
+import pt.ulusofona.copelabs.ndn.databinding.DialogRespondToInterestBinding;
 
 /** Dialog for the addition of a new Route to the RIB and FIB of the running daemon. */
 public class RespondToInterestDialog extends DialogFragment {
@@ -37,8 +38,6 @@ public class RespondToInterestDialog extends DialogFragment {
 
 	private Face mFace;
 	private Interest mInterest;
-	private TextView mDataName;
-	private EditText mDataContent;
 
 	/** Method to be used for creating a new AddRouteDialog.
 	 * @return the AddRouteDialog
@@ -58,23 +57,17 @@ public class RespondToInterestDialog extends DialogFragment {
 	 */
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+		final DialogRespondToInterestBinding dialogBinding = DialogRespondToInterestBinding.inflate(getActivity().getLayoutInflater());
 
-		View dialog = View.inflate(getContext(), R.layout.dialog_respond_to_interest, null);
-
-		mDataName = (TextView) dialog.findViewById(R.id.dataName);
-		mDataName.setText(mInterest.getName().toString());
-		mDataContent = (EditText) dialog.findViewById(R.id.dataContent);
-
-		return builder
-			.setView(dialog)
+		return new AlertDialog.Builder(getActivity())
+			.setView(dialogBinding.getRoot())
 			.setTitle("Send Data")
 			.setPositiveButton(R.string.send, new DialogInterface.OnClickListener() {
 				@Override public void onClick(DialogInterface di, int id) {
-					Name dName = new Name(mDataName.getText().toString());
+					Name dName = new Name(dialogBinding.dataName.getText().toString());
 					Data data = new Data(dName);
-					Blob blob = new Blob(mDataContent.getText().toString());
-					Log.v(TAG, "Blob : " + mDataContent.getText().toString() + " > " + Base64.encodeToString(blob.getImmutableArray(), Base64.NO_PADDING));
+					Blob blob = new Blob(dialogBinding.dataContent.getText().toString());
+					Log.v(TAG, "Blob : " + dialogBinding.dataContent.getText().toString() + " > " + Base64.encodeToString(blob.getImmutableArray(), Base64.NO_PADDING));
 					data.setContent(blob);
 					new RespondToInterestTask(mFace, data).execute();
 					mPeerTracking.respondedToInterest(mInterest);

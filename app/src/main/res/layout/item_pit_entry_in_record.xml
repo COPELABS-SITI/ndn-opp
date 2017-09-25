@@ -1,13 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  ~ @version 1.0
-  ~ COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017/7/26
-  ~ Layout file for PIT entry's In-Record.
-  ~ @author Seweryn Dynerowicz (COPELABS/ULHT)
-  -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-			  style="@style/match" android:orientation="horizontal">
-    <TextView style="@style/cell" android:text="@string/in"/>
-	<TextView android:id="@+id/faceId" style="@style/cell"/>
-	<TextView android:id="@+id/lastNonce" style="@style/hCell"/>
-</LinearLayout>
+<layout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+
+	<android.support.constraint.ConstraintLayout
+		android:orientation="horizontal"
+		android:layout_height="wrap_content"
+		android:layout_width="match_parent">
+
+		<TextView android:text="@string/in"
+			android:layout_height="wrap_content"
+			android:layout_width="wrap_content"
+			app:layout_constraintRight_toLeftOf="parent"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintLeft_toLeftOf="parent"
+			app:layout_constraintTop_toTopOf="parent"
+			android:layout_margin="1dp"
+			android:padding="2dp"
+			android:fontFamily="monospace"
+			android:background="@color/lightgray"/>
+
+		<TextView android:id="@+id/face_id"
+			android:layout_height="wrap_content"
+			android:layout_width="wrap_content"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintLeft_toLeftOf="parent"
+			app:layout_constraintTop_toTopOf="parent"
+			android:layout_margin="1dp"
+			android:padding="2dp"
+			android:fontFamily="monospace"
+			android:background="@color/lightgray"/>
+
+		<TextView android:id="@+id/lastNonce"
+			android:layout_height="wrap_content"
+			android:layout_width="0dp"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintRight_toRightOf="parent"
+			app:layout_constraintLeft_toLeftOf="parent"
+			app:layout_constraintTop_toTopOf="parent"
+			android:layout_margin="1dp"
+			android:padding="2dp"
+			android:fontFamily="sans-serif"
+			android:background="@color/lightgray"/>
+
+	</android.support.constraint.ConstraintLayout>
+</layout>

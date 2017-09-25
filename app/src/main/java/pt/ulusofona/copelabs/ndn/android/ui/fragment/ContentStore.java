@@ -41,14 +41,6 @@ public class ContentStore extends Fragment implements Refreshable {
 		return fwdConfig;
 	}
 
-	/** Obtain the title to be displayed for this table
-	 * @return the title to be displayed
-	 */
-	@Override
-	public int getTitle() {
-		return R.string.contentstore;
-	}
-
 	/** Performs a refresh of the contents of the enclosed table
 	 * @param daemon Binder to the ForwardingDaemon used to retrieve the new entries to update this View with
 	 */

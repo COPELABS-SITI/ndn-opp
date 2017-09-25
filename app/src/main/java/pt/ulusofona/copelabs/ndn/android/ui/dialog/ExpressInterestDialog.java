@@ -25,6 +25,7 @@ import net.named_data.jndn.OnData;
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.OpportunisticPeerTracking;
 import pt.ulusofona.copelabs.ndn.android.ui.tasks.ExpressInterestTask;
+import pt.ulusofona.copelabs.ndn.databinding.DialogExpressInterestBinding;
 
 /** Dialog for the addition of a new Route to the RIB and FIB of the running daemon. */
 public class ExpressInterestDialog extends DialogFragment {
@@ -32,8 +33,6 @@ public class ExpressInterestDialog extends DialogFragment {
 
 	private Face mFace;
 	private OnData mOnDataReceived;
-	private EditText mInterestName;
-	private CheckBox mLongLived;
 
 	/** Method to be used for creating a new AddRouteDialog.
 	 * @return the AddRouteDialog
@@ -45,11 +44,6 @@ public class ExpressInterestDialog extends DialogFragment {
 		return fragment;
 	}
 
-	@Override
-	public void onAttach(Context context) {
-		super.onAttach(context);
-	}
-
 	/** Constructs a dialog window which enables the addition of routes. Three parameters are requested through its fields;
 	 * the Name prefix, the Face ID and the Cost.
 	 * @param savedInstanceState used by Android for restoring the dialog object from a previous instance
@@ -57,21 +51,16 @@ public class ExpressInterestDialog extends DialogFragment {
 	 */
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+		final DialogExpressInterestBinding dialogBinding = DialogExpressInterestBinding.inflate(getActivity().getLayoutInflater());
 
-		View dialog = View.inflate(getContext(), R.layout.dialog_send_interest, null);
-
-		mInterestName = (EditText) dialog.findViewById(R.id.interestName);
-		mLongLived = (CheckBox) dialog.findViewById(R.id.long_lived);
-
-		return builder
-			.setView(dialog)
+		return new AlertDialog.Builder(getActivity())
+			.setView(dialogBinding.getRoot())
 			.setTitle("Express Interest")
 			.setPositiveButton(R.string.express, new DialogInterface.OnClickListener() {
 				@Override public void onClick(DialogInterface di, int id) {
-					Name name = new Name(OpportunisticPeerTracking.PREFIX + "/" + mInterestName.getText().toString());
+					Name name = new Name(OpportunisticPeerTracking.PREFIX + "/" + dialogBinding.interestName.getText().toString());
 					Interest interest = new Interest(name, OpportunisticPeerTracking.INTEREST_LIFETIME);
-					interest.setLongLived(mLongLived.isChecked());
+					interest.setLongLived(dialogBinding.isLongLived.isChecked());
 					new ExpressInterestTask(mFace, interest, mOnDataReceived).execute();
 				}
 			})

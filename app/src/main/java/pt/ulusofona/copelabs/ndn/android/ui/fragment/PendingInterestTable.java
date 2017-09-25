@@ -51,14 +51,6 @@ public class PendingInterestTable extends Fragment implements Refreshable {
 		return pitView;
 	}
 
-	/** Obtain the title to be displayed for this table
-	 * @return the title to be displayed
-	 */
-    @Override
-    public int getTitle() {
-        return R.string.pit;
-    }
-
 	/** Performs a refresh of the contents of the enclosed table
 	 * @param daemon Binder to the ForwardingDaemon used to retrieve the new entries to update this View with
 	 */
@@ -96,8 +88,8 @@ public class PendingInterestTable extends Fragment implements Refreshable {
                 outRecordsAdapter.addAll(entry.getOutRecords());
 
                 ((TextView) convertView.findViewById(R.id.text_name)).setText(entry.getName());
-                ((ListView) convertView.findViewById(R.id.inRecords)).setAdapter(inRecordsAdapter);
-                ((ListView) convertView.findViewById(R.id.outRecords)).setAdapter(outRecordsAdapter);
+                ((ListView) convertView.findViewById(R.id.list_in_records)).setAdapter(inRecordsAdapter);
+                ((ListView) convertView.findViewById(R.id.list_out_records)).setAdapter(outRecordsAdapter);
             }
 
             return convertView;
@@ -120,7 +112,7 @@ public class PendingInterestTable extends Fragment implements Refreshable {
 
             PitEntry.FaceRecord record = getItem(position);
             if (record != null) {
-                ((TextView) convertView.findViewById(R.id.faceId)).setText(String.format(Locale.getDefault(), "%03d", record.getFaceId()));
+                ((TextView) convertView.findViewById(R.id.face_id)).setText(String.format(Locale.getDefault(), "%03d", record.getFaceId()));
                 ((TextView) convertView.findViewById(R.id.lastNonce)).setText(String.format(Locale.getDefault(), "%d", record.getNonce()));
             }
 

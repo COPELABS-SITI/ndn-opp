@@ -8,29 +8,18 @@
 package pt.ulusofona.copelabs.ndn.android.ui.dialog;
 
 import android.app.Dialog;
-
 import android.content.DialogInterface;
-
 import android.os.Bundle;
-
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
-
-import android.view.View;
-
-import android.widget.CheckBox;
-import android.widget.EditText;
-import android.widget.Spinner;
+import android.util.Log;
 
 import pt.ulusofona.copelabs.ndn.R;
-
 import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
+import pt.ulusofona.copelabs.ndn.databinding.DialogCreateFaceBinding;
 
 public class CreateFaceDialog extends DialogFragment {
-	private Spinner mProtocol;
-	private EditText mHost;
-	private EditText mPort;
-	private CheckBox mIsPermanent;
+	private static final String TAG = CreateFaceDialog.class.getSimpleName();
 
 	/** Method to be used for creating a new CreateFaceDialog.
 	 * @param binder used to access the locally running daemon
@@ -52,25 +41,20 @@ public class CreateFaceDialog extends DialogFragment {
 	 */
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 		final OpportunisticDaemon.Binder fwdDaemon = (OpportunisticDaemon.Binder) getArguments().getBinder("ForwardingDaemon");
+		final DialogCreateFaceBinding dialogBinding = DialogCreateFaceBinding.inflate(getActivity().getLayoutInflater());
 
-		View dialog = View.inflate(getContext(), R.layout.dialog_create_face, null);
-
-		mProtocol = (Spinner) dialog.findViewById(R.id.protocol);
-		mHost = (EditText) dialog.findViewById(R.id.host);
-		mPort = (EditText) dialog.findViewById(R.id.port);
-		mIsPermanent = (CheckBox) dialog.findViewById(R.id.permanent);
-
-		return builder
-			.setView(dialog)
+		return new AlertDialog.Builder(getActivity())
+			.setView(dialogBinding.getRoot())
+			.setTitle(R.string.createFace)
 			.setPositiveButton(R.string.create, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface di, int id) {
-					String protocol = mProtocol.getSelectedItem().toString();
-                    String host = mHost.getText().toString();
-                    String port = mPort.getText().toString();
+					String protocol = dialogBinding.protocolSelector.getSelectedItem().toString();
+                    String host = dialogBinding.host.getText().toString();
+                    String port = dialogBinding.port.getText().toString();
 
+					Log.v(TAG, "Host:" + host + ", Port:" + port);
                     String faceUri;
 					if(protocol.equals(R.string.opp))
 						faceUri = getString(R.string.opp) + "://[" + host + "]";
@@ -84,7 +68,7 @@ public class CreateFaceDialog extends DialogFragment {
 
 					fwdDaemon.createFace(
 						faceUri,
-						mIsPermanent.isChecked() ? 2 : 0,
+						dialogBinding.isPermanent.isChecked() ? 2 : 0,
 						host.equals("127.0.0.1")
 					);
 				}

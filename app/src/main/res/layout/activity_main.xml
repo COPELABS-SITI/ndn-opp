@@ -1,33 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<android.support.constraint.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:layout_height="match_parent"
     android:layout_width="match_parent"
-    android:background="@color/colorPrimary">
+    android:background="@color/colorPrimary"
+    tools:layout_editor_absoluteY="81dp"
+    tools:layout_editor_absoluteX="0dp">
 
-    <Switch
-        style="@style/match"
+    <Switch android:id="@+id/nfdSwitch"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/nfdSwitch"
         android:textColor="@color/white"
-        android:id="@+id/nfdSwitch"
-        android:layout_gravity="center_horizontal"
-        android:text="@string/nfdSwitch" />
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="4dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"/>
 
-    <LinearLayout style="@style/match">
-        <TextView style="@style/wrap" android:textColor="@color/white" android:text="@string/uptime"/>
-        <TextView style="@style/field" android:textColor="@color/white" android:id="@+id/uptime" android:text="@string/notAvailable"/>
-    </LinearLayout>
+    <TextView android:id="@+id/uptimeTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/uptime"
+        android:textColor="@color/white"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@+id/uptime"
+        app:layout_constraintBaseline_toBaselineOf="@+id/uptime"
+        android:layout_marginStart="4dp"/>
 
-    <LinearLayout style="@style/match">
-        <TextView style="@style/wrap" android:textColor="@color/white" android:text="@string/umobileUuid"/>
-        <TextView style="@style/field" android:textColor="@color/white" android:id="@+id/umobileUuid" android:text="@string/notAvailable"/>
-    </LinearLayout>
+    <TextView android:id="@+id/uptime"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
+        android:gravity="end"
+        android:text="@string/notAvailable"
+        android:textColor="@color/white"
+        android:textColorHint="@color/lightgray"
+        app:layout_constraintLeft_toRightOf="@+id/uptimeTitle"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/nfdSwitch"/>
+
+    <TextView android:id="@+id/uuidTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/umobileUuid"
+        android:textColor="@color/white"
+        android:layout_marginTop="4dp"
+        app:layout_constraintTop_toBottomOf="@+id/uptimeTitle"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@+id/uuid"
+        android:layout_marginStart="4dp"/>
+
+    <TextView android:id="@+id/uuid"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
+        android:gravity="end"
+        android:text="@string/notAvailable"
+        android:textColor="@color/white"
+        android:textColorHint="@color/lightgray"
+        app:layout_constraintTop_toBottomOf="@+id/uptime"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toRightOf="@+id/uuidTitle"/>
 
     <android.support.v4.view.ViewPager
-        xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/root"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/white"/>
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="@color/white"
+        android:padding="4dp"
+        app:layout_constraintTop_toBottomOf="@+id/uuid"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"/>
 
-</LinearLayout>
+</android.support.constraint.ConstraintLayout>

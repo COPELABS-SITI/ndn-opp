@@ -1,45 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_height="wrap_content"
-    android:layout_width="match_parent"
-    android:orientation="vertical">
-
-    <TextView android:id="@+id/dataNameTitle"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:text="@string/interest_name"
-              app:layout_constraintLeft_toLeftOf="parent"
-              app:layout_constraintBottom_toTopOf="@+id/dataContentTitle"
-              app:layout_constraintRight_toLeftOf="@+id/dataName"
-              app:layout_constraintBaseline_toBaselineOf="@+id/dataName"/>
-
-    <EditText
-        android:id="@+id/dataName"
-        android:layout_width="0dp"
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <data>
+        <variable name="interestPacket" type="net.named_data.jndn.Interest"/>
+    </data>
+    <android.support.constraint.ConstraintLayout
+        xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@+id/dataContent"
-        app:layout_constraintLeft_toRightOf="@+id/dataNameTitle"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        android:layout_width="match_parent"
+        android:orientation="vertical">
 
-    <TextView android:id="@+id/dataContentTitle"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:text="@string/content"
-              app:layout_constraintLeft_toLeftOf="parent"
-              app:layout_constraintRight_toLeftOf="@+id/dataContent"
-              app:layout_constraintTop_toBottomOf="@id/dataNameTitle"
-              app:layout_constraintBaseline_toBaselineOf="@+id/dataContent"
-              app:layout_constraintHorizontal_bias="0.0"/>
+        <TextView android:id="@+id/dataNameTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/interest_name"
+            android:textAllCaps="true"
+            android:textColor="@color/black"
+            app:layout_constraintBottom_toTopOf="@+id/dataName"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginLeft="8dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            android:layout_marginRight="8dp"
+            app:layout_constraintRight_toRightOf="parent"/>
 
-    <EditText android:id="@+id/dataContent"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toRightOf="@+id/dataContentTitle"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/dataName"/>
+        <EditText android:id="@+id/dataName"
+            android:text="@{interestPacket.name.toString()}"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toTopOf="@+id/dataContentTitle"
+            app:layout_constraintTop_toBottomOf="@+id/dataNameTitle"
+            android:layout_marginLeft="8dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            android:layout_marginRight="8dp"
+            app:layout_constraintRight_toRightOf="parent"/>
 
-</android.support.constraint.ConstraintLayout>
+        <TextView android:id="@+id/dataContentTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/content"
+            android:textAllCaps="true"
+            android:textColor="@color/black"
+            app:layout_constraintBottom_toTopOf="@+id/dataContent"
+            app:layout_constraintTop_toBottomOf="@+id/dataName"
+            android:layout_marginLeft="8dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            android:layout_marginRight="8dp"
+            app:layout_constraintRight_toRightOf="parent"/>
+
+        <EditText android:id="@+id/dataContent"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/dataContentTitle"
+            android:layout_marginRight="8dp"
+            app:layout_constraintRight_toRightOf="parent"
+            android:layout_marginLeft="8dp"
+            app:layout_constraintLeft_toLeftOf="parent"/>
+
+    </android.support.constraint.ConstraintLayout>
+</layout>

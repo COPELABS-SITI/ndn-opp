@@ -8,15 +8,7 @@ package pt.ulusofona.copelabs.ndn.android.models;
 import android.support.annotation.NonNull;
 import android.util.SparseArray;
 
-import android.view.LayoutInflater;
-import android.view.View;
-
-import android.widget.TextView;
-
 import java.util.Locale;
-
-import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
 /** The model class used to represent Faces within the Android app.
  * A face has 7 important properties in NDN; Face ID, Local URI, Remote URI, FaceScope, FacePersistency, Link Type and FaceState
@@ -24,7 +16,7 @@ import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
  * @version 1.0
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
-public class Face implements Table.Entry, Comparable<Face> {
+public class Face implements Comparable<Face> {
 	private long faceId;
 	private String remoteUri;
     private int scope;
@@ -37,6 +29,19 @@ public class Face implements Table.Entry, Comparable<Face> {
 		return faceId;
 	}
 	public String getRemoteUri() { return remoteUri; }
+
+	public String remoteUri() {
+		if (remoteUri.startsWith("opp://"))
+			return remoteUri + (queueSize > 0 ? " [" + queueSize + "]" : "");
+		else
+			return remoteUri;
+	}
+
+	public String faceId() { return String.format(Locale.getDefault(), "%03d", faceId); }
+	public String scope() { return FaceScope.get(scope); }
+	public String persistency() { return FacePersistency.get(persistency); }
+	public String linkType() { return FaceLinkType.get(linkType); }
+	public String state() { return FaceState.get(state); }
 
 	/** Main constructor. Refer to NFD Developer's Guide Section 2. Face System (p. 9) for details about the meaning of the fields
 	 * @param faceId the Face ID
@@ -84,34 +89,6 @@ public class Face implements Table.Entry, Comparable<Face> {
 		FaceState.put(4, "Fd"); // FAILED
 		FaceState.put(5, "Cd"); // CLOSED
 	}
-
-	/** Constructs the View to use to display an instance of Face.
-	 * @param inflater the system inflater to used for turning the layout file into objects.
-	 * @return the View to be used for displaying an instance of Face.
-	 */
-    @Override
-    public View getView(LayoutInflater inflater) {
-        return inflater.inflate(R.layout.item_face, null, false);
-	}
-
-	/** Initialize the fields of a View with the values stored in this Face.
-	 * @param entry the View to use for displaying this Face.
-	 */
-    @Override
-    public void setViewContents(View entry) {
-		((TextView) entry.findViewById(R.id.faceId)).setText(String.format(Locale.getDefault(), "%03d", faceId));
-		((TextView) entry.findViewById(R.id.state)).setText(FaceState.get(state));
-
-		// Append the queue size to the RemoteURI in the case of an Opportunistic Face.
-		if(this.remoteUri.startsWith("opp://"))
-			((TextView) entry.findViewById(R.id.remoteUri)).setText(remoteUri + (queueSize > 0 ? " [" + queueSize + "]" : ""));
-		else
-			((TextView) entry.findViewById(R.id.remoteUri)).setText(remoteUri);
-
-		((TextView) entry.findViewById(R.id.scope)).setText(FaceScope.get(scope));
-		((TextView) entry.findViewById(R.id.persistency)).setText(FacePersistency.get(persistency));
-		((TextView) entry.findViewById(R.id.linkType)).setText(FaceLinkType.get(linkType));
-    }
 
 	/** Comparison of Faces based on their ID
 	 * @param that other Face to compare this Face with

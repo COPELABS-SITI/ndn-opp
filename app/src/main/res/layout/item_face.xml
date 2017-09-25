@@ -1,12 +1,98 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/match">
+<layout xmlns:app="http://schemas.android.com/apk/res-auto"
+		xmlns:android="http://schemas.android.com/apk/res/android">
+	<data>
+		<variable name="face" type="pt.ulusofona.copelabs.ndn.android.models.Face"/>
+	</data>
 
-	<TextView style="@style/cell" android:id="@+id/faceId" />
-	<TextView style="@style/cell" android:id="@+id/state" />
-	<TextView style="@style/cell" android:id="@+id/scope" />
-	<TextView style="@style/cell" android:id="@+id/persistency" />
-	<TextView style="@style/cell" android:id="@+id/linkType" />
-    <TextView style="@style/hCell" android:id="@+id/remoteUri" android:fontFamily="sans-serif" android:maxLines="1" />
+	<android.support.constraint.ConstraintLayout
+		android:layout_height="wrap_content"
+		android:layout_width="match_parent">
 
-</LinearLayout>
+		<TextView android:id="@+id/face_id"
+				  android:text="@{face.faceId()}"
+				  android:layout_height="wrap_content"
+				  android:layout_width="wrap_content"
+				  android:layout_margin="1dp"
+				  android:paddingStart="4dp"
+				  android:paddingEnd="4dp"
+				  android:background="@color/lightgray"
+				  android:fontFamily="monospace"
+				  app:layout_constraintLeft_toLeftOf="parent"
+				  app:layout_constraintTop_toTopOf="parent"
+				  app:layout_constraintBottom_toBottomOf="parent"
+				  app:layout_constraintRight_toLeftOf="@+id/state"/>
+
+		<TextView android:id="@+id/state"
+				  android:layout_height="wrap_content"
+				  android:layout_width="wrap_content"
+				  android:text="@{face.state()}"
+				  android:layout_margin="1dp"
+				  android:paddingStart="4dp"
+				  android:paddingEnd="4dp"
+				  android:background="@color/lightgray"
+				  android:fontFamily="monospace"
+				  app:layout_constraintLeft_toRightOf="@+id/face_id"
+				  app:layout_constraintTop_toTopOf="parent"
+				  app:layout_constraintBottom_toBottomOf="parent"
+				  app:layout_constraintRight_toLeftOf="@+id/scope"/>
+
+		<TextView android:id="@+id/scope"
+				  android:layout_height="wrap_content"
+				  android:layout_width="wrap_content"
+				  android:text="@{face.scope()}"
+				  android:layout_margin="1dp"
+				  android:paddingStart="4dp"
+				  android:paddingEnd="4dp"
+				  android:background="@color/lightgray"
+				  android:fontFamily="monospace"
+				  app:layout_constraintLeft_toRightOf="@+id/state"
+				  app:layout_constraintBottom_toBottomOf="parent"
+				  app:layout_constraintTop_toTopOf="parent"
+				  app:layout_constraintRight_toLeftOf="@+id/persistency"/>
+
+		<TextView android:id="@+id/persistency"
+				  android:layout_height="wrap_content"
+				  android:layout_width="wrap_content"
+				  android:text="@{face.persistency()}"
+				  android:layout_margin="1dp"
+				  android:paddingStart="4dp"
+				  android:paddingEnd="4dp"
+				  android:background="@color/lightgray"
+				  android:fontFamily="monospace"
+				  app:layout_constraintLeft_toRightOf="@+id/scope"
+				  app:layout_constraintBottom_toBottomOf="parent"
+				  app:layout_constraintTop_toTopOf="parent"
+				  app:layout_constraintRight_toLeftOf="@+id/link_type"/>
+
+		<TextView android:id="@+id/link_type"
+				  android:layout_height="wrap_content"
+				  android:layout_width="wrap_content"
+				  android:text="@{face.linkType()}"
+				  android:layout_margin="1dp"
+				  android:paddingStart="4dp"
+				  android:paddingEnd="4dp"
+				  android:background="@color/lightgray"
+				  android:fontFamily="monospace"
+				  app:layout_constraintLeft_toRightOf="@+id/persistency"
+				  app:layout_constraintBottom_toBottomOf="parent"
+				  app:layout_constraintTop_toTopOf="parent"
+				  app:layout_constraintRight_toLeftOf="@+id/remote_uri"/>
+
+		<TextView android:id="@+id/remote_uri"
+				  android:layout_height="wrap_content"
+				  android:layout_width="0dp"
+				  android:text="@{face.remoteUri()}"
+				  android:fontFamily="sans-serif"
+				  android:maxLines="1"
+				  android:layout_margin="1dp"
+				  android:paddingStart="4dp"
+				  android:paddingEnd="4dp"
+				  android:background="@color/lightgray"
+				  app:layout_constraintLeft_toRightOf="@+id/link_type"
+				  app:layout_constraintBottom_toBottomOf="parent"
+				  app:layout_constraintTop_toTopOf="parent"
+				  app:layout_constraintRight_toRightOf="parent"/>
+
+	</android.support.constraint.ConstraintLayout>
+</layout>

@@ -9,7 +9,9 @@ package pt.ulusofona.copelabs.ndn.android.ui.dialog;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.databinding.DataBindingUtil;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.util.Base64;
@@ -27,14 +29,13 @@ import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.ui.Main;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.OpportunisticPeerTracking;
 import pt.ulusofona.copelabs.ndn.android.ui.tasks.RespondToInterestTask;
+import pt.ulusofona.copelabs.ndn.databinding.DialogSendDataBinding;
 
 /** Dialog for the addition of a new Route to the RIB and FIB of the running daemon. */
 public class SendDataDialog extends DialogFragment {
 	private static final String TAG = SendDataDialog.class.getSimpleName();
 
 	private Face mFace;
-	private EditText mDataName;
-	private EditText mDataContent;
 
 	/** Method to be used for creating a new AddRouteDialog.
 	 * @return the AddRouteDialog
@@ -52,23 +53,18 @@ public class SendDataDialog extends DialogFragment {
 	 */
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+		final DialogSendDataBinding dialogBinding = DialogSendDataBinding.inflate(getActivity().getLayoutInflater());
 
-		View dialog = View.inflate(getContext(), R.layout.dialog_send_data, null);
-
-		mDataName = (EditText) dialog.findViewById(R.id.dataName);
-		mDataContent = (EditText) dialog.findViewById(R.id.dataContent);
-
-		return builder
-			.setView(dialog)
+		return new AlertDialog.Builder(getActivity())
+			.setView(dialogBinding.getRoot())
 			.setTitle("Send Push Data")
 			.setPositiveButton(R.string.send, new DialogInterface.OnClickListener() {
 				@Override public void onClick(DialogInterface di, int id) {
-					Name dName = new Name(OpportunisticPeerTracking.PREFIX + "/" + mDataName.getText().toString());
+					Name dName = new Name(OpportunisticPeerTracking.PREFIX + "/" + dialogBinding.dataName.getText().toString());
 					Data data = new Data(dName);
 					data.setPushed(true);
-					Blob blob = new Blob(mDataContent.getText().toString());
-					Log.v(TAG, "Blob : " + mDataContent.getText().toString() + " > " + Base64.encodeToString(blob.getImmutableArray(), Base64.NO_PADDING));
+					Blob blob = new Blob(dialogBinding.dataContent.getText().toString());
+					Log.v(TAG, "Blob : " + dialogBinding.dataContent.getText().toString() + " > " + Base64.encodeToString(blob.getImmutableArray(), Base64.NO_PADDING));
 					data.setContent(blob);
 					new RespondToInterestTask(mFace, data).execute();
 				}
