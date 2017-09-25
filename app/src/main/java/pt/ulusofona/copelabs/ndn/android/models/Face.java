@@ -98,4 +98,17 @@ public class Face implements Comparable<Face> {
 	public int compareTo(@NonNull Face that) {
 		return (int) (this.faceId - that.faceId);
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		Face that = (Face) obj;
+		return this.faceId == that.faceId &&
+			   this.remoteUri.equals(that.remoteUri) &&
+				this.scope == that.scope &&
+				this.persistency == that.persistency &&
+				this.linkType == that.linkType &&
+				this.state == that.state &&
+				this.queueSize == that.queueSize;
+
+	}
 }

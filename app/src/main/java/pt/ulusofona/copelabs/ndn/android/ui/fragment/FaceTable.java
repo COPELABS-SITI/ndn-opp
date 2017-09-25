@@ -29,6 +29,8 @@ import pt.ulusofona.copelabs.ndn.databinding.ItemFaceBinding;
 
 /** Fragment used to display the FaceTable of the running daemon. */
 public class FaceTable extends Fragment implements Refreshable {
+	private static final String TAG = FaceTable.class.getSimpleName();
+
 	private FragmentTableDbBinding mTableBinding;
 	private List<Face> mFaceTable = new ArrayList<>();
 	private ArrayAdapter<Face> mFaceTableAdapter;
@@ -57,10 +59,13 @@ public class FaceTable extends Fragment implements Refreshable {
 	 * @param daemon Binder to the ForwardingDaemon used to retrieve the new entries to update this View with
 	 */
 	public void refresh(@NonNull OpportunisticDaemon.Binder daemon) {
-		mFaceTable.clear();
-		mFaceTable.addAll(daemon.getFaceTable());
-		mFaceTableAdapter.clear();
-		mFaceTableAdapter.addAll(mFaceTable);
+		List<Face> newTable = daemon.getFaceTable();
+		if(!mFaceTable.equals(newTable)) {
+			mFaceTable.clear();
+			mFaceTable.addAll(daemon.getFaceTable());
+			mFaceTableAdapter.clear();
+			mFaceTableAdapter.addAll(mFaceTable);
+		}
 	}
 
 	/** Clear the contents of the enclosed table */

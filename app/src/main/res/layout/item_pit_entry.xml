@@ -1,35 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
 
+	<data>
+		<variable name="entry" type="pt.ulusofona.copelabs.ndn.android.models.PitEntry"/>
+	</data>
+
 	<android.support.constraint.ConstraintLayout
 		android:layout_height="wrap_content"
 		android:layout_width="match_parent">
 
 		<TextView android:id="@+id/text_name"
+			android:text="@{entry.name.toString()}"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="1dp"
+			android:paddingStart="4dp"
+			android:paddingEnd="4dp"
+			android:background="@color/lightgray"
 			android:fontFamily="sans-serif"
 			android:gravity="center"
-			android:layout_height="0dp"
-			android:layout_width="match_parent"
-			app:layout_constraintBottom_toTopOf="@+id/list_in_records"
-			app:layout_constraintRight_toRightOf="parent"
+			app:layout_constraintBottom_toTopOf="@+id/text_in_records"
 			app:layout_constraintLeft_toLeftOf="parent"
+			app:layout_constraintRight_toRightOf="parent"
 			app:layout_constraintTop_toTopOf="parent"/>
 
-		<ListView android:id="@+id/list_in_records"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			app:layout_constraintTop_toBottomOf="@+id/text_name"
-			app:layout_constraintBottom_toTopOf="@+id/list_out_records"
-			app:layout_constraintRight_toRightOf="parent"
-			app:layout_constraintLeft_toLeftOf="parent"/>
+		<TextView android:id="@+id/title_in_records"
+				  android:layout_width="wrap_content"
+				  android:layout_height="wrap_content"
+				  android:text="@string/in"
+				  android:layout_margin="1dp"
+				  android:paddingStart="4dp"
+				  android:paddingEnd="4dp"
+				  android:background="@color/lightgray"
+				  android:fontFamily="sans-serif"
+				  app:layout_constraintLeft_toLeftOf="parent"
+				  app:layout_constraintTop_toBottomOf="@+id/text_name"
+				  app:layout_constraintRight_toLeftOf="@id/text_in_records"
+				  app:layout_constraintBottom_toTopOf="@+id/title_out_records"/>
 
-		<ListView android:id="@+id/list_out_records"
-			android:layout_width="match_parent"
+		<TextView android:id="@+id/title_out_records"
+				  android:text="@string/out"
+				  android:layout_width="wrap_content"
+				  android:layout_height="wrap_content"
+				  android:layout_margin="1dp"
+				  android:paddingStart="4dp"
+				  android:paddingEnd="4dp"
+				  android:background="@color/lightgray"
+				  android:fontFamily="sans-serif"
+				  app:layout_constraintTop_toBottomOf="@+id/title_in_records"
+				  app:layout_constraintRight_toLeftOf="@+id/text_out_records"
+				  app:layout_constraintLeft_toLeftOf="parent"
+				  app:layout_constraintBottom_toBottomOf="parent"/>
+
+		<TextView android:id="@+id/text_in_records"
+			android:text="@{entry.getInRecords()}"
+			android:layout_width="0dp"
 			android:layout_height="wrap_content"
-			app:layout_constraintBottom_toBottomOf="parent"
-			app:layout_constraintRight_toRightOf="@+id/list_in_records"
-			app:layout_constraintTop_toBottomOf="parent"
-			app:layout_constraintLeft_toLeftOf="@+id/list_in_records"/>
+			android:layout_margin="1dp"
+			android:paddingStart="4dp"
+			android:paddingEnd="4dp"
+			android:background="@color/lightgray"
+			android:fontFamily="sans-serif"
+			app:layout_constraintTop_toBottomOf="@+id/text_name"
+			app:layout_constraintRight_toRightOf="parent"
+			app:layout_constraintLeft_toRightOf="@+id/title_in_records"
+			app:layout_constraintBaseline_toBaselineOf="@+id/title_in_records"
+			app:layout_constraintBottom_toTopOf="@id/title_out_records"/>
+
+		<TextView android:id="@+id/text_out_records"
+			android:text="@{entry.getOutRecords()}"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+				  android:layout_margin="1dp"
+				  android:paddingStart="4dp"
+				  android:paddingEnd="4dp"
+				  android:background="@color/lightgray"
+				  android:fontFamily="sans-serif"
+				  app:layout_constraintTop_toBottomOf="@+id/text_in_records"
+			app:layout_constraintLeft_toRightOf="@+id/title_out_records"
+			app:layout_constraintRight_toRightOf="parent"
+				  app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintBaseline_toBaselineOf="@+id/title_out_records"/>
 
 	</android.support.constraint.ConstraintLayout>
 </layout>

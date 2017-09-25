@@ -48,8 +48,11 @@ public class PitEntry implements Comparable<PitEntry> {
     /** Obtain the IN-Records of this PitEntry.
      * @return the set of all IN-Records of this PitEntry.
      */
-	public Set<FaceRecord> getInRecords() {
-        return mInRecords;
+	public String getInRecords() {
+		StringBuilder sb = new StringBuilder();
+		for(FaceRecord inRecord : mInRecords)
+			sb.append(inRecord.faceId + "=" + inRecord.nonce + " ");
+		return sb.toString();
     }
 
 	/** Add a new OUT-Record to this PitEntry which records the information on the last Interest packet sent on a Face.
@@ -64,8 +67,11 @@ public class PitEntry implements Comparable<PitEntry> {
     /** Obtain the OUT-Records of this PitEntry.
      * @return the set of all OUT-Records of this PitEntry.
      */
-	public Set<FaceRecord> getOutRecords() {
-        return mOutRecords;
+	public String getOutRecords() {
+		StringBuilder sb = new StringBuilder();
+		for(FaceRecord inRecord : mOutRecords)
+			sb.append(inRecord.faceId + "=" + inRecord.nonce + " ");
+		return sb.toString();
     }
 
 	/** Comparison of PitEntries based on their Interest Name
@@ -93,5 +99,17 @@ public class PitEntry implements Comparable<PitEntry> {
         public int getNonce() {
             return nonce;
         }
-    }
+
+		@Override
+		public boolean equals(Object obj) {
+			FaceRecord that = (FaceRecord) obj;
+			return faceId == that.faceId && nonce == that.nonce;
+		}
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		PitEntry that = (PitEntry) obj;
+		return name.equals(that.name) && mInRecords.equals(that.mInRecords) && mOutRecords.equals(that.mOutRecords);
+	}
 }
