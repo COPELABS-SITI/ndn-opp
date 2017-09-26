@@ -16,22 +16,19 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ListView;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.models.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
-import pt.ulusofona.copelabs.ndn.databinding.FragmentTableDbBinding;
+import pt.ulusofona.copelabs.ndn.databinding.FragmentTableBinding;
 import pt.ulusofona.copelabs.ndn.databinding.ItemPitEntryBinding;
 
 /** Fragment used to display the PendingInterestTable of the running daemon. */
 public class PendingInterestTable extends Fragment implements Refreshable {
-    private FragmentTableDbBinding mTableBinding;
+    private FragmentTableBinding mTableBinding;
     private List<PitEntry> mPitEntries = new ArrayList<>();
 	private PitEntryAdapter mPitEntriesAdapter;
 
@@ -44,8 +41,8 @@ public class PendingInterestTable extends Fragment implements Refreshable {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mTableBinding = FragmentTableDbBinding.inflate(getActivity().getLayoutInflater());
-        mTableBinding.title.setText(R.string.facetable);
+        mTableBinding = FragmentTableBinding.inflate(getActivity().getLayoutInflater());
+        mTableBinding.title.setText(R.string.pit);
         mPitEntriesAdapter = new PendingInterestTable.PitEntryAdapter(getContext(), R.layout.item_face);
         mTableBinding.contents.setAdapter(mPitEntriesAdapter);
     }

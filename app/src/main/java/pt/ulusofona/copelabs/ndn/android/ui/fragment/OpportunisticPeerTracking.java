@@ -14,6 +14,7 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -54,6 +55,7 @@ import pt.ulusofona.copelabs.ndn.android.ui.tasks.RegisterPrefixTask;
 import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracker;
+import pt.ulusofona.copelabs.ndn.databinding.FragmentOppPeerTrackingBinding;
 
 /** Interface to the Peer Tracking functionality of NDN-Opp. This Fragment is responsible for integrating
  * the functionalities of the NsdServiceTracker, the WifiP2pPeerTracker and the WifiP2pConnectivityManager.
@@ -64,7 +66,7 @@ import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracke
  * - The Connectivity Manager is used to take care of the formation of a Wi-Fi Direct Group (whether to form a new one or join an existing one)
  * - The NSD Service Tracker is used to know which NDN-Opp daemon can be reached within the Group to which the current device is connected (if it is)
  */
-public class OpportunisticPeerTracking extends Fragment implements Observer, View.OnClickListener, OnInterestCallback, OnData, OnRegisterSuccess, OnPushedDataCallback {
+public class OpportunisticPeerTracking extends Fragment implements Observer, View.OnClickListener, AdapterView.OnItemClickListener, OnInterestCallback, OnData, OnRegisterSuccess, OnPushedDataCallback {
     private static final String TAG = OpportunisticPeerTracking.class.getSimpleName();
 
     public static final String PREFIX = "/ndn/multicast/opp";
@@ -77,8 +79,7 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
     private WifiP2pManager mWifiP2pManager;
     private WifiP2pManager.Channel mWifiP2pChannel;
 
-    // Used for feedback to the user that a peerDiscovery is in progress
-    private ProgressBar mDiscoveryInProgress;
+    private FragmentOppPeerTrackingBinding mBinding;
 
     private OpportunisticPeerTracker mPeerTracker = new OpportunisticPeerTracker();
 
@@ -113,6 +114,8 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         mContext.registerReceiver(mBr, mIntentFilter);
 
         mPeerTracker.addObserver(this);
+
+        mBinding = FragmentOppPeerTrackingBinding.inflate(getActivity().getLayoutInflater());
     }
 
     /** Fragment lifecycle method (see https://developer.android.com/guide/components/fragments.html) */
@@ -126,29 +129,12 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
 
     /** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html */
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        Log.v(TAG, "onCreateView");
-        View viewWifiP2pTracking = inflater.inflate(R.layout.fragment_opp_peer_tracking, container, false);
-
-        viewWifiP2pTracking.findViewById(R.id.btn_start_peer_discovery).setOnClickListener(this);
-        mDiscoveryInProgress = (ProgressBar) viewWifiP2pTracking.findViewById(R.id.discoveryInProgress);
-
-        ListView listViewWifiP2pPeers = (ListView) viewWifiP2pTracking.findViewById(R.id.list_wifiP2pPeers);
-        listViewWifiP2pPeers.setAdapter(mPeerAdapter);
-
-        ListView listViewPendingInterest = (ListView) viewWifiP2pTracking.findViewById(R.id.list_pending_interests);
-        listViewPendingInterest.setAdapter(mInterestAdapter);
-        listViewPendingInterest.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Interest si = mPendingInterests.get(i);
-                DialogFragment dialog = RespondToInterestDialog.create(OpportunisticPeerTracking.this, mFace, si);
-                dialog.show(getChildFragmentManager(), dialog.getTag());
-            }
-        });
-
-        return viewWifiP2pTracking;
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        mBinding.btnStartPeerDiscovery.setOnClickListener(this);
+        mBinding.listWifiP2pPeers.setAdapter(mPeerAdapter);
+        mBinding.listPendingInterests.setAdapter(mInterestAdapter);
+        mBinding.listPendingInterests.setOnItemClickListener(this);
+        return mBinding.getRoot();
     }
 
     /** Fragment lifecycle method (see https://developer.android.com/guide/components/fragments.html) */
@@ -204,9 +190,9 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
             if(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION.equals(action)) {
                 int extra = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE, -1);
                 if(extra == WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED)
-                    mDiscoveryInProgress.setVisibility(View.VISIBLE);
+                    mBinding.discoveryInProgress.setVisibility(View.VISIBLE);
                 else
-                    mDiscoveryInProgress.setVisibility(View.INVISIBLE);
+                    mBinding.discoveryInProgress.setVisibility(View.INVISIBLE);
             } else if (OpportunisticDaemon.STARTED.equals(action)) {
                 mPeerTracker.enable(context);
                 mFace = new Face("127.0.0.1", 6363);
@@ -261,6 +247,13 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
     public void onPushedData(Data data) {
         Log.v(TAG, "Push Data Received : " + data.getName().toString());
         DisplayDataDialog dialog = DisplayDataDialog.create(data);
+        dialog.show(getChildFragmentManager(), dialog.getTag());
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+        Interest si = mPendingInterests.get(i);
+        DialogFragment dialog = RespondToInterestDialog.create(OpportunisticPeerTracking.this, mFace, si);
         dialog.show(getChildFragmentManager(), dialog.getTag());
     }
 }

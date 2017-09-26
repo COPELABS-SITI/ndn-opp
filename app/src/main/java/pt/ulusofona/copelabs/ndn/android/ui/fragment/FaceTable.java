@@ -24,21 +24,21 @@ import java.util.List;
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.models.Face;
 import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
-import pt.ulusofona.copelabs.ndn.databinding.FragmentTableDbBinding;
+import pt.ulusofona.copelabs.ndn.databinding.FragmentTableBinding;
 import pt.ulusofona.copelabs.ndn.databinding.ItemFaceBinding;
 
 /** Fragment used to display the FaceTable of the running daemon. */
 public class FaceTable extends Fragment implements Refreshable {
 	private static final String TAG = FaceTable.class.getSimpleName();
 
-	private FragmentTableDbBinding mTableBinding;
+	private FragmentTableBinding mTableBinding;
 	private List<Face> mFaceTable = new ArrayList<>();
-	private ArrayAdapter<Face> mFaceTableAdapter;
+	private FaceTableAdapter mFaceTableAdapter;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		mTableBinding = FragmentTableDbBinding.inflate(getActivity().getLayoutInflater());
+		mTableBinding = FragmentTableBinding.inflate(getActivity().getLayoutInflater());
 		mTableBinding.title.setText(R.string.facetable);
 		mFaceTableAdapter = new FaceTableAdapter(getContext(), R.layout.item_face);
 		mTableBinding.contents.setAdapter(mFaceTableAdapter);

@@ -8,7 +8,9 @@ package pt.ulusofona.copelabs.ndn.android.models;
 
 import android.support.annotation.NonNull;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /** The model class used to represent entries from the PendingInterestTable within the Android app.
@@ -18,9 +20,9 @@ import java.util.Set;
 public class PitEntry implements Comparable<PitEntry> {
     private String name;
 	// Associates a FaceId with the last Nonce received on that Face
-    private Set<FaceRecord> mInRecords = new HashSet<>();
+    private Map<Long, Integer> mInRecords = new HashMap<>();
 	// Associates a FaceId with the last Nonce sent out on that Face
-    private Set<FaceRecord> mOutRecords = new HashSet<>();
+    private Map<Long, Integer> mOutRecords = new HashMap<>();
 
 	/** Main constructor. Refer to NFD Developer's Guide Section 3.4. Pending Interest Table (p. 23) for details about the meaning of the fields
 	 * @param name NDN name associated to this PitEntry.
@@ -42,7 +44,7 @@ public class PitEntry implements Comparable<PitEntry> {
      * @param nonce the nonce of the last Interest packet received on the Face
 	 */
 	public void addInRecord(long faceId, int nonce) {
-        mInRecords.add(new FaceRecord(faceId, nonce));
+        mInRecords.put(faceId, nonce);
 	}
 
     /** Obtain the IN-Records of this PitEntry.
@@ -50,8 +52,8 @@ public class PitEntry implements Comparable<PitEntry> {
      */
 	public String getInRecords() {
 		StringBuilder sb = new StringBuilder();
-		for(FaceRecord inRecord : mInRecords)
-			sb.append(inRecord.faceId + "=" + inRecord.nonce + " ");
+		for(Long faceId : mInRecords.keySet())
+			sb.append(faceId + "=" + mInRecords.get(faceId) + " ");
 		return sb.toString();
     }
 
@@ -61,7 +63,7 @@ public class PitEntry implements Comparable<PitEntry> {
      * @param nonce the nonce of the last Interest packet sent down the Face
 	 */
 	public void addOutRecord(long faceId, int nonce) {
-        mOutRecords.add(new FaceRecord(faceId, nonce));
+        mOutRecords.put(faceId, nonce);
 	}
 
     /** Obtain the OUT-Records of this PitEntry.
@@ -69,8 +71,8 @@ public class PitEntry implements Comparable<PitEntry> {
      */
 	public String getOutRecords() {
 		StringBuilder sb = new StringBuilder();
-		for(FaceRecord inRecord : mOutRecords)
-			sb.append(inRecord.faceId + "=" + inRecord.nonce + " ");
+		for(Long faceId : mOutRecords.keySet())
+			sb.append(faceId + "=" + mOutRecords.get(faceId) + " ");
 		return sb.toString();
     }
 
@@ -82,30 +84,6 @@ public class PitEntry implements Comparable<PitEntry> {
     public int compareTo(@NonNull PitEntry that) {
         return this.name.compareTo(that.name);
     }
-
-	public class FaceRecord {
-		private long faceId;
-		private int nonce;
-
-		FaceRecord(long faceId, int nonce) {
-			this.faceId = faceId;
-			this.nonce = nonce;
-		}
-
-		public long getFaceId() {
-            return faceId;
-        }
-
-        public int getNonce() {
-            return nonce;
-        }
-
-		@Override
-		public boolean equals(Object obj) {
-			FaceRecord that = (FaceRecord) obj;
-			return faceId == that.faceId && nonce == that.nonce;
-		}
-	}
 
 	@Override
 	public boolean equals(Object obj) {
