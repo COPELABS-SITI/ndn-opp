@@ -16,7 +16,6 @@ import android.widget.Toast;
 import java.util.Map;
 
 import pt.ulusofona.copelabs.ndn.android.Identity;
-import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeer;
 
 /** Manager for WifiP2p connectivity to take care of everything related to forming groups for connecting
  *  devices together. */

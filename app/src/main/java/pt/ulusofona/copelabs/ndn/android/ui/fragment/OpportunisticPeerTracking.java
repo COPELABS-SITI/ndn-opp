@@ -14,7 +14,6 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -23,8 +22,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ListView;
-import android.widget.ProgressBar;
 
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
@@ -53,8 +50,8 @@ import pt.ulusofona.copelabs.ndn.android.ui.tasks.JndnProcessEventTask;
 import pt.ulusofona.copelabs.ndn.android.ui.tasks.RegisterPrefixForPushedDataTask;
 import pt.ulusofona.copelabs.ndn.android.ui.tasks.RegisterPrefixTask;
 import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
-import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeer;
-import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracker;
+import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticPeer;
+import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticPeerTracker;
 import pt.ulusofona.copelabs.ndn.databinding.FragmentOppPeerTrackingBinding;
 
 /** Interface to the Peer Tracking functionality of NDN-Opp. This Fragment is responsible for integrating

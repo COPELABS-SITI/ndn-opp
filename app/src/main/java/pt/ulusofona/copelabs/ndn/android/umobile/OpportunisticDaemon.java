@@ -10,12 +10,12 @@ package pt.ulusofona.copelabs.ndn.android.umobile;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.IBinder;
 import android.util.Base64;
 import android.util.Log;
 import android.util.LongSparseArray;
 import android.util.SparseArray;
-import android.widget.Toast;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.Identity;
@@ -25,7 +25,6 @@ import pt.ulusofona.copelabs.ndn.android.models.FibEntry;
 import pt.ulusofona.copelabs.ndn.android.models.Name;
 import pt.ulusofona.copelabs.ndn.android.models.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.models.SctEntry;
-import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracker;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -44,6 +43,12 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
 	public static final String STARTED = "pt.ulusofona.copelabs.ndn.android.service.STARTED";
 	public static final String STOPPING = "pt.ulusofona.copelabs.ndn.android.service.STOPPING";
 
+    public static final IntentFilter mIntents = new IntentFilter();
+    static {
+        mIntents.addAction(STARTED);
+        mIntents.addAction(STOPPING);
+    }
+
     private enum State { STARTED , STOPPED }
 
     public class Binder extends android.os.Binder {
@@ -53,11 +58,11 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
         public List<Name> getNameTree() { return jniGetNameTree(); }
         public List<Face> getFaceTable() { return jniGetFaceTable(); }
         public void createFace(String faceUri, int persistency, boolean localFields) { jniCreateFace(faceUri, persistency, localFields);}
+        public void destroyFace(long faceId) { jniDestroyFace(faceId); }
         public void bringUpFace(long faceId) { jniBringUpFace(faceId); }
         public void bringDownFace(long faceId) { jniBringDownFace(faceId); }
-        public void pushData(long faceId, String name) { jniPushData(faceId, name); }
+        public void passData(long faceId, String name) { jniPushData(faceId, name); }
         public void passInterests(long faceId, String name) { jniPassInterests(faceId, name); }
-        public void destroyFace(long faceId) { jniDestroyFace(faceId); }
         public List<FibEntry> getForwardingInformationBase() { return jniGetForwardingInformationBase(); }
         public void addRoute(String prefix, long faceId, long origin, long cost, long flags) { jniAddRoute(prefix, faceId, origin, cost, flags);}
         public List<PitEntry> getPendingInterestTable() { return jniGetPendingInterestTable(); }
@@ -83,15 +88,15 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
     private OpportunisticConnectivityManager mConnectivityManager = new OpportunisticConnectivityManager();
 
     private OpportunisticConnectionLessTransferManager mConnectionLessManager = new OpportunisticConnectionLessTransferManager();
-    // Maps a Packet ID to a Nonce
-    private SparseArray<String> mPendingInterestIds = new SparseArray<>();
-    // Maps a Nonce to a Packet ID
-    private Map<String, Integer> mPendingInterestNonces = new HashMap<>();
+    // Maps Nonce -> Packet ID
+    private SparseArray<String> mPendingInterestIdsFromNonces = new SparseArray<>();
+    // Maps Packet ID -> Nonce
+    private Map<String, Integer> mPendingInterestNoncesFromIds = new HashMap<>();
 
-    // Maps a Packet ID to a Name (Data)
-    private Map<String, String> mPendingDataIds = new HashMap<>();
-    // Maps a Name (Data) to a Packet ID
-    private Map<String, String> mPendingDataNames = new HashMap<>();
+    // Maps Name -> Packet ID (Data)
+    private Map<String, String> mPendingDataIdsFromNames = new HashMap<>();
+    // Maps Packet ID -> Name (Data)
+    private Map<String, String> mPendingDataNamesFromIds = new HashMap<>();
 
     // Custom lock to regulate the transitions between STARTED and STOPPED.
     // @TODO: Replace this with a standard lock.
@@ -200,8 +205,8 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
         Log.d(TAG, "Transfer Interest : " + faceId + " " + nonce + " (" + ((payload != null) ? payload.length : "NULL") + ")");
         //mConnectivityManager.transferInterest(mOppFaceManager.getUuid(faceId), nonce, payload);
         String pktId = mConnectionLessManager.sendPacket(mOppFaceManager.getUuid(faceId), payload);
-        mPendingInterestIds.put(nonce, pktId);
-        mPendingInterestNonces.put(pktId, nonce);
+        mPendingInterestIdsFromNonces.put(nonce, pktId);
+        mPendingInterestNoncesFromIds.put(pktId, nonce);
     }
 
     // Called from JNI
@@ -209,15 +214,20 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
         Log.d(TAG, "Cancel Interest : " + faceId + " " + nonce);
         // TODO: remove the PKT ID and Nonce from Pendings.
         //mConnectivityManager.cancelInterestTransfer(mOppFaceManager.getUuid(faceId), nonce);
-        mConnectionLessManager.cancelPacket(mOppFaceManager.getUuid(faceId), mPendingInterestIds.get(nonce));
+        mConnectionLessManager.cancelPacket(mOppFaceManager.getUuid(faceId), mPendingInterestIdsFromNonces.get(nonce));
+        String pktId = mPendingInterestIdsFromNonces.get(nonce);
+        if( pktId != null ) {
+            mPendingInterestIdsFromNonces.remove(nonce);
+            mPendingInterestNoncesFromIds.remove(pktId);
+        }
     }
 
     // Called from JNI
     private void transferData(long faceId, String name, byte[] payload) {
         Log.d(TAG, "Transfer Data : " + faceId + " " + name + " (" + payload.length + ") [" + Base64.encodeToString(payload, Base64.NO_PADDING) + "]");
         String pktId = mConnectionLessManager.sendPacket(mOppFaceManager.getUuid(faceId), payload);
-        mPendingDataIds.put(name, pktId);
-        mPendingDataNames.put(pktId, name);
+        mPendingDataIdsFromNames.put(name, pktId);
+        mPendingDataNamesFromIds.put(pktId, name);
     }
 
     @Override
@@ -225,11 +235,15 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
         Log.i(TAG, "Packet transferred : " + recipient + " [" + pktId + "]");
         Long faceId = mOppFaceManager.getFaceId(recipient);
         if(faceId != null) {
-            if (mPendingInterestNonces.containsKey(pktId)) {
-                Integer nonce = mPendingInterestNonces.get(pktId);
+            if (mPendingInterestNoncesFromIds.containsKey(pktId)) {
+                Integer nonce = mPendingInterestNoncesFromIds.get(pktId);
+                mPendingInterestIdsFromNonces.remove(nonce);
+                mPendingInterestNoncesFromIds.remove(pktId);
                 jniOnInterestTransferred(mOppFaceManager.getFaceId(recipient), nonce);
-            } else if (mPendingDataNames.containsKey(pktId)) {
-                String name = mPendingDataNames.get(pktId);
+            } else if (mPendingDataNamesFromIds.containsKey(pktId)) {
+                String name = mPendingDataNamesFromIds.get(pktId);
+                mPendingDataIdsFromNames.remove(name);
+                mPendingDataNamesFromIds.remove(pktId);
                 jniOnDataTransferred(mOppFaceManager.getFaceId(recipient), name);
             }
         }

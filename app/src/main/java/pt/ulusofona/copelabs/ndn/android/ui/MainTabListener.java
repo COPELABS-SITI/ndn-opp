@@ -28,15 +28,9 @@ class MainTabListener implements ActionBar.TabListener {
         }
     }
 
-    @Override
-    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
+    @Override public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {}
 
-    }
-
-    @Override
-    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
-
-    }
+    @Override public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {}
 
     int getCurrentPosition() {
         return mCurrentPosition;

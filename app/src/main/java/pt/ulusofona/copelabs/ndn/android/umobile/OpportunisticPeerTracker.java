@@ -5,7 +5,7 @@
  * in the neighborhood.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
-package pt.ulusofona.copelabs.ndn.android.umobile.wifip2p;
+package pt.ulusofona.copelabs.ndn.android.umobile;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

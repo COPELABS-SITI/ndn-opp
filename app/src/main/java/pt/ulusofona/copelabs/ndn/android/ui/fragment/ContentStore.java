@@ -44,12 +44,7 @@ public class ContentStore extends Fragment implements Refreshable {
 		mBindingTable.contents.setAdapter(mAdapter);
 	}
 
-	/** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html
-	 * @param inflater Android-provided layout inflater
-	 * @param parent parent View within the hierarchy
-	 * @param savedInstanceState previously saved state of the View instance
-	 * @return the View to be used
-	 */
+	/** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html */
     @Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
 		return mBindingTable.getRoot();
@@ -70,15 +65,14 @@ public class ContentStore extends Fragment implements Refreshable {
 	}
 
 	/** Clear the contents of the enclosed table */
-	@Override
-	public void clear() {
+	@Override public void clear() {
 		mContents.clear();
 	}
 
 	private class ContentStoreAdapter extends ArrayAdapter<CsEntry> {
 		private LayoutInflater mInflater;
 
-		public ContentStoreAdapter(@NonNull Context context, @LayoutRes int resource) {
+		ContentStoreAdapter(@NonNull Context context, @LayoutRes int resource) {
 			super(context, resource);
 			mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		}

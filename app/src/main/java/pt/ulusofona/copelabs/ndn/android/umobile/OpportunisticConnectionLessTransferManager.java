@@ -29,9 +29,6 @@ import java.util.regex.Pattern;
 
 import pt.ulusofona.copelabs.ndn.android.Identity;
 import pt.ulusofona.copelabs.ndn.android.OperationResult;
-import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeer;
-import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracker;
-import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.Status;
 
 /** Manages the transfer of small payload packets through the TXT record of Wifi P2P Services.
  *  note that per http://www.drjukka.com/blog/wordpress/?p=127 (), this is not a sensible transfer

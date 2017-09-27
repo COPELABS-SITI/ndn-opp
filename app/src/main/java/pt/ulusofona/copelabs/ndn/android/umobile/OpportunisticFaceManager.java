@@ -16,9 +16,6 @@ import java.util.Observable;
 import java.util.Observer;
 
 import pt.ulusofona.copelabs.ndn.android.models.Face;
-import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeer;
-import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.OpportunisticPeerTracker;
-import pt.ulusofona.copelabs.ndn.android.umobile.wifip2p.Status;
 
 // @TODO: if phone goes to sleep, all the open connections will close.
 

@@ -4,7 +4,7 @@
  * Implementation of a Peer, which is an NDN-Opp enabled device.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
-package pt.ulusofona.copelabs.ndn.android.umobile.wifip2p;
+package pt.ulusofona.copelabs.ndn.android.umobile;
 
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.util.Log;
