@@ -14,6 +14,8 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -22,6 +24,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
@@ -42,7 +45,6 @@ import java.util.Observer;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.OperationResult;
-import pt.ulusofona.copelabs.ndn.android.ui.adapter.OpportunisticPeerAdapter;
 import pt.ulusofona.copelabs.ndn.android.ui.adapter.PendingInterestAdapter;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.DisplayDataDialog;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.RespondToInterestDialog;
@@ -53,6 +55,7 @@ import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
 import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticPeerTracker;
 import pt.ulusofona.copelabs.ndn.databinding.FragmentOppPeerTrackingBinding;
+import pt.ulusofona.copelabs.ndn.databinding.ItemNdnOppPeerBinding;
 
 /** Interface to the Peer Tracking functionality of NDN-Opp. This Fragment is responsible for integrating
  * the functionalities of the NsdServiceTracker, the WifiP2pPeerTracker and the WifiP2pConnectivityManager.
@@ -252,5 +255,23 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         Interest si = mPendingInterests.get(i);
         DialogFragment dialog = RespondToInterestDialog.create(OpportunisticPeerTracking.this, mFace, si);
         dialog.show(getChildFragmentManager(), dialog.getTag());
+    }
+
+    private class OpportunisticPeerAdapter extends ArrayAdapter<OpportunisticPeer> {
+        private LayoutInflater mInflater;
+
+        OpportunisticPeerAdapter(@NonNull Context context) {
+            super(context, R.layout.item_ndn_opp_peer);
+            mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            ItemNdnOppPeerBinding inopb = ItemNdnOppPeerBinding.inflate(mInflater, parent, false);
+            List<OpportunisticPeer> peers = new ArrayList<>(mPeers.values());
+            inopb.setPeer(peers.get(position));
+            return inopb.getRoot();
+        }
     }
 }

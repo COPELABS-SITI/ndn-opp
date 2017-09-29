@@ -58,6 +58,7 @@ public class RespondToInterestDialog extends DialogFragment {
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		final DialogRespondToInterestBinding dialogBinding = DialogRespondToInterestBinding.inflate(getActivity().getLayoutInflater());
+		dialogBinding.setInterestPacket(mInterest);
 
 		return new AlertDialog.Builder(getActivity())
 			.setView(dialogBinding.getRoot())
