@@ -47,6 +47,19 @@ public class OpportunisticPeerTracker extends Observable implements WifiP2pManag
         return mPeers;
     }
 
+    /** Enables the PeerTracker. When enabled, it automatically performs ServiceDiscovery based on the current status of the Wi-Fi
+     * P2P component of Android. At that point, it notifies any Observer whenever there is a change to the state of the list of NDN-Opp peers.
+     * The changes that are advertised to the Observers are;
+     *
+     *  - New peer detected
+     *  - Change to the status of a known peer; moved in (Available) or gone out (Unavailable) of communication range, connected to a group (Connected),
+     *                                          invited to a group (Invited) or failed (Failed) as reported by Android.
+     *         (see https://developer.android.com/reference/android/net/wifi/p2p/WifiP2pDevice.html)
+     *
+     * All these changes are announced as a list of OpportunisticPeer objects to the Observers.
+     *
+     * @param context
+     */
     public void enable(Context context) {
         mContext = context;
         mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
@@ -61,14 +74,18 @@ public class OpportunisticPeerTracker extends Observable implements WifiP2pManag
         mContext.registerReceiver(bReceiver, intents);
     }
 
+    /** Disables the PeerTracker. All OpportunisticPeer objects are marked as Unavailable and all the Observers are notified. */
     public void disable() {
         mContext.unregisterReceiver(bReceiver);
-        mPeers.clear();
+        for(String peerUuid : mPeers.keySet())
+            mPeers.get(peerUuid).setStatus(Status.UNAVAILABLE);
         setChanged(); notifyObservers(mPeers);
     }
 
     @Override public void onChannelDisconnected() {}
 
+    /** DNS-SD Service Response Listener which reacts to the a new service discovered by Android. Only considers
+     * */
     private WifiP2pManager.DnsSdServiceResponseListener svcResponseListener = new WifiP2pManager.DnsSdServiceResponseListener() {
         @Override
         public void onDnsSdServiceAvailable(String uuid, String type, WifiP2pDevice dev) {

@@ -25,7 +25,7 @@ public class OpportunisticPeer {
     private boolean mHasGroupOwnerField;
     private String mGroupOwnerMacAddress;
 
-    /** Create a Peer from a Device and a Service.
+    /** Create a Peer from a UUID and a Device
      * @param uu UUID of the NDN-Opp
      * @param dev WifiP2pDevice used to initialize this OpportunisticPeer
      */

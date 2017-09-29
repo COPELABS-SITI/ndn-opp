@@ -1,3 +1,9 @@
+/**
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-08-25
+ * This class implements the connection-less transfers using the Wi-Fi P2P Service Discovery
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ */
 package pt.ulusofona.copelabs.ndn.android.umobile;
 
 import android.content.BroadcastReceiver;
@@ -355,6 +361,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
         Log.e(TAG, "onChannelDisconnected");
     }
 
+    /* The Handler which regularly restarts the discovery of peers and services. */
     private Handler mHandler = new Handler();
     private Runnable mDiscoverServices = new Runnable() {
         @Override
