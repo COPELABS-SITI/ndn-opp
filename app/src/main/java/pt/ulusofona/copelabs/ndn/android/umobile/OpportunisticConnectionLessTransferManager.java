@@ -81,6 +81,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
     private WifiP2pDnsSdServiceRequest mRequest;
     private WifiP2pServiceInfo mDescriptor;
 
+    // The Context to which this Manager is attached.
     private Observer mObservingContext;
     private String mAssignedUuid;
 
@@ -221,6 +222,10 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
         mPendingPackets.put(sender, pendingPacketsForRemote);
     }
 
+    /** Performs the registration of a Transfer Service Instance containing a TXT Records with all the pending packets.
+     * @param recipient the intended recipient of this transfer (UUID)
+     * @param pendingPacketsForRecipient the packets to be sent (PKT:ID, <payload>)
+     */
     private void registerTransferDescriptor(final String recipient, Map<String, String> pendingPacketsForRecipient) {
         final WifiP2pDnsSdServiceInfo descriptor = Identity.getTransferDescriptorWithTxtRecord(recipient, pendingPacketsForRecipient);
         Log.v(TAG, "Register Descriptor : " + recipient + " = " + pendingPacketsForRecipient.toString());
@@ -233,6 +238,9 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
         });
     }
 
+    /** Updates the registered TXT Record for an intended recipient. Called when some changes happen in the list of packets (cancellation or acknowledgement)
+     * @param recipient the intended recipient of this transfer (UUID).
+     */
     private void updateRegisteredDescriptor(final String recipient) {
         final Map<String, String> pendingPacketsForRecipient = mPendingPackets.get(recipient);
         if(pendingPacketsForRecipient != null) {
@@ -341,6 +349,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
                         }
                     }
 
+                    // If packets were removed from the pendingPackets list, we must update it in the Map
                     if(packetsRemoved)
                         mPendingPackets.put(remoteUuid, pendingPackets);
 
@@ -350,6 +359,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
                         updatePendingAcknowledgements(remoteUuid);
                     }
 
+                    // If there are any changes at all, we must update the registered Transfer Service Instance with a new TXT-Record
                     if (acknowledgmentChanges || packetsRemoved)
                         updateRegisteredDescriptor(remoteUuid);
                 }
@@ -393,6 +403,10 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
         }
     };
 
+    /** Used by the Opportunistic Peer Tracker to notify of changes in the list of Peers.
+     * @param observable
+     * @param obj
+     */
     @Override
     public void update(Observable observable, Object obj) {
         if (observable instanceof OpportunisticPeerTracker) {
@@ -405,6 +419,8 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
         }
     }
 
+    /** Implemented by the Context object so that the Manager can notify of Transfer successes and received packets.
+     */
     public interface Observer {
         void onPacketTransferred(String recipient, String pktId);
         void onPacketReceived(String sender, byte[] payload);

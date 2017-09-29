@@ -147,6 +147,7 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         }
     }
 
+    /** Updates the Opportunistic Peer ListView */
     private Runnable mPeerUpdater = new Runnable() {
         @Override
         public void run() {
@@ -155,6 +156,10 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         }
     };
 
+    /** Callback that the OpportunisticPeerTracker uses to notify of changes in the peer list
+     * @param observable the OpportunisticPeerTracker
+     * @param obj ignored
+     */
     @Override
     public void update(Observable observable, Object obj) {
         FragmentActivity act = getActivity();
@@ -172,6 +177,7 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         return mFace;
     }
 
+    // jNDN requires a regular polling otherwise nothing happens. This handler takes care of it.
     private Handler mHandler = new Handler();
     private Runnable mJndnProcessor = new Runnable() {
         @Override
@@ -219,6 +225,9 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         });
     }
 
+    /** Used when the RespondToInterestDialog terminates
+     * @param interest the Interest for which the Dialog was used to respond
+     */
     public void respondedToInterest(final Interest interest) {
         if(!interest.isLongLived()) {
             mPendingInterests.remove(interest);
@@ -231,11 +240,19 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         }
     }
 
+    /** jNDN callback to confirm successful registration of a prefix
+     * @param prefix the Prefix that was registered
+     * @param registeredPrefixId an internal ID which can be used to unregister the prefix
+     */
     @Override
     public void onRegisterSuccess(Name prefix, long registeredPrefixId) {
         Log.v(TAG, "Registration Success : " + prefix.toString());
     }
 
+    /** jNDN callback to notify Data was received in response to an Interest
+     * @param interest the Interest for which the Data matches
+     * @param data the Data which matches the Interest
+     */
     @Override
     public void onData(Interest interest, Data data) {
         Log.v(TAG, "Received Data : " + data.getName().toString() + " > " + data.getContent().toString());
@@ -243,6 +260,9 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         dialog.show(getChildFragmentManager(), dialog.getTag());
     }
 
+    /** jNDN callback to notify when PushedData is received
+     * @param data the Data packet received
+     */
     @Override
     public void onPushedData(Data data) {
         Log.v(TAG, "Push Data Received : " + data.getName().toString());
@@ -250,13 +270,20 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         dialog.show(getChildFragmentManager(), dialog.getTag());
     }
 
+    /** Used to Respond to an Interest from the list of received Interests.
+     * @param adapterView
+     * @param view view in the list that was clicked
+     * @param position item in the list that was clicked
+     * @param l
+     */
     @Override
-    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-        Interest si = mPendingInterests.get(i);
+    public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+        Interest si = mPendingInterests.get(position);
         DialogFragment dialog = RespondToInterestDialog.create(OpportunisticPeerTracking.this, mFace, si);
         dialog.show(getChildFragmentManager(), dialog.getTag());
     }
 
+    /** Used to nicely display the Peers in a ListView */
     private class OpportunisticPeerAdapter extends ArrayAdapter<OpportunisticPeer> {
         private LayoutInflater mInflater;
 
