@@ -273,11 +273,17 @@ public class OpportunisticFaceManager implements Observer {
          * @return the FaceId of the Face that points to the remote host
          */
         private long identifyFaceIdFromHostAddress(String hostAddress) {
-            for(NsdService svc : mUmobileServices.values())
-                if(svc.getHost().equals(hostAddress))
-                    return mOppFaceIds.get(svc.getUuid());
 
-            Log.e(TAG, "No service matching " + hostAddress + " found.");
+                for (NsdService svc : mUmobileServices.values())
+                    if (svc.getHost().equals(hostAddress)) {
+                        try {
+                            return mOppFaceIds.get(svc.getUuid());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                Log.e(TAG, "No service matching " + hostAddress + " found.");
             return -1L;
         }
     }

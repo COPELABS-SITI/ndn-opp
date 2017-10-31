@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static android.os.AsyncTask.THREAD_POOL_EXECUTOR;
+
 /** JNI wrapper around the NDN Opportunistic Daemon (NOD), which is the modified version of NFD to include the Opportunistic Faces,
  * and PUSH communications. This class provides an interface entirely through JNI to manage the configuration of the running
  * NOD including face creation, destruction and addition of routes to the RIB.
@@ -203,6 +205,7 @@ public class OpportunisticDaemon extends Service {
 
         return peers;
     }
+
 
     static {
         System.loadLibrary("gnustl_shared");

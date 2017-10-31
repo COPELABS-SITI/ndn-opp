@@ -15,11 +15,14 @@ import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager.ActionListener;
 import android.net.wifi.p2p.WifiP2pManager.DnsSdServiceResponseListener;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
+import android.os.Handler;
 import android.util.Log;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
+
+import static android.net.wifi.p2p.WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION;
 
 /** The WifiP2pServiceDiscoverer (SD) wraps up the Wi-Fi P2P service discovery process of Android
  * and includes additional logic around it. It searches for service of type _wifip2ptracker._tcp
@@ -38,6 +41,16 @@ class WifiP2pServiceDiscoverer extends Observable {
     private WifiP2pDnsSdServiceRequest mRequest;
 
     private boolean mEnabled = false;
+    private Handler mHandler = new Handler();
+
+    private Runnable mRunnable = new Runnable() {
+
+        @Override
+        public void run() {
+            start();
+            mHandler.postDelayed(this, 30 * 1000);
+        }
+    };
 
     // Associates a MAC address to a WifiP2pService.
     private Map<String, WifiP2pService> mServices = new HashMap<>();
@@ -63,7 +76,8 @@ class WifiP2pServiceDiscoverer extends Observable {
 
             mWifiP2pMgr.setDnsSdResponseListeners(mWifiP2pChn, svcResponseListener, null);
 
-            mContext.registerReceiver(mEventDetector, new IntentFilter(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION));
+            mContext.registerReceiver(mEventDetector, new IntentFilter(WIFI_P2P_STATE_CHANGED_ACTION));
+
             mEnabled = true;
         } else
             Log.w(TAG, "Attempt to enable TWICE");
@@ -93,6 +107,8 @@ class WifiP2pServiceDiscoverer extends Observable {
         @Override
         public void onDnsSdServiceAvailable(String instanceUuid, String registrationType, WifiP2pDevice node) {
             Log.d(TAG, "Service Found : " + instanceUuid + " : " + registrationType + "@" + node.deviceAddress);
+
+            Log.e("TESTE", node.deviceAddress);
 
             // Exclude the UUID of the current device.
             if (!instanceUuid.equals(mAssignedUuid)) {
@@ -128,12 +144,15 @@ class WifiP2pServiceDiscoverer extends Observable {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
 
-            if(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)) {
+
+
+            if(WIFI_P2P_STATE_CHANGED_ACTION.equals(action)) {
                 int wifiP2pState = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1);
 
                 if(wifiP2pState == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
                     Log.v(TAG, "WiFi P2P State : ON");
-                    start();
+                    mHandler.post(mRunnable);
+                    //start();
                 }
                 else if (wifiP2pState == WifiP2pManager.WIFI_P2P_STATE_DISABLED) {
                     Log.v(TAG, "WiFi P2P State : OFF");

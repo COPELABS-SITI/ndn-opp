@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="pt.ulusofona.copelabs.ndn"
-    android:versionCode="1"
-    android:versionName="1.0">
+    package="pt.ulusofona.copelabs.ndn" >
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
@@ -12,7 +10,7 @@
 
     <application
         android:allowBackup="false"
-	    android:supportsRtl="true"
+        android:supportsRtl="true"
         android:description="@string/description"
         android:icon="@mipmap/ic_ndn_opp"
         android:label="@string/app_name"

@@ -16,6 +16,7 @@ import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.util.DebugUtils;
 import android.util.Log;
 
 import java.net.Inet4Address;
@@ -30,6 +31,7 @@ import java.util.Observable;
 import java.util.Observer;
 
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
+import pt.ulusofona.copelabs.ndn.android.umobile.Utilities;
 
 // @TODO: figure out if the observed micro-cuts [LOST =(1-2seconds)= FOUND] can be safely concealed.
 // @TODO: Services are sometimes lost for longer period of time ...
@@ -217,6 +219,7 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
 
                 mResolver.resolve(descriptor);
             }
+
 
         }
 

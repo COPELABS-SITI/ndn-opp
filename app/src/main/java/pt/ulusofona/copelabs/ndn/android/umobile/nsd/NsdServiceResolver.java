@@ -11,11 +11,18 @@ package pt.ulusofona.copelabs.ndn.android.umobile.nsd;
 
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.os.Handler;
 import android.util.Log;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Observable;
 import java.util.Queue;
+
+import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 
 /** Implementation of a resolver which serializes resolution operations upon detection of new
  * services in the same Wi-Fi Direct Group. The resolution operation takes a simple name of a service
@@ -24,16 +31,18 @@ import java.util.Queue;
  *
  * This serialization is done due to the fact that Android may report multiple newly discovered services
  * that trigger concurrent resolutions, resulting in failure. */
-class NsdServiceResolver extends Observable {
+class NsdServiceResolver extends Observable implements Runnable {
     private static final String TAG = NsdServiceResolver.class.getSimpleName();
 
     private boolean mEnabled = false;
+
     private NsdManager mNsdManager;
 
-    private boolean mResolutionPending = false;
-    private ResolutionListener mListener = new ResolutionListener();
+    private Handler mHandler = new Handler();
 
-    private Queue<NsdServiceInfo> mQueue = new LinkedList<>();
+    private boolean mResolutionPending = true;
+
+    private HashMap<String, NsdServiceInfo> services = new HashMap<>();
 
     /** Enable the resolver; services that are subsequently detected will be resolved serially.
      * @param nsdMgr Android-provided NsdManager
@@ -42,26 +51,18 @@ class NsdServiceResolver extends Observable {
         if(!mEnabled) {
             mNsdManager = nsdMgr;
             mEnabled = true;
+            mResolutionPending = true;
+            mHandler.post(this);
         }
     }
 
     /** Disable the resolver. All pending resolution are dropped. */
     synchronized void disable() {
         if(mEnabled) {
-            mQueue.clear();
+            services.clear();
             mEnabled = false;
-            mResolutionPending = false;
+            mHandler.removeCallbacks(this);
         }
-    }
-
-    /** Effectively perform the resolution of the next service in the queue. If the queue of pending
-     * resolutions is empty, the resolvers stops. Otherwise, it requests the next resolution from the NsdManager
-     */
-    private synchronized void resolveNext() {
-        if(mQueue.isEmpty()) {
-            mResolutionPending = false;
-        } else
-            mNsdManager.resolveService(mQueue.remove(), mListener);
     }
 
     /** Used to request resolution of a service. If a resolution is underway, the resolution is placed in a queue.
@@ -69,14 +70,18 @@ class NsdServiceResolver extends Observable {
      * @param descriptor partial details of the newly discovered service
      */
     synchronized void resolve(NsdServiceInfo descriptor) {
-        if(mResolutionPending) {
-            Log.d(TAG, "Queueing descriptor.");
-            mQueue.add(descriptor);
-        } else {
-            Log.d(TAG, "Resolving descriptor.");
-            mResolutionPending = true;
-            mNsdManager.resolveService(descriptor, mListener);
+        services.put(descriptor.getServiceName(), descriptor);
+    }
+
+    @Override
+    public void run() {
+        Iterator it = services.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry)it.next();
+            mNsdManager.resolveService((NsdServiceInfo) pair.getValue(), new ResolutionListener());
+            while(mResolutionPending);
         }
+        mHandler.postDelayed(this, 10 * 1000);
     }
 
     /** Listener used to handle the resolution completion. */
@@ -84,16 +89,15 @@ class NsdServiceResolver extends Observable {
         @Override
         public void onServiceResolved(NsdServiceInfo descriptor) {
             Log.d(TAG, "ServiceResolved : " + descriptor.getServiceName() + " @ " + descriptor.getHost() + ":" + descriptor.getPort());
-
-            setChanged(); notifyObservers(descriptor);
-
-            resolveNext();
+            mResolutionPending = false;
+            setChanged();
+            notifyObservers(descriptor);
         }
 
         @Override
         public void onResolveFailed(NsdServiceInfo descriptor, int error) {
             Log.d(TAG, "Resolution err" + error + " : " + descriptor.getServiceName());
-            resolveNext();
+            mResolutionPending = false;
         }
     }
 }
