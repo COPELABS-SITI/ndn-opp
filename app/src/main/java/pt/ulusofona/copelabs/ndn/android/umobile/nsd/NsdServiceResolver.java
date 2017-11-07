@@ -70,7 +70,10 @@ class NsdServiceResolver extends Observable implements Runnable {
      * @param descriptor partial details of the newly discovered service
      */
     synchronized void resolve(NsdServiceInfo descriptor) {
-        services.put(descriptor.getServiceName(), descriptor);
+        if(!services.containsKey(descriptor.getServiceName())) {
+            Log.i(TAG, descriptor.getServiceName() + " was added to services map");
+            services.put(descriptor.getServiceName(), descriptor);
+        }
     }
 
     @Override
@@ -81,8 +84,9 @@ class NsdServiceResolver extends Observable implements Runnable {
             mNsdManager.resolveService((NsdServiceInfo) pair.getValue(), new ResolutionListener());
             while(mResolutionPending);
         }
-        mHandler.postDelayed(this, 10 * 1000);
+        mHandler.postDelayed(this, 20 * 1000);
     }
+
 
     /** Listener used to handle the resolution completion. */
     private class ResolutionListener implements NsdManager.ResolveListener {
@@ -96,8 +100,14 @@ class NsdServiceResolver extends Observable implements Runnable {
 
         @Override
         public void onResolveFailed(NsdServiceInfo descriptor, int error) {
-            Log.d(TAG, "Resolution err" + error + " : " + descriptor.getServiceName());
-            mResolutionPending = false;
+            Log.d(TAG, "Resolution error " + error + " : " + descriptor.getServiceName());
+            try {
+                Thread.sleep(2 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            mNsdManager.resolveService(descriptor, new ResolutionListener());
         }
+
     }
 }

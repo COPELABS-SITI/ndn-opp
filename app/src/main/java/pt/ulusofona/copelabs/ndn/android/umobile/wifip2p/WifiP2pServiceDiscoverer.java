@@ -21,6 +21,7 @@ import android.util.Log;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
+import java.util.Random;
 
 import static android.net.wifi.p2p.WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION;
 
@@ -48,7 +49,7 @@ class WifiP2pServiceDiscoverer extends Observable {
         @Override
         public void run() {
             start();
-            mHandler.postDelayed(this, 30 * 1000);
+            mHandler.postDelayed(this, ((new Random().nextInt(9 - 1) + 20) * 1000));
         }
     };
 
@@ -107,8 +108,6 @@ class WifiP2pServiceDiscoverer extends Observable {
         @Override
         public void onDnsSdServiceAvailable(String instanceUuid, String registrationType, WifiP2pDevice node) {
             Log.d(TAG, "Service Found : " + instanceUuid + " : " + registrationType + "@" + node.deviceAddress);
-
-            Log.e("TESTE", node.deviceAddress);
 
             // Exclude the UUID of the current device.
             if (!instanceUuid.equals(mAssignedUuid)) {
