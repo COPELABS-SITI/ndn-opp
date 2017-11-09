@@ -25,16 +25,15 @@ import java.util.regex.Pattern;
 
 import pt.ulusofona.copelabs.ndn.android.Identity;
 import pt.ulusofona.copelabs.ndn.android.OperationResult;
+import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
+import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 
 /** The Peer Tracker is used to maintain up-to-date the lists of all NDN-Opp Peers ever detected.
  * The Peer Tracker integrates three components; the DeviceDiscoverer, the ServiceDiscoverer and
  * the ServiceRegistrar. */
-public class OpportunisticPeerTracker extends Observable implements WifiP2pManager.ChannelListener {
-    private static final String TAG = OpportunisticPeerTracker.class.getSimpleName();
+public class OpportunisticPeerTracker extends Observable implements WifiP2pListener.PeersAvailable, WifiP2pListener.ServiceAvailable {
 
-    private Context mContext;
-    private WifiP2pManager mWifiP2pManager;
-    private WifiP2pManager.Channel mWifiP2pChannel;
+    private static final String TAG = OpportunisticPeerTracker.class.getSimpleName();
 
     private String mAssignedUuid;
 
@@ -61,104 +60,67 @@ public class OpportunisticPeerTracker extends Observable implements WifiP2pManag
      * @param context
      */
     public void enable(Context context) {
-        mContext = context;
-        mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
-        mWifiP2pChannel = mWifiP2pManager.initialize(context, Looper.getMainLooper(), this);
-        mWifiP2pManager.setDnsSdResponseListeners(mWifiP2pChannel, svcResponseListener, null);
-
         mAssignedUuid = Identity.getUuid();
-
-        IntentFilter intents = new IntentFilter();
-        intents.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
-        intents.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
-        mContext.registerReceiver(bReceiver, intents);
+        WifiP2pListenerManager.registerListener(this);
     }
 
     /** Disables the PeerTracker. All OpportunisticPeer objects are marked as Unavailable and all the Observers are notified. */
     public void disable() {
-        mContext.unregisterReceiver(bReceiver);
+        WifiP2pListenerManager.unregisterListener(this);
         for(String peerUuid : mPeers.keySet())
             mPeers.get(peerUuid).setStatus(Status.UNAVAILABLE);
         setChanged(); notifyObservers(mPeers);
     }
 
-    @Override public void onChannelDisconnected() {}
 
-    /** DNS-SD Service Response Listener which reacts to the a new service discovered by Android. Only considers
-     * */
-    private WifiP2pManager.DnsSdServiceResponseListener svcResponseListener = new WifiP2pManager.DnsSdServiceResponseListener() {
-        @Override
-        public void onDnsSdServiceAvailable(String uuid, String type, WifiP2pDevice dev) {
-            Log.d(TAG, "Service Found : " + uuid + " : " + type + "@" + dev.deviceAddress);
+    @Override
+    public void onServiceAvailable(String uuid, String type, WifiP2pDevice dev) {
+        Log.d(TAG, "Service Found : " + uuid + " : " + type + "@" + dev.deviceAddress);
 
-            // Exclude the UUID of the current device
-            if (!mAssignedUuid.equals(uuid)) {
-                String[] components = type.split(Pattern.quote("."));
-                if (components.length >= 1 && Identity.SVC_INSTANCE_TYPE.equals(components[0]) && !mPeers.containsKey(uuid)) {
-                    OpportunisticPeer peer = new OpportunisticPeer(uuid, dev);
-                    mPeers.put(uuid, peer);
-                    mDevices.put(dev.deviceAddress, uuid);
-                    Map<String, OpportunisticPeer> peerList = new HashMap<>();
-                    peerList.put(uuid, peer);
-                    setChanged(); notifyObservers(peerList);
-                }
-            }
-        }
-    };
-
-    private BroadcastReceiver bReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-
-            if(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)) {
-                int extra = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1);
-
-                switch (extra) {
-                    case WifiP2pManager.WIFI_P2P_STATE_ENABLED:
-                        mWifiP2pManager.addServiceRequest(mWifiP2pChannel, WifiP2pDnsSdServiceRequest.newInstance(), new OperationResult(TAG, "Service Request addition"));
-                        mWifiP2pManager.discoverServices(mWifiP2pChannel, new OperationResult(TAG, "Service Discovery"));
-                        break;
-                    case WifiP2pManager.WIFI_P2P_STATE_DISABLED:
-                        mWifiP2pManager.clearServiceRequests(mWifiP2pChannel, new OperationResult(TAG, "Service Request removal"));
-                        break;
-                    default:
-                        Log.e(TAG, "EXTRA_WIFI_P2P_STATE not found in Intent ...");
-                        break;
-                }
-
-
-            } else if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
-                WifiP2pDeviceList devList = intent.getParcelableExtra(WifiP2pManager.EXTRA_P2P_DEVICE_LIST);
-                // TODO: Improve this update sequence
+        // Exclude the UUID of the current device
+        if (!mAssignedUuid.equals(uuid)) {
+            String[] components = type.split(Pattern.quote("."));
+            if (components.length >= 1 && Identity.SVC_INSTANCE_TYPE.equals(components[0]) && !mPeers.containsKey(uuid)) {
+                OpportunisticPeer peer = new OpportunisticPeer(uuid, dev);
+                mPeers.put(uuid, peer);
+                mDevices.put(dev.deviceAddress, uuid);
                 Map<String, OpportunisticPeer> peerList = new HashMap<>();
-                Map<String, Status> scanResult = new HashMap<>();
-
-                for(WifiP2pDevice dev : devList.getDeviceList())
-                    scanResult.put(dev.deviceAddress, Status.convert(dev.status));
-
-                // Construct the list of peers whose device is not in the scan result.
-                for(String mac : mDevices.keySet()) {
-                    if(!scanResult.containsKey(mac)) {
-                        String uuid = mDevices.get(mac);
-                        OpportunisticPeer peer = mPeers.get(uuid);
-                        peer.setStatus(Status.UNAVAILABLE);
-                        peerList.put(uuid, peer);
-                    }
-                }
-
-                // Construct the list of peers whose status in the scan has changed.
-                for(WifiP2pDevice dev : devList.getDeviceList()) {
-                    String uuid = mDevices.get(dev.deviceAddress);
-                    if (uuid != null) {
-                        OpportunisticPeer peer = new OpportunisticPeer(uuid, dev);
-                        mPeers.put(uuid, peer);
-                        peerList.put(uuid, peer);
-                    }
-                }
-
+                peerList.put(uuid, peer);
                 setChanged(); notifyObservers(peerList);
             }
         }
-    };
+    }
+
+    @Override
+    public void onPeersAvailable(WifiP2pDeviceList peers) {
+        //WifiP2pDeviceList devList = intent.getParcelableExtra(WifiP2pManager.EXTRA_P2P_DEVICE_LIST);
+        // TODO: Improve this update sequence
+        Map<String, OpportunisticPeer> peerList = new HashMap<>();
+        Map<String, Status> scanResult = new HashMap<>();
+
+        for(WifiP2pDevice dev : peers.getDeviceList())
+            scanResult.put(dev.deviceAddress, Status.convert(dev.status));
+
+        // Construct the list of peers whose device is not in the scan result.
+        for(String mac : mDevices.keySet()) {
+            if(!scanResult.containsKey(mac)) {
+                String uuid = mDevices.get(mac);
+                OpportunisticPeer peer = mPeers.get(uuid);
+                peer.setStatus(Status.UNAVAILABLE);
+                peerList.put(uuid, peer);
+            }
+        }
+
+        // Construct the list of peers whose status in the scan has changed.
+        for(WifiP2pDevice dev : peers.getDeviceList()) {
+            String uuid = mDevices.get(dev.deviceAddress);
+            if (uuid != null) {
+                OpportunisticPeer peer = new OpportunisticPeer(uuid, dev);
+                mPeers.put(uuid, peer);
+                peerList.put(uuid, peer);
+            }
+        }
+
+        setChanged(); notifyObservers(peerList);
+    }
 }

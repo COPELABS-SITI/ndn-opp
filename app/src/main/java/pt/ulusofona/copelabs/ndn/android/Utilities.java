@@ -10,7 +10,10 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Base64;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
 /** Utility class for methods used throughout the application. */

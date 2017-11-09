@@ -59,16 +59,24 @@ std::string extractName(const Transport::Packet &pkt) {
 // Initiates the sending of the next pending packet.
 void OppTransport::sendNextPacket() {
     if(!m_intrQueue.empty()) {
+        NFD_LOG_DEBUG("!m_intrQueue.empty()");
         Packet current = m_intrQueue.front();
+        m_intrQueue.pop_front();
         transferInterest(this->getFace()->getId(), extractNonce(current), current.packet);
+        sendNextPacket();
     } else if(!m_dataQueue.empty()) {
+        NFD_LOG_DEBUG("!m_dataQueue.empty()");
         Packet current = m_dataQueue.front();
+        m_dataQueue.pop_front();
         transferData(this->getFace()->getId(), extractName(current), current.packet);
+        sendNextPacket();
     } else
         NFD_LOG_DEBUG("Queues empty.");
 }
 
 int OppTransport::getQueueSize() {
+    NFD_LOG_DEBUG("getQueueSize -> m_intrQueue.size(): " << m_intrQueue.size());
+    NFD_LOG_DEBUG("getQueueSize -> m_dataQueue.size(): " << m_dataQueue.size());
     return m_intrQueue.size() + m_dataQueue.size();
 }
 

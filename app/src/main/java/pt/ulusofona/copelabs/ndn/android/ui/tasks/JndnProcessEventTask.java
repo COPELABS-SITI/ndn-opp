@@ -21,7 +21,7 @@ public class JndnProcessEventTask extends AsyncTask<Void, Void, Integer> {
 
     @Override
     protected Integer doInBackground(Void... params) {
-        Log.d(TAG, "JndnProcessEvents (doInBackground)");
+        //Log.d(TAG, "JndnProcessEvents (doInBackground)");
 
         try {
             mFace.processEvents();
@@ -37,9 +37,9 @@ public class JndnProcessEventTask extends AsyncTask<Void, Void, Integer> {
     @Override
     protected void onPostExecute(final Integer result) {
         if (mRetVal == -1) {
-            Log.d(TAG, "Error Register Prefix Task");
+            Log.e(TAG, "Error Register Prefix Task");
         } else {
-            Log.d(TAG, "Register Prefix Task ended (onPostExecute)");
+            //Log.d(TAG, "Register Prefix Task ended (onPostExecute)");
         }
     }
 }

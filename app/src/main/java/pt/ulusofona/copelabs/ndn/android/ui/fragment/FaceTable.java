@@ -13,6 +13,7 @@ import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -64,7 +65,7 @@ public class FaceTable extends Fragment implements Refreshable {
 			mFaceTable.clear();
 			mFaceTable.addAll(daemon.getFaceTable());
 			mFaceTableAdapter.clear();
-			mFaceTableAdapter.addAll(mFaceTable);
+			mFaceTableAdapter.addAll(newTable);
 		}
 	}
 
@@ -85,6 +86,7 @@ public class FaceTable extends Fragment implements Refreshable {
 		@Override
 		public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
 			ItemFaceBinding ifb = ItemFaceBinding.inflate(mInflater, parent, false);
+			Log.i(TAG, "Binding position: " + position + " to: " + mFaceTable.get(position).getRemoteUri());
 			ifb.setFace(mFaceTable.get(position));
 			return ifb.getRoot();
 		}

@@ -9,6 +9,7 @@
 package pt.ulusofona.copelabs.ndn.android.umobile;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
@@ -16,6 +17,7 @@ import android.util.Base64;
 import android.util.Log;
 import android.util.LongSparseArray;
 import android.util.SparseArray;
+import android.widget.Toast;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.Identity;
@@ -25,6 +27,7 @@ import pt.ulusofona.copelabs.ndn.android.models.FibEntry;
 import pt.ulusofona.copelabs.ndn.android.models.Name;
 import pt.ulusofona.copelabs.ndn.android.models.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.models.SctEntry;
+import pt.ulusofona.copelabs.ndn.android.wifi.Wifi;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -148,6 +151,8 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
             mConnectionLessManager.enable(this);
             mConnectivityManager.enable(this);
 
+            new Wifi(this);
+
             Log.d(TAG, STARTED);
             sendBroadcast(new Intent(STARTED));
 		}
@@ -202,7 +207,7 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
 
     // Called from JNI
     private void transferInterest(long faceId, int nonce, byte[] payload) {
-        Log.d(TAG, "Transfer Interest : " + faceId + " " + nonce + " (" + ((payload != null) ? payload.length : "NULL") + ")");
+        Log.d(TAG, "Transfer Interest : " + faceId + " " + nonce + " length (" + ((payload != null) ? payload.length : "NULL") + ")");
         //mConnectivityManager.transferInterest(mOppFaceManager.getUuid(faceId), nonce, payload);
         String pktId = mConnectionLessManager.sendPacket(mOppFaceManager.getUuid(faceId), payload);
         mPendingInterestIdsFromNonces.put(nonce, pktId);
@@ -223,8 +228,10 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
     }
 
     // Called from JNI
+
     private void transferData(long faceId, String name, byte[] payload) {
-        Log.d(TAG, "Transfer Data : " + faceId + " " + name + " (" + payload.length + ") [" + Base64.encodeToString(payload, Base64.NO_PADDING) + "]");
+        byte[] teste = payload;
+        Log.d(TAG, "Transfer Data : " + faceId + " " + name + " length (" + payload.length + ") [" + Base64.encodeToString(payload, Base64.NO_PADDING) + "]");
         String pktId = mConnectionLessManager.sendPacket(mOppFaceManager.getUuid(faceId), payload);
         mPendingDataIdsFromNames.put(name, pktId);
         mPendingDataNamesFromIds.put(pktId, name);
@@ -232,7 +239,7 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
 
     @Override
     public void onPacketTransferred(String recipient, String pktId) {
-        Log.i(TAG, "Packet transferred : " + recipient + " [" + pktId + "]");
+        Log.i(TAG, "Packet transferred from : " + recipient + " with id : [" + pktId + "]");
         Long faceId = mOppFaceManager.getFaceId(recipient);
         if(faceId != null) {
             if (mPendingInterestNoncesFromIds.containsKey(pktId)) {
@@ -251,8 +258,7 @@ public class OpportunisticDaemon extends Service implements OpportunisticConnect
 
     @Override
     public void onPacketReceived(String sender, byte[] payload) {
-        Log.i(TAG, "Packet received : " + sender + " [" + payload.length + "]");
-        //Toast.makeText(this, "Packet received : " + payload.length, Toast.LENGTH_SHORT).show();
+        Log.i(TAG, "Packet received from : " + sender + " with length : [" + payload.length + "]");
         Long faceId = mOppFaceManager.getFaceId(sender);
         if(faceId != null)
             jniReceiveOnFace(faceId, payload.length, payload);

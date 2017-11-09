@@ -15,7 +15,6 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.net.wifi.p2p.nsd.WifiP2pServiceInfo;
-import android.os.Handler;
 import android.util.Base64;
 import android.util.Log;
 
@@ -35,6 +34,8 @@ import java.util.regex.Pattern;
 
 import pt.ulusofona.copelabs.ndn.android.Identity;
 import pt.ulusofona.copelabs.ndn.android.OperationResult;
+import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
+import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 
 /** Manages the transfer of small payload packets through the TXT record of Wifi P2P Services.
  *  note that per http://www.drjukka.com/blog/wordpress/?p=127 (), this is not a sensible transfer
@@ -58,13 +59,9 @@ import pt.ulusofona.copelabs.ndn.android.OperationResult;
  *     Using TXT records larger than 1300 bytes is NOT RECOMMENDED at this
  *     time.
  */
-public class OpportunisticConnectionLessTransferManager implements Observer, WifiP2pManager.ChannelListener {
+public class OpportunisticConnectionLessTransferManager implements Observer, WifiP2pManager.ChannelListener,
+        WifiP2pListener.TxtRecordAvailable {
     public static final String TAG = OpportunisticConnectionLessTransferManager.class.getSimpleName();
-
-    /* RESCAN_INTERVAL drives the pace at which we restart discovering peers and services.
-       Doing so enables detect services faster than simply starting those discories once
-       and leaving them to run. */
-    private static final long RESCAN_INTERVAL = 15000;
 
     // Key used in the TXT-Record to store packets. Packet ID is appended after it.
     private static final String PACKET_KEY_PREFIX = "PKT:";
@@ -78,7 +75,6 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
     private Context mContext;
     private WifiP2pManager mWifiP2pManager;
     private WifiP2pManager.Channel mWifiP2pChannel;
-    private WifiP2pDnsSdServiceRequest mRequest;
     private WifiP2pServiceInfo mDescriptor;
 
     // The Context to which this Manager is attached.
@@ -92,7 +88,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
     // Associates the UUID of a recipient with the descriptor containing the packets pending for it.
     private Map<String, WifiP2pDnsSdServiceInfo> mRegisteredDescriptors = new HashMap<>();
 
-    // Associates the UUID of a packet sender with the acknowledgements adressed to that sender
+    // Associates the UUID of a packet sender with the acknowledgements addressed to that sender
     private Map<String, Set<String>> mPendingAcknowledgements = new HashMap<>();
 
     public void enable(Context context) {
@@ -104,12 +100,15 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
         mAssignedUuid = Identity.getUuid();
 
         // Retrieve the instance of the WiFi P2P Manager, the Channel and create the DNS-SD Service request.
+
+
         mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
         mWifiP2pChannel = mWifiP2pManager.initialize(context, context.getMainLooper(), this);
-        mWifiP2pManager.setDnsSdResponseListeners(mWifiP2pChannel, null, txtRecordListener);
+        //mWifiP2pManager.setDnsSdResponseListeners(mWifiP2pChannel, null, this);
 
-        mRequest = WifiP2pDnsSdServiceRequest.newInstance();
         mDescriptor = Identity.getDescriptor();
+
+        WifiP2pListenerManager.registerListener(this);
 
         // Startup the Broadcast Receiver to react to changes in the state of WiFi P2P.
         mContext.registerReceiver(mIntentReceiver, new IntentFilter(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION));
@@ -118,6 +117,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
     public void disable() {
         // Cleanup upon detachment.
         mContext.unregisterReceiver(mIntentReceiver);
+        WifiP2pListenerManager.unregisterListener(this);
         mWifiP2pManager.setDnsSdResponseListeners(mWifiP2pChannel, null, null);
     }
 
@@ -257,6 +257,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
 
                     @Override
                     public void onFailure(int i) {
+
                     }
                 });
             } else
@@ -266,122 +267,109 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
 
     /** Specific listener for TXT Records. Invoked by Android when a new TXT-Record is found through a Service Discovery.
      */
-    private WifiP2pManager.DnsSdTxtRecordListener txtRecordListener = new WifiP2pManager.DnsSdTxtRecordListener() {
 
-        @Override
-        public void onDnsSdTxtRecordAvailable(String fulldomain, Map<String, String> txt, WifiP2pDevice dev) {
+    @Override
+    public void onTxtRecordAvailable(String fulldomain, Map<String, String> txt, WifiP2pDevice srcDevice) {
+
             /* Take the fulldomain field and split it. The convention used by this implementation is that it contains three components;
                - [0] UUID of the sender (a.k.a. remote UUID)
                - [1] Type of the service (i.e. NDN-Opp)
                - [2] UUID of the intended recipient (a.k.a. local UUID)
              */
 
-            Log.v(TAG, "Received TXT Record : " + fulldomain + " " + txt.toString());
+        Log.v(TAG, "Received TXT Record : " + fulldomain + " " + txt.toString());
 
             /* Android encodes the information describing the service as _<instanceName>._<serviceType>._local.
                We first split based on the '.' to separate the components into separate Strings. */
-            String[] components = fulldomain.split(Pattern.quote("."));
-            // Only consider TXT Records for fulldomain made up of at least three components.
-            if (components.length >= 3) {
-                String remoteUuid = components[0];
-                String serviceType = components[1];
-                String localUuid = components[2];
+        String[] components = fulldomain.split(Pattern.quote("."));
+        // Only consider TXT Records for fulldomain made up of at least three components.
+        if (components.length >= 3) {
+            final String remoteUuid = components[0];
+            String serviceType = components[1];
+            String localUuid = components[2];
                 /* We only consider TXT Record if-and-only-if
                  * - It does not come from us (yes, Android notifies you of your own services)
                  * - Our assigned UUID matches that of the intended recipient (i.e. this TXT Record is intended for us)
                  * - The service type is the one we're interested in (i.e. NDN-Opp) */
 
-                if (mKnownPeers.contains(remoteUuid) && !mAssignedUuid.equals(remoteUuid) && mAssignedUuid.equals(localUuid) && Identity.SVC_TRANSFER_TYPE.equals(serviceType)) {
-                    Log.i(TAG, "Received from <" + fulldomain + "> : " + txt.toString());
+            if (mKnownPeers.contains(remoteUuid) && !mAssignedUuid.equals(remoteUuid) && mAssignedUuid.equals(localUuid) && Identity.SVC_TRANSFER_TYPE.equals(serviceType)) {
+                Log.i(TAG, "Received from <" + fulldomain + "> : " + txt.toString());
 
-                    // Perform an update to the acknowledgements we advertise to the remote UUID.
-                    Set<String> pendingAcknowledgements = mPendingAcknowledgements.get(remoteUuid);
-                    if(pendingAcknowledgements == null)
-                        pendingAcknowledgements = new HashSet<>();
+                // Perform an update to the acknowledgements we advertise to the remote UUID.
+                Set<String> pendingAcknowledgements = mPendingAcknowledgements.get(remoteUuid);
+                if(pendingAcknowledgements == null)
+                    pendingAcknowledgements = new HashSet<>();
 
                     /* The fact that a packet ID we are acknowledging to the remote UUID is not in this TXT-Record
                      * means that the remote has received our ACK and removed the packet from the Record. As a consequence,
                      * we can remove all the acknowledgements whose packet ID do not appear in the TXT-Record and only keep the ones
                      * that do appear in it. */
-                    Set<String> packetKeys = txt.keySet();
-                    boolean acknowledgmentChanges = pendingAcknowledgements.retainAll(packetKeys);
+                Set<String> packetKeys = txt.keySet();
+                boolean acknowledgmentChanges = pendingAcknowledgements.retainAll(packetKeys);
 
-                    // Retrieve the pending packets for the remote UUID
-                    Map<String, String> pendingPackets = mPendingPackets.get(remoteUuid);
-                    boolean packetsRemoved = false;
+                // Retrieve the pending packets for the remote UUID
+                Map<String, String> pendingPackets = mPendingPackets.get(remoteUuid);
+                boolean packetsRemoved = false;
 
                     /* For all the packet identifiers registered in the TXT-Record, we process it based on whether
                      * it is a packet identifier (i.e. PKT:n, for some n). */
-                    for (String pktKey : packetKeys) {
+                for (String pktKey : packetKeys) {
                         /* In the case the packet key starts with "PKT:", this is a packet. In response, we add an acknowledgement
                          * for it addressed to the remote and notify the context observing us that a packet was received from the remote
                          * along with its payload. Only do so if it is the first time we see this packet (i.e. we haven't acknowledged
                          * it before) */
-                        if (pktKey.startsWith(PACKET_KEY_PREFIX)) {
-                            // Only consider this packet if we haven't seen it before.
-                            if(!pendingAcknowledgements.contains(pktKey)) {
-                                acknowledgmentChanges |= pendingAcknowledgements.add(pktKey);
-                                byte[] payload = Base64.decode(txt.get(pktKey), Base64.NO_PADDING);
-                                Log.i(TAG, "receivedPacket [" + payload.length + "] <" + digest(payload) + ">");
-                                mObservingContext.onPacketReceived(remoteUuid, payload);
-                            }
+                    if (pktKey.startsWith(PACKET_KEY_PREFIX)) {
+                        // Only consider this packet if we haven't seen it before.
+                        if(!pendingAcknowledgements.contains(pktKey)) {
+                            acknowledgmentChanges |= pendingAcknowledgements.add(pktKey);
+                            final byte[] payload = Base64.decode(txt.get(pktKey), Base64.NO_PADDING);
+                            Log.i(TAG, "receivedPacket [" + payload.length + "] <" + digest(payload) + ">");
+                            mObservingContext.onPacketReceived(remoteUuid, payload);
+                        }
                         /* In the case the packet key equals "ACKs", this is a list of acknowledgements for some of the packets
                          * that we sent to the remote. In response, we remove all the packets that are acknowledged and notify
                          * the context observing us of the success of those transfers. */
-                        } else if (pktKey.equals(ACKNOWLEDGMENTS_KEY)) {
-                            Log.d(TAG, "Acknowledgments : " + txt.get(ACKNOWLEDGMENTS_KEY));
-                            if(pendingPackets != null) {
-                                // The list of ACKs is a comma-separated list of packet IDs.
-                                String ackIdentifiers[] = txt.get(pktKey).split(Pattern.quote(ACKNOWLEDGMENT_ID_SEPARATOR));
-                                Log.d(TAG, "Acknowedgement list : " + Arrays.toString(ackIdentifiers));
-                                Log.d(TAG, "Pending packets    : " + pendingPackets);
+                    } else if (pktKey.equals(ACKNOWLEDGMENTS_KEY)) {
+                        Log.d(TAG, "c : " + txt.get(ACKNOWLEDGMENTS_KEY));
+                        if(pendingPackets != null) {
+                            // The list of ACKs is a comma-separated list of packet IDs.
+                            String ackIdentifiers[] = txt.get(pktKey).split(Pattern.quote(ACKNOWLEDGMENT_ID_SEPARATOR));
+                            Log.d(TAG, "Acknowedgement list : " + Arrays.toString(ackIdentifiers));
+                            Log.d(TAG, "Pending packets    : " + pendingPackets);
                                 /* We go through the list of ACK IDs and for each, we remove the pending packet and notify
                                  * the parent Activity that is was successfully transferred. */
-                                for (String ackId : ackIdentifiers) {
-                                   if(pendingPackets.containsKey(ackId)) {
-                                        pendingPackets.remove(ackId);
-                                        packetsRemoved |= true;
-                                        mObservingContext.onPacketTransferred(remoteUuid, ackId);
-                                    }
+                            for (final String ackId : ackIdentifiers) {
+                                if(pendingPackets.containsKey(ackId)) {
+                                    pendingPackets.remove(ackId);
+                                    packetsRemoved |= true;
+                                    mObservingContext.onPacketTransferred(remoteUuid, ackId);
                                 }
-                            } else
-                                Log.d(TAG, "No pending packets found");
-                        }
+                            }
+                        } else
+                            Log.d(TAG, "No pending packets found");
                     }
+                }
 
-                    // If packets were removed from the pendingPackets list, we must update it in the Map
-                    if(packetsRemoved)
-                        mPendingPackets.put(remoteUuid, pendingPackets);
+                // If packets were removed from the pendingPackets list, we must update it in the Map
+                if(packetsRemoved)
+                    mPendingPackets.put(remoteUuid, pendingPackets);
 
                     /* If there were any changes to the list of acknowledgements, we perform an update */
-                    if (acknowledgmentChanges) {
-                        mPendingAcknowledgements.put(remoteUuid, pendingAcknowledgements);
-                        updatePendingAcknowledgements(remoteUuid);
-                    }
-
-                    // If there are any changes at all, we must update the registered Transfer Service Instance with a new TXT-Record
-                    if (acknowledgmentChanges || packetsRemoved)
-                        updateRegisteredDescriptor(remoteUuid);
+                if (acknowledgmentChanges) {
+                    mPendingAcknowledgements.put(remoteUuid, pendingAcknowledgements);
+                    updatePendingAcknowledgements(remoteUuid);
                 }
+
+                // If there are any changes at all, we must update the registered Transfer Service Instance with a new TXT-Record
+                if (acknowledgmentChanges || packetsRemoved)
+                    updateRegisteredDescriptor(remoteUuid);
             }
         }
-    };
+    }
 
     @Override public void onChannelDisconnected() {
         Log.e(TAG, "onChannelDisconnected");
     }
-
-    /* The Handler which regularly restarts the discovery of peers and services. */
-    private Handler mHandler = new Handler();
-    private Runnable mDiscoverServices = new Runnable() {
-        @Override
-        public void run() {
-            Log.v(TAG, "Restart discovery");
-            mWifiP2pManager.discoverPeers(mWifiP2pChannel, new OperationResult(TAG, "Restart peer discovery"));
-            mWifiP2pManager.discoverServices(mWifiP2pChannel, new OperationResult(TAG, "Restart service Discovery"));
-            mHandler.postDelayed(mDiscoverServices, RESCAN_INTERVAL);
-        }
-    };
 
     private final BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
         @Override
@@ -391,13 +379,11 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
             if (WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)) {
                 int state = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1);
                 if(state == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
+                    Log.e(TAG, "LINHA 406 BROADCAST RECEIVER");
                     mWifiP2pManager.addLocalService(mWifiP2pChannel, mDescriptor, new OperationResult(TAG, "Local Service addition"));
-                    mWifiP2pManager.addServiceRequest(mWifiP2pChannel, mRequest, new OperationResult(TAG, "Add Service Request"));
-                    mHandler.postDelayed(mDiscoverServices, 100);
                 } else {
                     mWifiP2pManager.clearServiceRequests(mWifiP2pChannel, new OperationResult(TAG, "Clear Service Requests"));
                     mWifiP2pManager.clearLocalServices(mWifiP2pChannel, new OperationResult(TAG, "Clear Local Services"));
-                    mHandler.removeCallbacks(mDiscoverServices);
                 }
             }
         }
@@ -418,6 +404,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
                 mKnownPeers.addAll(peers.keySet());
         }
     }
+
 
     /** Implemented by the Context object so that the Manager can notify of Transfer successes and received packets.
      */

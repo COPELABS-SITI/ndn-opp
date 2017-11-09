@@ -43,15 +43,15 @@ public class OpportunisticPeer {
             mGroupOwnerMacAddress = (String) goAddress.get(dev);
             mHasGroupOwnerField = true;
         } catch (ClassNotFoundException e) {
-            Log.d(TAG, "Class not found ...");
+            Log.e(TAG, "Class not found ...");
             mGroupOwnerMacAddress = null;
             mHasGroupOwnerField = false;
         } catch (NoSuchFieldException e) {
-            Log.d(TAG, "Field not found ...");
+            Log.e(TAG, "Field not found ...");
             mGroupOwnerMacAddress = null;
             mHasGroupOwnerField = false;
         } catch (IllegalAccessException e) {
-            Log.d(TAG, "Cannot access field ...");
+            Log.e(TAG, "Cannot access field ...");
             mGroupOwnerMacAddress = null;
             mHasGroupOwnerField = false;
         }

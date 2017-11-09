@@ -8,8 +8,8 @@ import java.util.Map;
 import java.util.UUID;
 
 public class Identity {
-    public static final String SVC_INSTANCE_TYPE = "_ndnoppcl";
-    public static final String SVC_TRANSFER_TYPE = SVC_INSTANCE_TYPE + "transfer" ;
+    public static final String SVC_INSTANCE_TYPE = "_ndnopp";
+    public static final String SVC_TRANSFER_TYPE = SVC_INSTANCE_TYPE + "tfr" ;
 
     private static final String PROPERTY_UUID_KEY = "UMOBILE_UUID";
 
@@ -48,10 +48,10 @@ public class Identity {
     /** Create a new Wifi P2P Service Descriptor with no TXT-Record embedded into it.
       * @return the Service Descriptor for this instance of NDN-Opp
      */
+
     public static WifiP2pDnsSdServiceInfo getDescriptor() {
         if(!mInitialized)
             throw new RuntimeException("Uninitialized Identity. Call initialize(Context context) method prior to retrieving descriptor.");
-
         return WifiP2pDnsSdServiceInfo.newInstance(mAssignedUuid, SVC_INSTANCE_TYPE, null);
     }
 
@@ -62,7 +62,7 @@ public class Identity {
     public static WifiP2pDnsSdServiceInfo getTransferDescriptorWithTxtRecord(String recipient, Map<String, String> txtRecord) {
         if(!mInitialized)
             throw new RuntimeException("Uninitialized Identity. Call initialize(Context context) method prior to retrieving descriptor.");
-
         return WifiP2pDnsSdServiceInfo.newInstance(mAssignedUuid, SVC_TRANSFER_TYPE + "." + recipient, txtRecord);
     }
+
 }

@@ -5,6 +5,8 @@
  */
 package pt.ulusofona.copelabs.ndn.android.models;
 
+import android.databinding.BaseObservable;
+import android.databinding.Bindable;
 import android.support.annotation.NonNull;
 import android.util.SparseArray;
 
@@ -28,13 +30,15 @@ public class Face implements Comparable<Face> {
 	public long getFaceId() {
 		return faceId;
 	}
-	public String getRemoteUri() { return remoteUri; }
+	public String getRemoteUri() {
+		return remoteUri;
+	}
 
 	public String remoteUri() {
 		if (remoteUri.startsWith("opp://"))
 			return remoteUri + (queueSize > 0 ? " [" + queueSize + "]" : "");
 		else
-			return remoteUri;
+			return remoteUri + (queueSize > 0 ? " [" + queueSize + "]" : "");
 	}
 
 	public String faceId() { return String.format(Locale.getDefault(), "%03d", faceId); }
