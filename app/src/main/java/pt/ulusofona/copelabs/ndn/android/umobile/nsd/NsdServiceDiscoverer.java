@@ -16,6 +16,7 @@ import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.os.Handler;
 import android.util.Log;
 
 import java.net.Inet4Address;
@@ -28,6 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Random;
 
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 
@@ -59,6 +61,17 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
 
     // Associates a UUID to a NsdService.
     private Map<String, NsdService> mServices = new HashMap<>();
+
+    private Handler mHandler = new Handler();
+
+    private Runnable mRunnable = new Runnable() {
+
+        @Override
+        public void run() {
+            mNsdManager.discoverServices(NsdService.SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, new DiscoveryListener());
+            mHandler.postDelayed(this, ((new Random().nextInt(9 - 1) + 20) * 1000));
+        }
+    };
 
     private NsdServiceDiscoverer() {}
 
@@ -112,6 +125,9 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
     private synchronized void start() {
         if(mEnabled && !mStarted) {
             Log.i(TAG, "Starting [" + mAssignedIpv4 + "]");
+
+            mHandler.post(mRunnable);
+
             mNsdManager.discoverServices(NsdService.SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mListener);
             mStarted = true;
         } else
@@ -206,18 +222,16 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
         @Override
         public void onServiceFound(NsdServiceInfo descriptor) {
             String svcUuid = descriptor.getServiceName();
-
             Log.d(TAG, "ServiceFound " + svcUuid);
-
             if (!mAssignedUuid.equals(svcUuid)) {
                 if (!mServices.containsKey(svcUuid)) {
                     NsdService svc = new NsdService(svcUuid);
                     mServices.put(svcUuid, svc);
                 }
 
+                Log.i(TAG, "Let's resolve the descriptor: " + descriptor.getServiceName());
                 mResolver.resolve(descriptor);
             }
-
         }
 
         @Override

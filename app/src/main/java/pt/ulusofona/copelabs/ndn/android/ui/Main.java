@@ -9,24 +9,18 @@ package pt.ulusofona.copelabs.ndn.android.ui;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-
 import android.content.ServiceConnection;
+import android.databinding.DataBindingUtil;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
-
 import android.os.IBinder;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.view.ViewPager;
-
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MenuInflater;
 import android.widget.CompoundButton;
-import android.widget.Switch;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Locale;
@@ -34,47 +28,68 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.ui.dialog.ConnectToNdnDialog;
-import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
-
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.Identity;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.AddRouteDialog;
+import pt.ulusofona.copelabs.ndn.android.ui.dialog.ConnectToNdnDialog;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.CreateFaceDialog;
-import pt.ulusofona.copelabs.ndn.android.umobile.Utilities;
+import pt.ulusofona.copelabs.ndn.android.ui.dialog.ExpressInterestDialog;
+import pt.ulusofona.copelabs.ndn.android.ui.dialog.SendDataDialog;
+import pt.ulusofona.copelabs.ndn.android.ui.fragment.ContentStore;
+import pt.ulusofona.copelabs.ndn.android.ui.fragment.FaceTable;
+import pt.ulusofona.copelabs.ndn.android.ui.fragment.ForwarderConfiguration;
+import pt.ulusofona.copelabs.ndn.android.ui.fragment.NameTree;
+import pt.ulusofona.copelabs.ndn.android.ui.fragment.OpportunisticPeerTracking;
+import pt.ulusofona.copelabs.ndn.android.ui.fragment.PendingInterestTable;
+import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticDaemon;
+import pt.ulusofona.copelabs.ndn.databinding.ActivityMainBinding;
 
 /** Main interface of NDN-Opp. Brings together the various app sections with the connection to the
  * ForwardingDaemon. */
-public class Main extends AppCompatActivity {
+public class Main extends AppCompatActivity implements ServiceConnection {
     private static final String TAG = Main.class.getSimpleName();
 
     private MainTabListener mTabListener;
     private AppSections mAppSections = new AppSections(getSupportFragmentManager());
 
+    // Fragments
+    private final OpportunisticPeerTracking mPeerTracking = new OpportunisticPeerTracking();
+    private final PendingInterestTable mPit = new PendingInterestTable();
+    private final FaceTable mFaceTable = new FaceTable();
+    private final ForwarderConfiguration mFwd = new ForwarderConfiguration();
+    private final NameTree mNametree = new NameTree();
+    private final ContentStore mContentStore = new ContentStore();
+
     // ForwardingDaemon service
     private Intent mDaemonIntent;
-    private final IntentFilter mDaemonBroadcastedIntents = new IntentFilter();
     private final DaemonBroadcastReceiver mDaemonListener = new DaemonBroadcastReceiver();
 
-    private TextView mUptime;
-    private OpportunisticDaemon.NodBinder mDaemonBinder;
-    private boolean mDaemonConnected = false;
+    private ActivityMainBinding mBinding;
 
-    public Main() {
-        mDaemonBroadcastedIntents.addAction(OpportunisticDaemon.STARTED);
-        mDaemonBroadcastedIntents.addAction(OpportunisticDaemon.STOPPING);
-    }
+    private boolean mDaemonBound = false;
+    private OpportunisticDaemon.Binder mDaemonBinder;
 
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+
+        Identity.initialize(this);
+        Log.v(TAG, "Identity : " + Identity.getUuid());
+
+        mBinding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+
+        Log.v(TAG, "ActivityMainBinding : " + mBinding);
 
         mDaemonIntent = new Intent(this, OpportunisticDaemon.class);
 
-        mUptime = (TextView) findViewById(R.id.uptime);
+        mAppSections.addFragment(getString(R.string.peerTracking), mPeerTracking);
+        mAppSections.addFragment(getString(R.string.pit), mPit);
+        mAppSections.addFragment(getString(R.string.facetable), mFaceTable);
+        mAppSections.addFragment(getString(R.string.forwarderConfiguration), mFwd);
+        mAppSections.addFragment(getString(R.string.nametree), mNametree);
+        mAppSections.addFragment(getString(R.string.contentstore), mContentStore);
 
-        ViewPager pager = (ViewPager) findViewById(R.id.root);
-        mTabListener = new MainTabListener(pager);
-        pager.setAdapter(mAppSections);
+        mTabListener = new MainTabListener(mBinding.pager);
+        mBinding.pager.setAdapter(mAppSections);
 
         // Set up the action bar.
         final android.support.v7.app.ActionBar actionBar = getSupportActionBar();
@@ -89,18 +104,17 @@ public class Main extends AppCompatActivity {
                             .setTabListener(mTabListener));
         }
 
-        pager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+        mBinding.pager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
                 actionBar.setSelectedNavigationItem(position);
             }
         });
 
-        Switch nfdSwitch = (Switch) findViewById(R.id.nfdSwitch);
-		nfdSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+		mBinding.nfdSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 			@Override
 			public void onCheckedChanged(CompoundButton button, boolean isOn) {
-				if(isOn) startService(mDaemonIntent);
+                if(isOn) startService(mDaemonIntent);
 				else {
                     disconnectDaemon();
                     stopService(mDaemonIntent);
@@ -108,15 +122,14 @@ public class Main extends AppCompatActivity {
 			}
 		});
 
-        TextView uuid = (TextView) findViewById(R.id.umobileUuid);
-        uuid.setText(Utilities.obtainUuid(this));
+        mBinding.uuid.setText(Identity.getUuid());
 	}
 
     @Override
     protected void onResume() {
         super.onResume();
-        registerReceiver(mDaemonListener, mDaemonBroadcastedIntents);
-        if(mDaemonConnected) startUpdater();
+        registerReceiver(mDaemonListener, OpportunisticDaemon.mIntents);
+        if(mDaemonBound) startUpdater();
     }
 
     @Override
@@ -135,20 +148,16 @@ public class Main extends AppCompatActivity {
 
     @Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuInflater mi = getMenuInflater();
-		mi.inflate(R.menu.main, menu);
+		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         ConnectivityManager connMgr = (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        for(int i = 0; i < menu.size(); i++)
-            if(i == 0)
-                menu.getItem(i).setEnabled(mDaemonConnected && connMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isConnected());
-            else
-                menu.getItem(i).setEnabled(mDaemonConnected);
+        menu.getItem(0).setEnabled(mDaemonBound && connMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isConnected());
+        for(int i = 1; i < menu.size(); i++)
+            menu.getItem(i).setEnabled(mDaemonBound);
 
         return true;
     }
@@ -157,14 +166,23 @@ public class Main extends AppCompatActivity {
 	public boolean onOptionsItemSelected(MenuItem item) {
         DialogFragment dialog = null;
 
-        int itemId = item.getItemId();
-
-        if(item.getItemId() == R.id.createFace)
-            dialog = CreateFaceDialog.create(mDaemonBinder);
-        else if (itemId == R.id.addRoute)
-            dialog = AddRouteDialog.create(mDaemonBinder);
-        else if (itemId == R.id.connectNdn)
-            dialog = ConnectToNdnDialog.create(mDaemonBinder);
+        switch (item.getItemId()) {
+            case R.id.createFace:
+                dialog = CreateFaceDialog.create(mDaemonBinder);
+                break;
+            case R.id.addRoute:
+                dialog = AddRouteDialog.create(mDaemonBinder);
+                break;
+            case R.id.connectNdn:
+                dialog = ConnectToNdnDialog.create(mDaemonBinder);
+                break;
+            case R.id.expressInterest:
+                dialog = ExpressInterestDialog.create(mPeerTracking.getFace(), mPeerTracking);
+                break;
+            case R.id.sendPushedData:
+                dialog = SendDataDialog.create(mPeerTracking.getFace());
+                break;
+        }
 
         if(dialog != null)
             dialog.show(getSupportFragmentManager(), dialog.getTag());
@@ -176,26 +194,22 @@ public class Main extends AppCompatActivity {
 
     // For automatic refreshing of mCurrentDisplayedRefreshable.
     private static final long STARTUP_DELAY = 0L;
-    private static final long UPDATE_PERIOD = 1000L;
+    private static final long UPDATE_PERIOD = 1000L; // Number of milli-seconds before polling the daemon for its configuration
     private boolean mUpdaterRunning;
     private Timer mUpdater;
 
     private void clearDisplayed() {
-        if(mUptime != null)
-            mUptime.setText(getString(R.string.notAvailable));
-
+        mBinding.uptime.setText(getString(R.string.notAvailable));
         mAppSections.clear();
     }
 
     private void refreshDisplayed() {
-        if(mDaemonConnected) {
-            if (mUptime != null) {
-                long uptimeInSeconds = mDaemonBinder.getUptime() / 1000L;
-                long s = (uptimeInSeconds % 60);
-                long m = (uptimeInSeconds / 60) % 60;
-                long h = (uptimeInSeconds / 3600) % 60;
-                mUptime.setText(String.format(Locale.getDefault(), "%02d:%02d:%02d", h, m, s));
-            }
+        if(mDaemonBound) {
+            long uptimeInSeconds = mDaemonBinder.getUptime() / 1000L;
+            long s = (uptimeInSeconds % 60);
+            long m = (uptimeInSeconds / 60) % 60;
+            long h = (uptimeInSeconds / 3600) % 60;
+            mBinding.uptime.setText(String.format(Locale.getDefault(), "%02d:%02d:%02d", h, m, s));
 
             mAppSections.refresh(mDaemonBinder, mTabListener.getCurrentPosition());
         }
@@ -210,8 +224,8 @@ public class Main extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            // TODO: check this does not run all the time ...
-                            refreshDisplayed();
+                        // TODO: check this does not run all the time ...
+                        refreshDisplayed();
                         }
                     });
                 }
@@ -229,53 +243,40 @@ public class Main extends AppCompatActivity {
     }
 
     private void disconnectDaemon() {
-        if(mDaemonConnected) {
+        if(mDaemonBound) {
             stopUpdater();
-            unbindService(mConnection);
+            unbindService(this);
             clearDisplayed();
-            mDaemonConnected = false;
+            mDaemonBound = false;
             mDaemonBinder = null;
         }
     }
 
-    private ServiceConnection mConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName cn, IBinder bndr) {
-            Log.d(TAG, "Service Connected");
-            mDaemonBinder = (OpportunisticDaemon.NodBinder) bndr;
-            mDaemonConnected = true;
-            startUpdater();
-        }
+    @Override
+    public void onServiceConnected(ComponentName cn, IBinder bndr) {
+        Log.d(TAG, "Service Connected");
+        mDaemonBinder = (OpportunisticDaemon.Binder) bndr;
+        mDaemonBound = true;
+        startUpdater();
+    }
 
-        @Override
-        public void onServiceDisconnected(ComponentName cn) {
-            Log.d(TAG, "Service Unexpectedly disconnected");
-            stopUpdater();
-            clearDisplayed();
-            mDaemonConnected = false;
-            mDaemonBinder = null;
-        }
-    };
+    @Override
+    public void onServiceDisconnected(ComponentName cn) {
+        Log.d(TAG, "Service Unexpectedly disconnected");
+        stopUpdater();
+        clearDisplayed();
+        mDaemonBound = false;
+        mDaemonBinder = null;
+    }
 
     private class DaemonBroadcastReceiver extends android.content.BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             Log.d(TAG, "ForwardingDaemon : " + action);
-            Toast.makeText(Main.this, "Daemon : " + nicefy(action), Toast.LENGTH_LONG).show();
+            Toast.makeText(Main.this, "Daemon : " + action.substring(action.lastIndexOf('.') + 1, action.length()), Toast.LENGTH_LONG).show();
             if(action.equals(OpportunisticDaemon.STARTED))
-                bindService(mDaemonIntent, mConnection, Context.BIND_AUTO_CREATE);
-        }
-
-        private String nicefy(String action) {
-            String result = null;
-
-            if(action.equals(OpportunisticDaemon.STARTED))
-                result = "STARTED";
-            else if (action.equals(OpportunisticDaemon.STOPPING))
-                result = "STOPPING";
-
-            return result;
+                bindService(mDaemonIntent, Main.this, Context.BIND_AUTO_CREATE);
         }
     }
 }

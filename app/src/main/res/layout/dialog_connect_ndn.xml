@@ -1,9 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" style="@style/wrap" android:padding="@dimen/fragment_padding">
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <android.support.constraint.ConstraintLayout
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-    <TextView style="@style/title" android:text="@string/ndn_node"/>
-    <Spinner  style="@style/field" android:id="@+id/ndn_nodes" android:entries="@array/ndn_nodes_names"/>
+        <TextView
+            android:id="@+id/ndn_node_selector_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/ndn_node"
+            android:textAllCaps="true"
+            android:textColor="@color/black"
+            app:layout_constraintBottom_toTopOf="@+id/ndn_node_selector"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginRight="8dp"
+            app:layout_constraintRight_toRightOf="parent"
+            android:layout_marginLeft="8dp"
+            app:layout_constraintLeft_toLeftOf="parent"/>
 
-    <CheckBox style="@style/fill" android:id="@+id/permanent" android:text="@string/permanent" />
-</LinearLayout>
+        <Spinner
+            android:id="@+id/ndn_node_selector"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:entries="@array/ndn_nodes_names"
+            android:gravity="end"
+            android:textColorHint="@color/lightgray"
+            app:layout_constraintBottom_toTopOf="@+id/is_permanent"
+            app:layout_constraintTop_toBottomOf="@+id/ndn_node_selector_title"
+            android:layout_marginEnd="8dp"
+            app:layout_constraintRight_toRightOf="parent"
+            android:layout_marginStart="8dp"
+            app:layout_constraintLeft_toLeftOf="parent"/>
+
+        <CheckBox android:id="@+id/is_permanent"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/permanent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ndn_node_selector"
+            android:layout_marginRight="8dp"
+            app:layout_constraintRight_toRightOf="parent"
+            android:layout_marginLeft="8dp"
+            app:layout_constraintLeft_toLeftOf="parent"/>
+    </android.support.constraint.ConstraintLayout>
+</layout>

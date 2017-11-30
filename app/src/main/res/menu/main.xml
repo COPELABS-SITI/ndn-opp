@@ -17,4 +17,14 @@
 		android:orderInCategory="2"
 		android:title="@string/addRoute"/>
 
+	<item
+		android:id="@+id/expressInterest"
+		android:orderInCategory="3"
+		android:title="@string/express_interest"/>
+
+	<item
+		android:id="@+id/sendPushedData"
+		android:orderInCategory="4"
+		android:title="@string/send_pushed_data"/>
+
 </menu>

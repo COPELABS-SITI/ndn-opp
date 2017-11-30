@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/match">
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
 
-	<TextView android:id="@+id/name" style="@style/hCell" android:gravity="start"/>
-</LinearLayout>
+	<data>
+		<variable name="name" type="pt.ulusofona.copelabs.ndn.android.models.Name"/>
+	</data>
+
+	<LinearLayout android:layout_height="wrap_content" android:layout_width="match_parent">
+		<TextView android:text="@{name.name}"
+				  android:gravity="start"
+				  android:padding="2dp"
+				  android:fontFamily="sans-serif"
+				  android:layout_margin="1dp"
+				  android:layout_width="match_parent"
+				  android:layout_height="wrap_content"
+				  android:background="@color/lightgray"/>
+	</LinearLayout>
+</layout>

@@ -49,6 +49,7 @@ public class NsdServiceRegistrar {
             } catch (UnknownHostException e) {
                 e.printStackTrace();
             }
+
             mDescriptor.setPort(port);
 
             Log.d(TAG, "Registering " + mDescriptor);

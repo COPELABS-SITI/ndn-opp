@@ -8,10 +8,9 @@ package pt.ulusofona.copelabs.ndn.android.ui.fragment;
 
 import android.support.annotation.NonNull;
 
-import pt.ulusofona.copelabs.ndn.android.umobile.OpportunisticDaemon;
+import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticDaemon;
 
 public interface Refreshable {
-    int getTitle();
-    void refresh(@NonNull OpportunisticDaemon.NodBinder daemon);
+    void refresh(@NonNull OpportunisticDaemon.Binder daemon);
     void clear();
 }

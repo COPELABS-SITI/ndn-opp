@@ -8,7 +8,9 @@ package pt.ulusofona.copelabs.ndn.android.models;
 
 import android.support.annotation.NonNull;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /** The model class used to represent entries from the PendingInterestTable within the Android app.
@@ -18,46 +20,60 @@ import java.util.Set;
 public class PitEntry implements Comparable<PitEntry> {
     private String name;
 	// Associates a FaceId with the last Nonce received on that Face
-    private Set<FaceRecord> mInRecords = new HashSet<>();
+    private Map<Long, Integer> mInRecords = new HashMap<>();
 	// Associates a FaceId with the last Nonce sent out on that Face
-    private Set<FaceRecord> mOutRecords = new HashSet<>();
+    private Map<Long, Integer> mOutRecords = new HashMap<>();
 
+	/** Main constructor. Refer to NFD Developer's Guide Section 3.4. Pending Interest Table (p. 23) for details about the meaning of the fields
+	 * @param name NDN name associated to this PitEntry.
+	 */
     public PitEntry(String name) {
         this.name = name;
     }
 
-    public String getName() {
+	/** Retrieve the NDN Name of this entry.
+	 * @return NDN Name
+	 */
+	public String getName() {
         return this.name;
     }
 
-	/** Add a new IN-Record for this PitEntry which records the information on the last Interest packet received on a Face
+	/** Add a new IN-Record for this PitEntry which records the information on the last Interest packet received on a Face.
+	 * NOTE: This has no effect on the PIT of the running Daemon, it only updates this object.
 	 * @param faceId ID of the Incoming Face
      * @param nonce the nonce of the last Interest packet received on the Face
 	 */
 	public void addInRecord(long faceId, int nonce) {
-        mInRecords.add(new FaceRecord(faceId, nonce));
+        mInRecords.put(faceId, nonce);
 	}
 
     /** Obtain the IN-Records of this PitEntry.
      * @return the set of all IN-Records of this PitEntry.
      */
-	public Set<FaceRecord> getInRecords() {
-        return mInRecords;
+	public String getInRecords() {
+		StringBuilder sb = new StringBuilder();
+		for(Long faceId : mInRecords.keySet())
+			sb.append(faceId + "=" + mInRecords.get(faceId) + " ");
+		return sb.toString();
     }
 
-	/** Add a new OUT-Record to this PitEntry which records the information on the last Interest packet sent on a Face
+	/** Add a new OUT-Record to this PitEntry which records the information on the last Interest packet sent on a Face.
+	 * NOTE: This has no effect on the PIT of the running Daemon, it only updates this object.
 	 * @param faceId ID of the Outgoing Face
      * @param nonce the nonce of the last Interest packet sent down the Face
 	 */
 	public void addOutRecord(long faceId, int nonce) {
-        mOutRecords.add(new FaceRecord(faceId, nonce));
+        mOutRecords.put(faceId, nonce);
 	}
 
     /** Obtain the OUT-Records of this PitEntry.
      * @return the set of all OUT-Records of this PitEntry.
      */
-	public Set<FaceRecord> getOutRecords() {
-        return mOutRecords;
+	public String getOutRecords() {
+		StringBuilder sb = new StringBuilder();
+		for(Long faceId : mOutRecords.keySet())
+			sb.append(faceId + "=" + mOutRecords.get(faceId) + " ");
+		return sb.toString();
     }
 
 	/** Comparison of PitEntries based on their Interest Name
@@ -69,21 +85,9 @@ public class PitEntry implements Comparable<PitEntry> {
         return this.name.compareTo(that.name);
     }
 
-	public class FaceRecord {
-		private long faceId;
-		private int nonce;
-
-		FaceRecord(long faceId, int nonce) {
-			this.faceId = faceId;
-			this.nonce = nonce;
-		}
-
-		public long getFaceId() {
-            return faceId;
-        }
-
-        public int getNonce() {
-            return nonce;
-        }
-    }
+	@Override
+	public boolean equals(Object obj) {
+		PitEntry that = (PitEntry) obj;
+		return name.equals(that.name) && mInRecords.equals(that.mInRecords) && mOutRecords.equals(that.mOutRecords);
+	}
 }
