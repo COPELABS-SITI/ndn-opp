@@ -70,7 +70,7 @@ import pt.ulusofona.copelabs.ndn.databinding.ItemNdnOppPeerBinding;
  * The interactions between these three components is as follows;
  *
  * - The Peer Tracker provides the up-to-date list of Wi-Fi P2P devices running NDN-Opp that were encountered
- * - The Connectivity Manager is used to take care of the formation of a Wi-Fi Direct Group (whether to form a new one or join an existing one)
+ * - The Connectivity PacketManager is used to take care of the formation of a Wi-Fi Direct Group (whether to form a new one or join an existing one)
  * - The NSD Service Tracker is used to know which NDN-Opp daemon can be reached within the Group to which the current device is connected (if it is)
  */
 public class OpportunisticPeerTracking extends Fragment implements Observer, View.OnClickListener, AdapterView.OnItemClickListener, OnInterestCallback, OnData, OnRegisterSuccess, OnPushedDataCallback {
@@ -160,6 +160,7 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         mBinding.buttonGroupFormation.setOnClickListener(this);
+        mBinding.buttonGroupLeave.setOnClickListener(this);
 
         mBinding.btnStartPeerDiscovery.setOnClickListener(this);
         mBinding.listWifiP2pPeers.setAdapter(mPeerAdapter);

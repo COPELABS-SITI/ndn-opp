@@ -20,6 +20,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.Toast;
 
@@ -28,6 +29,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import pt.ulusofona.copelabs.ndn.R;
+import pt.ulusofona.copelabs.ndn.android.preferences.Configuration;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.Identity;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.AddRouteDialog;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.ConnectToNdnDialog;
@@ -156,9 +158,12 @@ public class Main extends AppCompatActivity implements ServiceConnection {
     public boolean onPrepareOptionsMenu(Menu menu) {
         ConnectivityManager connMgr = (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         menu.getItem(0).setEnabled(mDaemonBound && connMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isConnected());
-        for(int i = 1; i < menu.size(); i++)
+        for(int i = 1; i < menu.size(); i++) {
             menu.getItem(i).setEnabled(mDaemonBound);
-
+            if(menu.getItem(i).isCheckable()) {
+                menu.getItem(i).setChecked(Configuration.isBackupOptionEnabled(this));
+            }
+        }
         return true;
     }
 
@@ -181,6 +186,10 @@ public class Main extends AppCompatActivity implements ServiceConnection {
                 break;
             case R.id.sendPushedData:
                 dialog = SendDataDialog.create(mPeerTracking.getFace());
+                break;
+            case R.id.sendPacketsConfiguration:
+                item.setChecked(!item.isChecked());
+                Configuration.setSendOption(this, item.isChecked());
                 break;
         }
 

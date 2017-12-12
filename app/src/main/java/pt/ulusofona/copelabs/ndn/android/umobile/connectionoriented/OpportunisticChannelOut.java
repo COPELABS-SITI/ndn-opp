@@ -11,47 +11,35 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.Observable;
-import java.util.Observer;
 
-import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticDaemon;
-import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticFaceManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketObserver;
-import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.OpportunisticConnectionLessTransferManager;
 
 public class OpportunisticChannelOut {
     private static final String TAG = OpportunisticChannelOut.class.getSimpleName();
 
     private PacketObserver mObservingContext;
-    private final long mFaceId;
-    private final String mUuid;
     private final String mHost;
     private final int mPort;
 
 
     /** Main constructor
-     * @param uuid UUID of the corresponding device
-     * @param faceId FaceId of the Face this channel will be attached to
      * @param host IP address of the corresponding device
      * @param port Port number of the corresponding device
      */
-    public OpportunisticChannelOut(Context context, String uuid, long faceId, String host, int port) {
+    public OpportunisticChannelOut(Context context, String host, int port) {
         Log.d(TAG, "Creating OpportunisticChannelOut for " + host + ":" + port);
         mObservingContext = (PacketObserver) context;
-        mFaceId = faceId;
-        mUuid = uuid;
         mHost = host;
         mPort = port;
     }
 
-    public void sendPacket(String sender, byte[] payload) {
-        Log.d(TAG, "Attempting to send " + payload.length + " bytes through UUID " + sender + " to " + mHost + ":" + mPort);
-        ConnectionTask ct = new ConnectionTask(mHost, mPort, new Packet("1", sender, payload));
+    public void sendPacket(Packet packet) {
+        Log.d(TAG, "Attempting to send " + packet.getPayloadSize() + " bytes through UUID " + packet.getSender() + " to " + mHost + ":" + mPort);
+        ConnectionTask ct = new ConnectionTask(mHost, mPort, packet);
         ct.execute();
     }
 
@@ -101,7 +89,6 @@ public class OpportunisticChannelOut {
         @Override
         protected void onPostExecute(Boolean transferSucceeded) {
             if(transferSucceeded)
-                //mObservingContext.onPacketTransferred(mPacket.getSender(), mPacket.getId());
                 mObservingContext.onPacketTransferred(mPacket.getSender(), mPacket.getId());
         }
     }

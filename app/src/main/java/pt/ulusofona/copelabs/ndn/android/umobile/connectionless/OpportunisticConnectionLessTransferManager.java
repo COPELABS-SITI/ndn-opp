@@ -34,8 +34,11 @@ import java.util.regex.Pattern;
 import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketObserver;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticPeerTracker;
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
+
+import static pt.ulusofona.copelabs.ndn.android.umobile.manager.PacketManager.PACKET_KEY_PREFIX;
 
 /** Manages the transfer of small payload packets through the TXT record of Wifi P2P Services.
  *  note that per http://www.drjukka.com/blog/wordpress/?p=127 (), this is not a sensible transfer
@@ -64,8 +67,8 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
     public static final String TAG = OpportunisticConnectionLessTransferManager.class.getSimpleName();
 
     // Key used in the TXT-Record to store packets. Packet ID is appended after it.
-    private static final String PACKET_KEY_PREFIX = "PKT:";
-    private static int CURRENT_PACKET_ID = 0;
+    //private static final String PACKET_KEY_PREFIX = "PKT:";
+    //private static int CURRENT_PACKET_ID = 0;
 
     // Key used in the TXT-Record to store the list of acknowledgments. The value is a comma-separated
     // string with all the Packet IDs that are being acknowledged.
@@ -77,7 +80,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
     private WifiP2pManager.Channel mWifiP2pChannel;
     private WifiP2pServiceInfo mDescriptor;
 
-    // The Context to which this Manager is attached.
+    // The Context to which this PacketManager is attached.
     private PacketObserver mObservingContext;
     private String mAssignedUuid;
 
@@ -99,7 +102,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
         // Retrieve the UUID this application should use.
         mAssignedUuid = Identity.getUuid();
 
-        // Retrieve the instance of the WiFi P2P Manager, the Channel and create the DNS-SD Service request.
+        // Retrieve the instance of the WiFi P2P PacketManager, the Channel and create the DNS-SD Service request.
 
 
         mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
@@ -121,15 +124,6 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
         mWifiP2pManager.setDnsSdResponseListeners(mWifiP2pChannel, null, null);
     }
 
-    /** Generate the next packet ID
-     * @return a unique identifier for the next packet to be sent.
-     */
-    private String generatePacketId() {
-        String msgId = Integer.toString(CURRENT_PACKET_ID);
-        CURRENT_PACKET_ID += 1;
-        return PACKET_KEY_PREFIX + msgId;
-    }
-
     private static String digest(byte[] payload) {
         String sha1 = "FAIL";
         try {
@@ -149,26 +143,24 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
      * @param payload the bytes of the packet to be sent
      * @return the Packet ID assigned to this transfer by the manager. Used when the acknowledgement arrives.
      */
-    public String sendPacket(String recipient, byte[] payload) {
-        Log.i(TAG, "sendPacket [sha1sum=" + payload.length + "] <" + digest(payload) + ">");
-        String pktId = generatePacketId();
+    public void sendPacket(Packet packet) {
+        Log.i(TAG, "sendPacket [sha1sum=" + packet.getPayloadSize() + "] <" + digest(packet.getPayload()) + ">");
+        //String pktId = generatePacketId();
 
         // Retrieve the packets pending for the recipient.
-        Map<String, String> pendingPacketsForRecipient = mPendingPackets.get(recipient);
+        Map<String, String> pendingPacketsForRecipient = mPendingPackets.get(packet.getRecipient());
         if(pendingPacketsForRecipient == null)
             pendingPacketsForRecipient = new HashMap<>();
 
         // Base64 encoding of the String that guarantees Android works. NO_PADDING because if there are trailing ==, Android
         // does not report the TXT-Record ...
-        String packet = Base64.encodeToString(payload, Base64.NO_PADDING);
+        String data = Base64.encodeToString(packet.getPayload(), Base64.NO_PADDING);
         // Add the new packet to those intended for the recipient.
-        pendingPacketsForRecipient.put(pktId, packet);
-        mPendingPackets.put(recipient, pendingPacketsForRecipient);
+        pendingPacketsForRecipient.put(packet.getId(), data);
+        mPendingPackets.put(packet.getRecipient(), pendingPacketsForRecipient);
 
         // Perform an update to the descriptor for that recipient.
-        updateRegisteredDescriptor(recipient);
-
-        return pktId;
+        updateRegisteredDescriptor(packet.getRecipient());
     }
 
     /** Cancel a sending of a packet to an intended recipient.
@@ -379,7 +371,6 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
             if (WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)) {
                 int state = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1);
                 if(state == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
-                    Log.e(TAG, "LINHA 406 BROADCAST RECEIVER");
                     mWifiP2pManager.addLocalService(mWifiP2pChannel, mDescriptor, new OperationResult(TAG, "Local Service addition"));
                 } else {
                     mWifiP2pManager.clearServiceRequests(mWifiP2pChannel, new OperationResult(TAG, "Clear Service Requests"));

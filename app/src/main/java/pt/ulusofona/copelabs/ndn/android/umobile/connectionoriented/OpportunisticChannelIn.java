@@ -21,8 +21,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Enumeration;
-import java.util.Observable;
-import java.util.Observer;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticDaemon;
 import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketObserver;
@@ -129,7 +127,7 @@ public class OpportunisticChannelIn {
                     /** Use the IP to identify which service (UUID) is on the other end
                      pass the received packet to the corresponding Opportunistic Face. */
                     if (/*received > 0*/ packet != null)
-                        mObservingContext.onPacketReceived(packet.getSender(), packet.getPayLoad());
+                        mObservingContext.onPacketReceived(packet.getSender(), packet.getPayload());
                         //mDaemon.receiveOnFace(identifyFaceIdFromHostAddress(connection.getInetAddress().getHostAddress()), received, mBuffer);
                     // Close connection
                     connection.close();

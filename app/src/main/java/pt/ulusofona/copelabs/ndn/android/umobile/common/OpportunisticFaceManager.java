@@ -26,6 +26,7 @@ import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticChannelIn;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticChannelOut;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticPeer;
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Status;
 import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceDiscoverer;
 import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceRegistrar;
@@ -33,7 +34,7 @@ import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceRegistrar;
 // @TODO: if phone goes to sleep, all the open connections will close.
 
 /**
- * The Opportunistic Face Manager acts as the pivot between the ContextualManager and the ForwardingDaemon.
+ * The Opportunistic Face PacketManager acts as the pivot between the ContextualManager and the ForwardingDaemon.
  * It fullfills two functions within the App
  * (1) Routing: recomputing the new routes to be installed into the ForwardingDaemon's RIB
  * (2) Face management: translating the changes in neighborhood (i.e. other UMobile nodes availability)
@@ -159,21 +160,18 @@ public class OpportunisticFaceManager implements Observer {
             }
         }
         if (observable instanceof NsdServiceDiscoverer) {
-            Log.i(TAG, "ENTREI!!");
             if(obj != null) {
                 NsdService svc = (NsdService) obj;
                 if(!mOppOutChannels.containsKey(svc.getUuid())) {
-                    mOppOutChannels.put(svc.getUuid(), new OpportunisticChannelOut(
-                                    mContext, svc.getUuid(), getFaceId(svc.getUuid()), svc.getHost(), svc.getPort()
-                            )
-                    );
+                    Log.i(TAG, "Creating socket for: " + svc.getUuid() + " with " + svc.getHost() + ":" + svc.getPort());
+                    mOppOutChannels.put(svc.getUuid(), new OpportunisticChannelOut(mContext, svc.getHost(), svc.getPort()));
                 }
             }
         }
     }
 
-    public void sendPacket(String uuid, byte[] payload) {
-        mOppOutChannels.get(uuid).sendPacket(mDaemonBinder.getUmobileUuid(), payload);
+    public void sendPacket(Packet packet) {
+        mOppOutChannels.get(packet.getRecipient()).sendPacket(packet);
     }
 
     public String getUuid(long faceId) {

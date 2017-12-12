@@ -36,7 +36,7 @@ class WifiP2pSearcher implements DnsSdServiceResponseListener, DnsSdTxtRecordLis
     /** A mChannel that connects the application to the Wifi mWifiP2pManager framework. */
     private WifiP2pManager.Channel mChannel;
 
-    /** Android WiFi P2P Manager */
+    /** Android WiFi P2P PacketManager */
     private WifiP2pManager mWifiP2pManager;
 
     WifiP2pSearcher(Context context) {

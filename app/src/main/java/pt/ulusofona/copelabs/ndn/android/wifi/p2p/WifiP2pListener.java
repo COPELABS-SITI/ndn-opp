@@ -30,4 +30,9 @@ public interface WifiP2pListener {
         void onPeersAvailable(WifiP2pDeviceList peers);
     }
 
+    interface ConnectionStatus extends WifiP2pListener {
+        void onConnected();
+        void onDisconnected();
+    }
+
 }

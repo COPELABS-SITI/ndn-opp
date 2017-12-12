@@ -27,8 +27,10 @@ import pt.ulusofona.copelabs.ndn.android.models.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.models.SctEntry;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.OpportunisticConnectionLessTransferManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticChannelIn;
-import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticChannelOut;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticConnectivityManager;
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
+import pt.ulusofona.copelabs.ndn.android.umobile.manager.PacketListener;
+import pt.ulusofona.copelabs.ndn.android.umobile.manager.PacketManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceDiscoverer;
 import pt.ulusofona.copelabs.ndn.android.wifi.Wifi;
 
@@ -43,7 +45,7 @@ import java.util.Map;
  * and PUSH communications. This class provides an interface entirely through JNI to manage the configuration of the running
  * NOD including face creation, destruction and addition of routes to the RIB.
  */
-public class OpportunisticDaemon extends Service implements PacketObserver {
+public class OpportunisticDaemon extends Service implements PacketObserver, PacketListener.Requester {
     private static final String TAG = OpportunisticDaemon.class.getSimpleName();
 
 	public static final String STARTED = "pt.ulusofona.copelabs.ndn.android.service.STARTED";
@@ -95,17 +97,10 @@ public class OpportunisticDaemon extends Service implements PacketObserver {
     private OpportunisticConnectivityManager mConnectivityManager = new OpportunisticConnectivityManager();
 
     private OpportunisticConnectionLessTransferManager mConnectionLessManager = new OpportunisticConnectionLessTransferManager();
-    // Maps Nonce -> Packet ID
-    private SparseArray<String> mPendingInterestIdsFromNonces = new SparseArray<>();
-    // Maps Packet ID -> Nonce
-    private Map<String, Integer> mPendingInterestNoncesFromIds = new HashMap<>();
-
-    // Maps Name -> Packet ID (Data)
-    private Map<String, String> mPendingDataIdsFromNames = new HashMap<>();
-    // Maps Packet ID -> Name (Data)
-    private Map<String, String> mPendingDataNamesFromIds = new HashMap<>();
 
     private Wifi mWifi;
+
+    private PacketListener.Manager mPacketManager;
 
     // Custom lock to regulate the transitions between STARTED and STOPPED.
     // @TODO: Replace this with a standard lock.
@@ -166,6 +161,8 @@ public class OpportunisticDaemon extends Service implements PacketObserver {
             mServiceTracker.addObserver(mOppFaceManager);
             mServiceTracker.enable(this, mAssignedUuid);
 
+            mPacketManager = new PacketManager(this, this);
+
             Log.d(TAG, STARTED);
             sendBroadcast(new Intent(STARTED));
 		}
@@ -197,6 +194,7 @@ public class OpportunisticDaemon extends Service implements PacketObserver {
 		}
 	}
 
+
     /** Retrieve a given Face
      * @param faceId the FaceId for which the Face should be returned
      * @return the Face or null if no Face has that faceId
@@ -216,70 +214,60 @@ public class OpportunisticDaemon extends Service implements PacketObserver {
     private void beforeFaceRemoved(Face face) {
         long faceId = face.getFaceId();
         mFacetable.remove(faceId);
-        //mOppFaceManager.afterFaceAdded(face);
-    }
-
-    // Called from JNI
-    private void transferInterest(long faceId, int nonce, byte[] payload) {
-        Log.d(TAG, "Transfer Interest : " + faceId + " " + nonce + " length (" + ((payload != null) ? payload.length : "NULL") + ")");
-        //mConnectivityManager.transferInterest(mOppFaceManager.getUuid(faceId), nonce, payload);
-        mOppFaceManager.sendPacket(mOppFaceManager.getUuid(faceId), payload);
-        /*
-        String pktId = mConnectionLessManager.sendPacket(mOppFaceManager.getUuid(faceId), payload);
-        mPendingInterestIdsFromNonces.put(nonce, pktId);
-        mPendingInterestNoncesFromIds.put(pktId, nonce);
-        */
-    }
-
-    // Called from JNI
-    private void cancelInterest(long faceId, int nonce) {
-        Log.d(TAG, "Cancel Interest : " + faceId + " " + nonce);
-        // TODO: remove the PKT ID and Nonce from Pendings.
-        //mConnectivityManager.cancelInterestTransfer(mOppFaceManager.getUuid(faceId), nonce);
-
-        /*
-        mConnectionLessManager.cancelPacket(mOppFaceManager.getUuid(faceId), mPendingInterestIdsFromNonces.get(nonce));
-        String pktId = mPendingInterestIdsFromNonces.get(nonce);
-        if( pktId != null ) {
-            mPendingInterestIdsFromNonces.remove(nonce);
-            mPendingInterestNoncesFromIds.remove(pktId);
-        }
-        */
     }
 
     // Called from JNI
     private void transferData(long faceId, String name, byte[] payload) {
         Log.d(TAG, "Transfer Data : " + faceId + " " + name + " length (" + payload.length + ") [" + Base64.encodeToString(payload, Base64.NO_PADDING) + "]");
+        String recipient = mOppFaceManager.getUuid(faceId);
+        mPacketManager.onTransferData(mAssignedUuid, recipient, payload, name);
+    }
 
-        mOppFaceManager.sendPacket(mOppFaceManager.getUuid(faceId), payload);
+    // Called from JNI
+    private void transferInterest(long faceId, int nonce, byte[] payload) {
+        Log.d(TAG, "Transfer Interest : " + faceId + " " + nonce + " length (" + ((payload != null) ? payload.length : "NULL") + ")");
+        String recipient = mOppFaceManager.getUuid(faceId);
+        mPacketManager.onTransferInterest(mAssignedUuid, recipient, payload, nonce);
+    }
 
-        /*
-        String pktId = mConnectionLessManager.sendPacket(mOppFaceManager.getUuid(faceId), payload);
-        mPendingDataIdsFromNames.put(name, pktId);
-        mPendingDataNamesFromIds.put(pktId, name);
-        */
+    // Called from JNI
+    private void cancelInterest(long faceId, int nonce) {
+        Log.d(TAG, "Cancel Interest : " + faceId + " " + nonce);
+        mPacketManager.onCancelInterest(faceId, nonce);
     }
 
     @Override
     public void onPacketTransferred(String recipient, String pktId) {
         Log.i(TAG, "Packet transferred from : " + recipient + " with id : [" + pktId + "]");
-
-        /*
         Long faceId = mOppFaceManager.getFaceId(recipient);
         if(faceId != null) {
-            if (mPendingInterestNoncesFromIds.containsKey(pktId)) {
-                Integer nonce = mPendingInterestNoncesFromIds.get(pktId);
-                mPendingInterestIdsFromNonces.remove(nonce);
-                mPendingInterestNoncesFromIds.remove(pktId);
-                jniOnInterestTransferred(mOppFaceManager.getFaceId(recipient), nonce);
-            } else if (mPendingDataNamesFromIds.containsKey(pktId)) {
-                String name = mPendingDataNamesFromIds.get(pktId);
-                mPendingDataIdsFromNames.remove(name);
-                mPendingDataNamesFromIds.remove(pktId);
-                jniOnDataTransferred(mOppFaceManager.getFaceId(recipient), name);
-            }
+            mPacketManager.onPacketTransferred(pktId);
         }
-        */
+    }
+
+    @Override
+    public void onInterestPacketTransferred(String recipient, int nonce) {
+        jniOnInterestTransferred(mOppFaceManager.getFaceId(recipient), nonce);
+    }
+
+    @Override
+    public void onDataPacketTransferred(String recipient, String name) {
+        jniOnDataTransferred(mOppFaceManager.getFaceId(recipient), name);
+    }
+
+    @Override
+    public void onSendOverConnectionOriented(Packet packet) {
+        mOppFaceManager.sendPacket(packet);
+    }
+
+    @Override
+    public void onSendOverConnectionLess(Packet packet) {
+        mConnectionLessManager.sendPacket(packet);
+    }
+
+    @Override
+    public void onSendOverWifi(Packet packet) {
+
     }
 
     @Override

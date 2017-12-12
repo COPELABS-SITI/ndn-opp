@@ -80,4 +80,22 @@ public abstract class WifiP2pListenerManager {
         }
     }
 
+    static void notifyConnected() {
+        Log.i(TAG, "Wi-Fi connection established");
+        for(WifiP2pListener listener : listeners) {
+            if(listener instanceof  WifiP2pListener.ConnectionStatus) {
+                ((WifiP2pListener.ConnectionStatus)listener).onConnected();
+            }
+        }
+    }
+
+    static void notifyDisconnected() {
+        Log.i(TAG, "Wi-Fi connection dropped down");
+        for(WifiP2pListener listener : listeners) {
+            if(listener instanceof  WifiP2pListener.ConnectionStatus) {
+                ((WifiP2pListener.ConnectionStatus)listener).onDisconnected();
+            }
+        }
+    }
+
 }

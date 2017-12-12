@@ -17,7 +17,7 @@ import java.util.Map;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.Identity;
 
-/** Manager for WifiP2p connectivity to take care of everything related to forming groups for connecting
+/** PacketManager for WifiP2p connectivity to take care of everything related to forming groups for connecting
  *  devices together. */
 public class OpportunisticConnectivityManager implements WifiP2pManager.ChannelListener {
     private static final String TAG = OpportunisticConnectivityManager.class.getSimpleName();
@@ -146,6 +146,5 @@ public class OpportunisticConnectivityManager implements WifiP2pManager.ChannelL
 
     @Override
     public void onChannelDisconnected() {
-
     }
 }
