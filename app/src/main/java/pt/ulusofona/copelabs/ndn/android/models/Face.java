@@ -30,6 +30,7 @@ public class Face implements Comparable<Face> {
 	public long getFaceId() {
 		return faceId;
 	}
+
 	public String getRemoteUri() {
 		return remoteUri;
 	}
@@ -46,6 +47,9 @@ public class Face implements Comparable<Face> {
 	public String persistency() { return FacePersistency.get(persistency); }
 	public String linkType() { return FaceLinkType.get(linkType); }
 	public String state() { return FaceState.get(state); }
+	public boolean isFaceUp() {
+		return state == 1;
+	}
 
 	/** Main constructor. Refer to NFD Developer's Guide Section 2. Face System (p. 9) for details about the meaning of the fields
 	 * @param faceId the Face ID

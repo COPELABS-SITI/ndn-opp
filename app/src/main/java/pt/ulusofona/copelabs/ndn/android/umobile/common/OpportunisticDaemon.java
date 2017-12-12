@@ -15,7 +15,6 @@ import android.os.IBinder;
 import android.util.Base64;
 import android.util.Log;
 import android.util.LongSparseArray;
-import android.util.SparseArray;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.Identity;
@@ -29,17 +28,17 @@ import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.OpportunisticCon
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticChannelIn;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticConnectivityManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
-import pt.ulusofona.copelabs.ndn.android.umobile.manager.PacketListener;
-import pt.ulusofona.copelabs.ndn.android.umobile.manager.PacketManager;
+import pt.ulusofona.copelabs.ndn.android.umobile.forwarding.ForwarderManager;
+import pt.ulusofona.copelabs.ndn.android.umobile.manager.packet.PacketListener;
+import pt.ulusofona.copelabs.ndn.android.umobile.manager.packet.PacketManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceDiscoverer;
 import pt.ulusofona.copelabs.ndn.android.wifi.Wifi;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /** JNI wrapper around the NDN Opportunistic Daemon (NOD), which is the modified version of NFD to include the Opportunistic Faces,
  * and PUSH communications. This class provides an interface entirely through JNI to manage the configuration of the running
@@ -64,6 +63,7 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
         public long getUptime() { return (current == State.STARTED) ? System.currentTimeMillis() - startTime : 0L; }
         public String getUmobileUuid() { return (current == State.STARTED) ? mAssignedUuid : getString(R.string.notAvailable); }
         public String getVersion() { return jniGetVersion(); }
+        public boolean isFaceUp(long faceId) { return jniIsFaceUp(faceId); }
         public List<Name> getNameTree() { return jniGetNameTree(); }
         public List<Face> getFaceTable() { return jniGetFaceTable(); }
         public void createFace(String faceUri, int persistency, boolean localFields) { jniCreateFace(faceUri, persistency, localFields);}
@@ -78,6 +78,7 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
         public List<CsEntry> getContentStore() { return jniGetContentStore(); }
         public List<SctEntry> getStrategyChoiceTable() { return jniGetStrategyChoiceTable(); }
     }
+
     private final Binder local = new Binder();
 
     // Start time
@@ -221,6 +222,15 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
         Log.d(TAG, "Transfer Data : " + faceId + " " + name + " length (" + payload.length + ") [" + Base64.encodeToString(payload, Base64.NO_PADDING) + "]");
         String recipient = mOppFaceManager.getUuid(faceId);
         mPacketManager.onTransferData(mAssignedUuid, recipient, payload, name);
+
+        /*
+        ForwarderManager fw = new ForwarderManager(local);
+        ArrayList<Long> targetFacesIds = fw.getDestinationFace(faceId);
+        for(long targetFaceId : targetFacesIds) {
+            String recipient = mOppFaceManager.getUuid(targetFaceId);
+            mPacketManager.onTransferData(mAssignedUuid, recipient, payload, name);
+        }
+        */
     }
 
     // Called from JNI
@@ -287,6 +297,16 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
 	// UmobileService related functions.
     private native void jniStart(String homepath, String config);
 	private native void jniStop();
+
+    /** [JNI] Retrieve the version of the underlying NDN Opportunistic Daemon.
+     * @return build version of the NOD used.
+     */
+    private native boolean jniIsFaceUp(long faceId);
+
+    /** [JNI] Retrieve the version of the underlying NDN Opportunistic Daemon.
+     * @return build version of the NOD used.
+     */
+    private native void jniCreateFace(long faceId);
 
     /** [JNI] Retrieve the version of the underlying NDN Opportunistic Daemon.
      * @return build version of the NOD used.

@@ -1,4 +1,4 @@
-package pt.ulusofona.copelabs.ndn.android.umobile.manager;
+package pt.ulusofona.copelabs.ndn.android.umobile.manager.packet;
 
 
 import android.content.Context;

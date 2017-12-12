@@ -540,17 +540,31 @@ JNIEXPORT jobject JNICALL jniGetStrategyChoiceTable(JNIEnv* env, jobject) {
 	return sct;
 }
 
+JNIEXPORT jboolean JNICALL jniIsFaceUp(JNIEnv* env, jobject, jlong faceId) {
+    if(g_nfd.get() != nullptr) {
+        nfd::Face* current = g_nfd->getFaceTable().get(faceId);
+        if(current != nullptr) {
+            nfd::face::OppTransport* oppT = (nfd::face::OppTransport*) current->getTransport();
+            return oppT->getState() == nfd::face::TransportState::UP;
+        }
+    }
+    return (bool) false;
+}
+
+
 static JNINativeMethod nativeMethods[] = {
 	{ "jniStart", "(Ljava/lang/String;Ljava/lang/String;)V", (void*) jniStart },
 	{ "jniStop", "()V", (void*) jniStop },
 
 	{ "jniGetVersion", "()Ljava/lang/String;", (void*) jniGetVersion },
-	{ "jniGetNameTree"                  , "()Ljava/util/List;" , (void*) jniGetNameTree },
-	{ "jniGetFaceTable"                 , "()Ljava/util/List;" , (void*) jniGetFaceTable },
-	{ "jniGetPendingInterestTable"      , "()Ljava/util/List;" , (void*) jniGetPendingInterestTable },
-	{ "jniGetForwardingInformationBase" , "()Ljava/util/List;" , (void*) jniGetForwardingInformationBase },
-	{ "jniGetStrategyChoiceTable"       , "()Ljava/util/List;" , (void*) jniGetStrategyChoiceTable },
-	{ "jniGetContentStore"              , "()Ljava/util/List;" , (void*) jniGetContentStore },
+	{ "jniGetNameTree"                  , "()Ljava/util/List;"      , (void*) jniGetNameTree },
+	{ "jniGetFaceTable"                 , "()Ljava/util/List;"      , (void*) jniGetFaceTable },
+	{ "jniGetPendingInterestTable"      , "()Ljava/util/List;"      , (void*) jniGetPendingInterestTable },
+	{ "jniGetForwardingInformationBase" , "()Ljava/util/List;"      , (void*) jniGetForwardingInformationBase },
+	{ "jniGetStrategyChoiceTable"       , "()Ljava/util/List;"      , (void*) jniGetStrategyChoiceTable },
+	{ "jniGetContentStore"              , "()Ljava/util/List;"      , (void*) jniGetContentStore },
+	{ "jniIsFaceUp"                     , "(J)Z"   , (void*) jniIsFaceUp },
+	//{ "jniIsFaceUp"                     , "(J)V"   , (void*) jniIsFaceUp },
 
 	{ "jniCreateFace", "(Ljava/lang/String;IZ)V", (void*) jniCreateFace },
 	{ "jniBringUpFace", "(J)V", (void*) jniBringUpFace },

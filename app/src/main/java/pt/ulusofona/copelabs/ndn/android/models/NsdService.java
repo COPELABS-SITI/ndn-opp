@@ -50,6 +50,7 @@ public class NsdService {
     public String getUuid() {return uuid;}
     public String getHost() {return host;}
     public int getPort() {return port;}
+    public boolean isHostValid() { return !UNKNOWN_HOST.equals(host); }
 
     /** Updates the IP and port associated to this NsdService upon resolution by the Android platform
      * @param descriptor information encoding, among other things, the IP and port number.

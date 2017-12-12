@@ -56,7 +56,8 @@ public class OpportunisticFaceManager implements Observer {
     // Associates a FaceId to a UUID
     private Map<String, Long> mUuidToFaceId = new HashMap<>();
     // Associates a UUID to a FaceId
-    private LongSparseArray<String> mFaceIdToUuid = new LongSparseArray<>();
+    private Map<Long, String> mFaceIdToUuid = new HashMap<>();
+    //private LongSparseArray<String> mFaceIdToUuid = new LongSparseArray<>();
     // Associates a OpportunisticChannel to a UUID
     private Map<String, OpportunisticChannelOut> mOppOutChannels = new HashMap<>();
 
@@ -105,7 +106,7 @@ public class OpportunisticFaceManager implements Observer {
                 }
             }, 500);
 
-            mDaemonBinder.bringUpFace(faceId);
+            bringUpFace(peerUuid);
         }
     }
 
@@ -147,12 +148,11 @@ public class OpportunisticFaceManager implements Observer {
                     } else {
                         Long faceId = mUuidToFaceId.get(uuid);
                         if(faceId != null) {
-                            if (peer.getStatus().equals(Status.AVAILABLE))
-                                mDaemonBinder.bringUpFace(mUuidToFaceId.get(uuid));
-                            /*
-                            else
-                                mDaemonBinder.bringDownFace(mUuidToFaceId.get(uuid));
-                                */
+                            if (peer.getStatus().equals(Status.AVAILABLE) || peer.getStatus().equals(Status.CONNECTED)) {
+                                bringUpFace(uuid);
+                            } else {
+                                bringDownFace(uuid);
+                            }
                         }
                     }
                     mUmobilePeers.put(uuid, peer);
@@ -162,12 +162,16 @@ public class OpportunisticFaceManager implements Observer {
         if (observable instanceof NsdServiceDiscoverer) {
             if(obj != null) {
                 NsdService svc = (NsdService) obj;
-                if(!mOppOutChannels.containsKey(svc.getUuid())) {
-                    Log.i(TAG, "Creating socket for: " + svc.getUuid() + " with " + svc.getHost() + ":" + svc.getPort());
-                    mOppOutChannels.put(svc.getUuid(), new OpportunisticChannelOut(mContext, svc.getHost(), svc.getPort()));
+                if(!mOppOutChannels.containsKey(svc.getUuid()) && svc.isHostValid()) {
+                    createSocket(svc);
                 }
             }
         }
+    }
+
+    private void createSocket(NsdService svc) {
+        Log.i(TAG, "Creating socket for: " + svc.getUuid() + " with " + svc.getHost() + ":" + svc.getPort());
+        mOppOutChannels.put(svc.getUuid(), new OpportunisticChannelOut(mContext, svc.getHost(), svc.getPort()));
     }
 
     public void sendPacket(Packet packet) {

@@ -38,7 +38,7 @@ import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 
-import static pt.ulusofona.copelabs.ndn.android.umobile.manager.PacketManager.PACKET_KEY_PREFIX;
+import static pt.ulusofona.copelabs.ndn.android.umobile.manager.packet.PacketManager.PACKET_KEY_PREFIX;
 
 /** Manages the transfer of small payload packets through the TXT record of Wifi P2P Services.
  *  note that per http://www.drjukka.com/blog/wordpress/?p=127 (), this is not a sensible transfer
