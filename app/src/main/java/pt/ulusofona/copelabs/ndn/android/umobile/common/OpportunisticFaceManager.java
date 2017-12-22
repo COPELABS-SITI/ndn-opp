@@ -34,7 +34,7 @@ import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceRegistrar;
 // @TODO: if phone goes to sleep, all the open connections will close.
 
 /**
- * The Opportunistic Face PacketManager acts as the pivot between the ContextualManager and the ForwardingDaemon.
+ * The Opportunistic Face PacketManagerImpl acts as the pivot between the ContextualManager and the ForwardingDaemon.
  * It fullfills two functions within the App
  * (1) Routing: recomputing the new routes to be installed into the ForwardingDaemon's RIB
  * (2) Face management: translating the changes in neighborhood (i.e. other UMobile nodes availability)

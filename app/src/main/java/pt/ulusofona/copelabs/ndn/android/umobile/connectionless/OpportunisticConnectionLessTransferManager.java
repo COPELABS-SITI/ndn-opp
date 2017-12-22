@@ -38,7 +38,7 @@ import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 
-import static pt.ulusofona.copelabs.ndn.android.umobile.manager.packet.PacketManager.PACKET_KEY_PREFIX;
+import static pt.ulusofona.copelabs.ndn.android.umobile.manager.packet.PacketManagerImpl.PACKET_KEY_PREFIX;
 
 /** Manages the transfer of small payload packets through the TXT record of WifiRegular P2P Services.
  *  note that per http://www.drjukka.com/blog/wordpress/?p=127 (), this is not a sensible transfer
@@ -80,7 +80,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
     private WifiP2pManager.Channel mWifiP2pChannel;
     private WifiP2pServiceInfo mDescriptor;
 
-    // The Context to which this PacketManager is attached.
+    // The Context to which this PacketManagerImpl is attached.
     private PacketObserver mObservingContext;
     private String mAssignedUuid;
 
@@ -102,7 +102,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
         // Retrieve the UUID this application should use.
         mAssignedUuid = Identity.getUuid();
 
-        // Retrieve the instance of the WiFi P2P PacketManager, the Channel and create the DNS-SD Service request.
+        // Retrieve the instance of the WiFi P2P PacketManagerImpl, the Channel and create the DNS-SD Service request.
 
 
         mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);

@@ -35,7 +35,7 @@ public class NsdServiceRegistrar {
     public synchronized void register(Context context, String uuid, String ipAddress, int port) {
         if(!mRegistered) {
             mNsdData = new NsdData(uuid, ipAddress, port);
-            Log.v(TAG, "Registering " + uuid + "@" + ipAddress + ":" + port);
+            Log.v(TAG, "Registering " + uuid + " @ " + ipAddress + " port " + port);
             mNsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
 
             mAssignedUuid = uuid;

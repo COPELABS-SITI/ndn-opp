@@ -33,8 +33,10 @@ import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.OpportunisticCon
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticChannelIn;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticConnectivityManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
-import pt.ulusofona.copelabs.ndn.android.umobile.manager.packet.PacketListener;
 import pt.ulusofona.copelabs.ndn.android.umobile.manager.packet.PacketManager;
+import pt.ulusofona.copelabs.ndn.android.umobile.manager.packet.PacketManagerImpl;
+import pt.ulusofona.copelabs.ndn.android.umobile.manager.wifi_face.WifiFaceManager;
+import pt.ulusofona.copelabs.ndn.android.umobile.manager.wifi_face.WifiFaceManagerImpl;
 import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceDiscoverer;
 import pt.ulusofona.copelabs.ndn.android.utilities.Utilities;
 import pt.ulusofona.copelabs.ndn.android.wifi.Wifi;
@@ -43,7 +45,7 @@ import pt.ulusofona.copelabs.ndn.android.wifi.Wifi;
  * and PUSH communications. This class provides an interface entirely through JNI to manage the configuration of the running
  * NOD including face creation, destruction and addition of routes to the RIB.
  */
-public class OpportunisticDaemon extends Service implements PacketObserver, PacketListener.Requester {
+public class OpportunisticDaemon extends Service implements PacketObserver, PacketManager.Requester {
     private static final String TAG = OpportunisticDaemon.class.getSimpleName();
 
 	public static final String STARTED = "pt.ulusofona.copelabs.ndn.android.service.STARTED";
@@ -59,6 +61,7 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
     private NsdServiceDiscoverer mServiceTracker = NsdServiceDiscoverer.getInstance();
 
     public class Binder extends android.os.Binder {
+
         public long getUptime() { return (current == State.STARTED) ? System.currentTimeMillis() - startTime : 0L; }
         public String getUmobileUuid() { return (mAssignedUuid != null) ? mAssignedUuid : getString(R.string.notAvailable); }
         public String getVersion() { return jniGetVersion(); }
@@ -99,10 +102,9 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
     private OpportunisticConnectivityManager mConnectivityManager = new OpportunisticConnectivityManager();
     private OpportunisticConnectionLessTransferManager mConnectionLessManager = new OpportunisticConnectionLessTransferManager();
 
+    private WifiFaceManager mWifiFaceManager = new WifiFaceManagerImpl();
+    private PacketManager.Manager mPacketManager = new PacketManagerImpl();
     private Wifi mWifi;
-
-    private PacketListener.Manager mPacketManager;
-
 
 
     // Custom lock to regulate the transitions between STARTED and STOPPED.
@@ -135,8 +137,6 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
 
         mConfiguration = configuration.toString();
 
-
-
     }
 
     /** Starts the NDN Opportunistic Daemon and enables all the software components of NDN-Opp. Service lifecycle method.
@@ -166,9 +166,8 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
             mServiceTracker.addObserver(mOppFaceManager);
             mServiceTracker.enable(this, mAssignedUuid);
 
-            mPacketManager = new PacketManager(this, this, mOppFaceManager);
-
-            //new WifiFaceManager(this, local);
+            mPacketManager.enable(this, this, mOppFaceManager);
+            mWifiFaceManager.enable(this, local);
 
             Log.d(TAG, STARTED);
             sendBroadcast(new Intent(STARTED));
@@ -197,6 +196,9 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
             mOppFaceManager.disable();
             mPeerTracker.disable();
             mPacketManager.disable();
+            mWifiFaceManager.disable();
+
+            /** Last one to close */
             mWifi.close();
 
 			sendBroadcast(new Intent(STOPPING));

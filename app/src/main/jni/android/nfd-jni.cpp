@@ -1,6 +1,6 @@
 #include <jni.h>
-#include <coffeejni.h>
-#include <coffeecatch.h>
+// #include <coffeejni.h>
+// #include <coffeecatch.h>
 #include <stdlib.h>
 #include <map>
 
@@ -221,7 +221,7 @@ JNIEXPORT void JNICALL jniStart(JNIEnv* env, jobject fDaemon, jstring homepath, 
 }
 
 JNIEXPORT void JNICALL jniStop(JNIEnv* env, jobject) {
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         nfd::getGlobalIoService().post( [] {
             NFD_LOG_DEBUG("Stopping I/O service.");
             nfd::getGlobalIoService().stop();
@@ -237,7 +237,7 @@ JNIEXPORT void JNICALL jniStop(JNIEnv* env, jobject) {
             NFD_LOG_INFO("Resetting Global I/O Service");
             nfd::resetGlobalIoService();
         });
-    );
+    //);
 }
 
 JNIEXPORT jstring JNICALL jniGetVersion(JNIEnv* env, jobject) {
@@ -247,12 +247,12 @@ JNIEXPORT jstring JNICALL jniGetVersion(JNIEnv* env, jobject) {
 JNIEXPORT jobject JNICALL jniGetNameTree(JNIEnv* env, jobject) {
     jobject nametree = env->NewObject(list, newList);
 
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr)
             for(auto&& entry : g_nfd->getNameTree())
                 env->CallBooleanMethod(nametree, listAdd,
                     env->NewObject(name, newName, env->NewStringUTF(entry.getName().toUri().c_str())));
-    );
+    //);
 
 	return nametree;
 }
@@ -260,23 +260,23 @@ JNIEXPORT jobject JNICALL jniGetNameTree(JNIEnv* env, jobject) {
 JNIEXPORT jobject JNICALL jniGetFaceTable(JNIEnv* env, jobject) {
 	jobject faceList = env->NewObject(list, newList);
 
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if (g_nfd.get() != nullptr)
             for(const nfd::Face& current : g_nfd->getFaceTable())
                 env->CallBooleanMethod(faceList, listAdd, constructFace(env, current));
-    );
+    //);
 
 	return faceList;
 }
 
 JNIEXPORT void JNICALL jniCreateFace(JNIEnv* env, jobject, jstring uri, jint persistency, jboolean localFields) {
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             std::string faceUri = convertString(env, uri);
             NFD_LOG_INFO("CreateFace: " << faceUri);
             g_nfd->createFace(faceUri, (ndn::nfd::FacePersistency) persistency, (bool) localFields);
         }
-    );
+    //);
 }
 
 void transferInterest(long faceId, uint32_t nonce, ndn::Block bl) {
@@ -323,7 +323,7 @@ void transferData(long faceId, std::string name, ndn::Block bl) {
 }
 
 JNIEXPORT void JNICALL jniOnInterestTransferred(JNIEnv* env, jobject, jlong faceId, jint nonce, jboolean result) {
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             nfd::Face *current = g_nfd->getFaceTable().get(faceId);
             if(current != nullptr) {
@@ -332,11 +332,11 @@ JNIEXPORT void JNICALL jniOnInterestTransferred(JNIEnv* env, jobject, jlong face
             } else
                 NFD_LOG_ERROR("Could not retrieve face #" << faceId);
         }
-    );
+    //);
 }
 
 JNIEXPORT void JNICALL jniOnDataTransferred(JNIEnv* env, jobject, jlong faceId, jstring name) {
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             nfd::Face *current = g_nfd->getFaceTable().get(faceId);
             if(current != nullptr) {
@@ -345,11 +345,11 @@ JNIEXPORT void JNICALL jniOnDataTransferred(JNIEnv* env, jobject, jlong faceId, 
             } else
                 NFD_LOG_ERROR("Could not retrieve face #" << faceId);
         }
-    );
+    //);
 }
 
 JNIEXPORT void JNICALL jniReceiveOnFace(JNIEnv* env, jobject, jlong faceId, jint receivedBytes, jbyteArray buffer) {
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         NFD_LOG_DEBUG("Receive on Face " << faceId << " buffer=" << buffer << ", receivedBytes=" << (int) receivedBytes);
         if(g_nfd.get() != nullptr) {
             nfd::Face *current = g_nfd->getFaceTable().get(faceId);
@@ -362,11 +362,11 @@ JNIEXPORT void JNICALL jniReceiveOnFace(JNIEnv* env, jobject, jlong faceId, jint
             } else
                 NFD_LOG_ERROR("Could not retrieve face #" << faceId);
         }
-    );
+    //);
 }
 
 JNIEXPORT void JNICALL jniBringUpFace(JNIEnv* env, jobject, jlong faceId) {
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             nfd::Face* current = g_nfd->getFaceTable().get(faceId);
             if(current != nullptr) {
@@ -378,11 +378,11 @@ JNIEXPORT void JNICALL jniBringUpFace(JNIEnv* env, jobject, jlong faceId) {
                 }
             }
         }
-    );
+    //);
 }
 
 JNIEXPORT void JNICALL jniBringDownFace(JNIEnv* env, jobject, jlong faceId) {
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             nfd::Face* current = g_nfd->getFaceTable().get(faceId);
             if(current != nullptr) {
@@ -393,7 +393,7 @@ JNIEXPORT void JNICALL jniBringDownFace(JNIEnv* env, jobject, jlong faceId) {
                 }
             }
         }
-    );
+    //);
 }
 
 JNIEXPORT void JNICALL jniPushData(JNIEnv* env, jobject, jlong faceId, jstring name) {
@@ -420,18 +420,18 @@ JNIEXPORT void JNICALL jniPassInterests(JNIEnv* env, jobject, jlong faceId, jstr
 }
 
 JNIEXPORT void JNICALL jniDestroyFace(JNIEnv* env, jobject, jlong faceId) {
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             NFD_LOG_INFO("DestroyFace: " << faceId);
             g_nfd->destroyFace(faceId);
         }
-    );
+    //);
 }
 
 JNIEXPORT jobject JNICALL jniGetForwardingInformationBase(JNIEnv* env, jobject) {
 	jobject fib = env->NewObject(list, newList);
 
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             for(auto&& entry : g_nfd->getForwardingInformationBase()) {
                 jobject jfibEntry = env->NewObject(fibEntry, newFibEntry, env->NewStringUTF(entry.getPrefix().toUri().c_str()));
@@ -442,7 +442,7 @@ JNIEXPORT jobject JNICALL jniGetForwardingInformationBase(JNIEnv* env, jobject) 
                 env->CallBooleanMethod(fib, listAdd, jfibEntry);
             }
         }
-    );
+    //);
 
 	return fib;
 }
@@ -458,7 +458,7 @@ void onRibUpdateFailure(const nfd::rib::RibUpdate& update, uint32_t code, const 
 }
 
 JNIEXPORT void JNICALL jniAddRoute(JNIEnv* env, jobject, jstring prefix, jlong faceId, jlong origin, jlong cost, jlong flags) {
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if(g_nrd.get() != nullptr) {
             nfd::rib::Route route;
             route.faceId = faceId; route.origin = origin; route.cost = cost; route.flags = flags;
@@ -480,13 +480,13 @@ JNIEXPORT void JNICALL jniAddRoute(JNIEnv* env, jobject, jstring prefix, jlong f
             // @TODO: this causes SIGBUS (code 1: addr. algn.) on Android. [ = std::set::insert(..)]
             //g_nrd->m_ribManager->m_registeredFaces.insert(faceId);
         }
-    );
+    //);
 }
 
 JNIEXPORT jobject JNICALL jniGetPendingInterestTable(JNIEnv* env, jobject) {
 	jobject pit = env->NewObject(list, newList);
 
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             for(auto&& entry : g_nfd->getPendingInterestTable()) {
                 jobject jpitEntry = env->NewObject(pitEntry, newPitEntry, env->NewStringUTF(entry.getName().toUri().c_str()));
@@ -499,7 +499,7 @@ JNIEXPORT jobject JNICALL jniGetPendingInterestTable(JNIEnv* env, jobject) {
                 env->CallBooleanMethod(pit, listAdd, jpitEntry);
             }
         }
-    );
+    //);
 
 	return pit;
 }
@@ -507,7 +507,7 @@ JNIEXPORT jobject JNICALL jniGetPendingInterestTable(JNIEnv* env, jobject) {
 JNIEXPORT jobject JNICALL jniGetContentStore(JNIEnv* env, jobject) {
 	jobject cs = env->NewObject(list, newList);
 
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             for(auto&& entry : g_nfd->getContentStore()) {
                 std::string sName = entry.getName().toUri();
@@ -518,7 +518,7 @@ JNIEXPORT jobject JNICALL jniGetContentStore(JNIEnv* env, jobject) {
                 env->CallBooleanMethod(cs, listAdd, jCsEntry);
             }
         }
-    );
+    //);
 
 	return cs;
 }
@@ -526,7 +526,7 @@ JNIEXPORT jobject JNICALL jniGetContentStore(JNIEnv* env, jobject) {
 JNIEXPORT jobject JNICALL jniGetStrategyChoiceTable(JNIEnv* env, jobject) {
 	jobject sct = env->NewObject(list, newList);
 
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             for(auto&& entry : g_nfd->getStrategyChoiceTable()) {
                 jobject jstrategy = env->NewObject(sctEntry, newSctEntry,
@@ -535,7 +535,7 @@ JNIEXPORT jobject JNICALL jniGetStrategyChoiceTable(JNIEnv* env, jobject) {
                 env->CallBooleanMethod(sct, listAdd, jstrategy);
             }
         }
-    );
+    //);
 
 	return sct;
 }
@@ -551,22 +551,6 @@ JNIEXPORT jboolean JNICALL jniIsFaceUp(JNIEnv* env, jobject, jlong faceId) {
     return (bool) false;
 }
 
-/*
-JNIEXPORT jlong JNICALL jniGetFaceId(JNIEnv* env, jobject, jstring uri) {
-    std::string faceUri = convertString(env, uri);
-    if(g_nfd.get() != nullptr) {
-        for(const nfd::Face& face : g_nfd->getFaceTable()) {
-            NFD_LOG_INFO("Trying with " << face.getRemoteUri().toString());
-            if(face.getRemoteUri().toString().compare(faceUri) == 0) {
-                NFD_LOG_INFO("Found " << face.getRemoteUri() << " with face " << face.getId());
-                return face.getId();
-            }
-        }
-    }
-    return -1;
-}
-*/
-
 JNIEXPORT jlong JNICALL jniGetFaceId(JNIEnv* env, jobject, jstring uri) {
     std::string faceUri = convertString(env, uri);
     if(g_nfd.get() != nullptr) {
@@ -580,11 +564,6 @@ JNIEXPORT jlong JNICALL jniGetFaceId(JNIEnv* env, jobject, jstring uri) {
     }
     return -1;
 }
-
-/*
-:6363
-s1.find(s2) != std::string::npos
-*/
 
 static JNINativeMethod nativeMethods[] = {
 	{ "jniStart", "(Ljava/lang/String;Ljava/lang/String;)V", (void*) jniStart },
