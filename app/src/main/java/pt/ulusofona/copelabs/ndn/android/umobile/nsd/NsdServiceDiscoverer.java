@@ -7,10 +7,8 @@
  */
 package pt.ulusofona.copelabs.ndn.android.umobile.nsd;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.net.NetworkInfo;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
@@ -19,19 +17,15 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Handler;
 import android.util.Log;
 
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.InterfaceAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Random;
 
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
+import pt.ulusofona.copelabs.ndn.android.utilities.Utilities;
+import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
+import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 
 // @TODO: figure out if the observed micro-cuts [LOST =(1-2seconds)= FOUND] can be safely concealed.
 // @TODO: Services are sometimes lost for longer period of time ...
@@ -40,7 +34,7 @@ import pt.ulusofona.copelabs.ndn.android.models.NsdService;
  * Wi-Fi Direct Group along with their status. This list is maintained even after the current
  * device leaves the Wi-Fi Direct Group.
  */
-public class NsdServiceDiscoverer extends Observable implements Observer {
+public class NsdServiceDiscoverer extends Observable implements Observer, WifiP2pListener.WifiP2pConnectionStatus {
     private static final String TAG = NsdServiceDiscoverer.class.getSimpleName();
 
     private static NsdServiceDiscoverer INSTANCE = null;
@@ -56,10 +50,10 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
     private final DiscoveryListener mListener = new DiscoveryListener();
     private final NsdServiceResolver mResolver = new NsdServiceResolver();
 
-    private final ConnectivityEventDetector mConnectivityDetector = new ConnectivityEventDetector();
+    //private final ConnectivityEventDetector mConnectivityDetector = new ConnectivityEventDetector();
     private String mAssignedIpv4 = null;
 
-    // Associates a UUID to a NsdService.
+    // Associates a UUID to a NsdData.
     private Map<String, NsdService> mServices = new HashMap<>();
 
     private Handler mHandler = new Handler();
@@ -68,8 +62,8 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
 
         @Override
         public void run() {
-            mNsdManager.discoverServices(NsdService.SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, new DiscoveryListener());
-            mHandler.postDelayed(this, ((new Random().nextInt(9 - 1) + 20) * 1000));
+            //mNsdManager.discoverServices(NsdService.SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, new DiscoveryListener());
+            //mHandler.postDelayed(this, ((new Random().nextInt(9 - 1) + 20) * 1000));
         }
     };
 
@@ -98,14 +92,17 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
             mResolver.enable(mNsdManager);
 
             mContext = context;
-            mContext.registerReceiver(mConnectivityDetector, new IntentFilter(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION));
+
+
+            WifiP2pListenerManager.registerListener(this);
+            //mContext.registerReceiver(mConnectivityDetector, new IntentFilter(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION));
 
             mEnabled = true;
         } else
             Log.i(TAG, "Enabling TWICE");
     }
 
-    /** Disable the tracker. Future Group connections will be ignored as well as notifigations from the Service Tracker. */
+    /** Disable the tracker. Future Group connections will be ignored as well as notifications from the Service Tracker. */
     public synchronized void disable() {
         if (mEnabled) {
             Log.i(TAG, "Disabling");
@@ -114,7 +111,10 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
             mResolver.disable();
             mResolver.deleteObserver(this);
 
-            mContext.unregisterReceiver(mConnectivityDetector);
+
+            WifiP2pListenerManager.unregisterListener(this);
+
+            //mContext.unregisterReceiver(mConnectivityDetector);
 
             mEnabled = false;
         } else
@@ -126,6 +126,7 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
         if(mEnabled && !mStarted) {
             Log.i(TAG, "Starting [" + mAssignedIpv4 + "]");
 
+            mResolver.enable(mNsdManager);
             mHandler.post(mRunnable);
 
             mNsdManager.discoverServices(NsdService.SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mListener);
@@ -140,6 +141,7 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
             Log.i(TAG, "Stopping");
 
             mNsdManager.stopServiceDiscovery(mListener);
+            mResolver.disable();
 
             for (NsdService svc : mServices.values())
                 svc.markAsUnavailable();
@@ -198,15 +200,46 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
             Log.w(TAG, "Update from unknown Observable " + observable.getClass());
     }
 
+    @Override
+    public void onConnected(Intent intent) {
+        NetworkInfo netInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
+        WifiP2pGroup wifip2pGroup = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_GROUP);
+
+        Log.v(TAG, "NetworkInfo : " + netInfo);
+        Log.v(TAG, "WifiP2pGroup : " + wifip2pGroup);
+
+        if (netInfo.isConnected()) {
+                    /* When the current device connects to a Group;
+                       1) retrieve the IP it has been assigned and
+                       2) enable the opportunistic service on that IP
+                    */
+            String newIpv4 = Utilities.extractIp(wifip2pGroup);
+            if (mAssignedIpv4 != null) {
+                // If it was previously connected, and the IP has changed enable the service
+                if (!mAssignedIpv4.equals(newIpv4)) {
+                    mAssignedIpv4 = newIpv4;
+                }
+            } else
+                mAssignedIpv4 = newIpv4;
+
+            start();
+        }
+    }
+
+    @Override
+    public void onDisconnected(Intent intent) {
+        stop();
+    }
+
     private class DiscoveryListener implements NsdManager.DiscoveryListener {
         @Override
         public void onStartDiscoveryFailed(String s, int error) {
-            Log.e(TAG, "Start err" + error);
+            Log.e(TAG, "Start error " + error);
         }
 
         @Override
         public void onStopDiscoveryFailed(String s, int error) {
-            Log.e(TAG, "Stop err" + error);
+            Log.e(TAG, "Stop error " + error);
         }
 
         @Override
@@ -249,64 +282,4 @@ public class NsdServiceDiscoverer extends Observable implements Observer {
         }
     }
 
-    private class ConnectivityEventDetector extends BroadcastReceiver {
-        private String extractIp(WifiP2pGroup group) {
-            String ipAddress = null;
-            String interfaceName = group.getInterface();
-            Log.v(TAG, "Group Interface : " + interfaceName);
-            if (interfaceName != null) {
-                try {
-                    Enumeration<NetworkInterface> allIfaces = NetworkInterface.getNetworkInterfaces();
-                    Log.v(TAG, allIfaces.toString());
-                    while (allIfaces.hasMoreElements()) {
-                        NetworkInterface iface = allIfaces.nextElement();
-                        Log.v(TAG, iface.toString());
-                        if (interfaceName.equals(iface.getName())) {
-                            for (InterfaceAddress ifAddr : iface.getInterfaceAddresses()) {
-                                InetAddress address = ifAddr.getAddress();
-                                if (address instanceof Inet4Address && !address.isAnyLocalAddress())
-                                    ipAddress = address.getHostAddress();
-                            }
-                        }
-                    }
-                } catch (SocketException e) {
-                    e.printStackTrace();
-                }
-            }
-            return ipAddress;
-        }
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-
-            if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
-                NetworkInfo netInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
-                WifiP2pGroup wifip2pGroup = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_GROUP);
-
-                Log.v(TAG, "NetworkInfo : " + netInfo);
-                Log.v(TAG, "WifiP2pGroup : " + wifip2pGroup);
-
-                if (netInfo.isConnected()) {
-                    /* When the current device connects to a Group;
-                       1) retrieve the IP it has been assigned and
-                       2) enable the opportunistic service on that IP
-                    */
-                    String newIpv4 = extractIp(wifip2pGroup);
-                    if (mAssignedIpv4 != null) {
-                        // If it was previously connected, and the IP has changed enable the service
-                        if (!mAssignedIpv4.equals(newIpv4)) {
-                            mAssignedIpv4 = newIpv4;
-                        }
-                    } else
-                        mAssignedIpv4 = newIpv4;
-
-                    start();
-                } else {
-                    mAssignedIpv4 = null;
-                    stop();
-                }
-            }
-        }
-    }
 }

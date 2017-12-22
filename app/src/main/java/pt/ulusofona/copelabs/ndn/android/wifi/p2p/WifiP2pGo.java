@@ -22,7 +22,7 @@ class WifiP2pGo implements WifiP2pManager.ConnectionInfoListener, WifiP2pManager
 
     private static final String TAG = "WifiP2pGo";
 
-    /** A mChannel that connects the application to the Wifi mWifiP2pManager framework. */
+    /** A mChannel that connects the application to the WifiRegular mWifiP2pManager framework. */
     private WifiP2pManager.Channel mChannel;
 
     /** Android WiFi P2P PacketManager */

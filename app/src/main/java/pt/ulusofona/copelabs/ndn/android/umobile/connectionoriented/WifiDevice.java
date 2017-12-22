@@ -10,12 +10,12 @@ import android.util.Log;
 
 import java.lang.reflect.Field;
 
-/** Customized representation of WifiP2pDevice. Essentially expands the android.net.wifi.p2p.WifiP2pDevice
+/** Customized representation of WifiDevice. Essentially expands the android.net.wifi.p2p.WifiDevice
  * by including details about whether the corresponding device is currently a Group Owner or a Client of a
  * Wi-Fi Direct Group.
  */
-class WifiP2pDevice {
-    private static final String TAG = WifiP2pDevice.class.getSimpleName();
+public class WifiDevice {
+    private static final String TAG = WifiDevice.class.getSimpleName();
     private Status currently;
 	private String name;
 	private String macAddress;
@@ -24,12 +24,12 @@ class WifiP2pDevice {
     private boolean hasGroupOwnerField;
     private String groupOwnerMacAddress;
 
-    /** Conversion of Android WifiP2pDevice to our own WifiP2pDevice.
+    /** Conversion of Android WifiP2pDevice to our own WifiDevice.
      * @param p2pDev original peer details provided by Android
-     * @return WifiP2pDevice including additional fields; namely whether the device is currently an owner or a client of a group
+     * @return WifiDevice including additional fields; namely whether the device is currently an owner or a client of a group
      */
-    static WifiP2pDevice convert(android.net.wifi.p2p.WifiP2pDevice p2pDev) {
-        WifiP2pDevice dev = new WifiP2pDevice();
+    public static WifiDevice convert(android.net.wifi.p2p.WifiP2pDevice p2pDev) {
+        WifiDevice dev = new WifiDevice();
         dev.currently = Status.convert(p2pDev.status);
         dev.name = p2pDev.deviceName;
         dev.macAddress = p2pDev.deviceAddress;
@@ -92,6 +92,6 @@ class WifiP2pDevice {
      */
     @Override
     public String toString() {
-        return "[" + name + "#" + macAddress + "]";
+        return "[" + name + "#" + macAddress + "#" + currently +"]";
     }
 }

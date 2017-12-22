@@ -5,7 +5,6 @@ import android.util.Log;
 
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
-import net.named_data.jndn.Name;
 import net.named_data.jndn.OnData;
 
 import java.io.IOException;

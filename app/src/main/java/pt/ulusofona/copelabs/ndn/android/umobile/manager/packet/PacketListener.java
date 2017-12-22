@@ -10,13 +10,14 @@ public interface PacketListener {
         void onTransferData(String sender, String recipient, byte[] payload, String name);
         void onPacketTransferred(String pktId);
         void onCancelInterest(long faceId, int nonce);
+        void disable();
     }
 
     interface Requester {
         void onInterestPacketTransferred(String recipient, int nonce);
         void onDataPacketTransferred(String recipient, String name);
+        void onCancelPacketSentOverConnectionLess(Packet packet);
         void onSendOverConnectionOriented(Packet packet);
         void onSendOverConnectionLess(Packet packet);
-        void onSendOverWifi(Packet packet);
     }
 }

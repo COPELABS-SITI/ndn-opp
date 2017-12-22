@@ -6,6 +6,7 @@
 package pt.ulusofona.copelabs.ndn.android.wifi.p2p;
 
 
+import android.content.Intent;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 
@@ -30,9 +31,9 @@ public interface WifiP2pListener {
         void onPeersAvailable(WifiP2pDeviceList peers);
     }
 
-    interface ConnectionStatus extends WifiP2pListener {
-        void onConnected();
-        void onDisconnected();
+    interface WifiP2pConnectionStatus extends WifiP2pListener {
+        void onConnected(Intent intent);
+        void onDisconnected(Intent intent);
     }
 
 }

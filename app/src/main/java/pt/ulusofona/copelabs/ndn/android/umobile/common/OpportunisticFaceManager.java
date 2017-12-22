@@ -115,8 +115,9 @@ public class OpportunisticFaceManager implements Observer {
      */
     public void bringUpFace(String uuid) {
         Log.d(TAG, "Bringing UP face for " + uuid + " " + mUuidToFaceId.containsKey(uuid));
-        if(mUuidToFaceId.containsKey(uuid))
+        if(mUuidToFaceId.containsKey(uuid)) {
             mDaemonBinder.bringUpFace(mUuidToFaceId.get(uuid));
+        }
     }
 
     /** Used to handle the departure of an NDN-Opp peer from the current Wi-Fi Direct Group
@@ -124,8 +125,13 @@ public class OpportunisticFaceManager implements Observer {
      */
     public void bringDownFace(String uuid) {
         Log.d(TAG, "Bringing DOWN face for " + uuid);
-        if (mUuidToFaceId.containsKey(uuid))
+        if (mUuidToFaceId.containsKey(uuid)) {
             mDaemonBinder.bringDownFace(mUuidToFaceId.get(uuid));
+            if(mOppOutChannels.containsKey(uuid)) {
+                Log.i(TAG, "Destroying socket of " + uuid);
+                mOppOutChannels.remove(uuid);
+            }
+        }
     }
 
     /** Update the state of the Routing engine based on what the NSD Service Discoverer reports
@@ -148,7 +154,7 @@ public class OpportunisticFaceManager implements Observer {
                     } else {
                         Long faceId = mUuidToFaceId.get(uuid);
                         if(faceId != null) {
-                            if (peer.getStatus().equals(Status.AVAILABLE) || peer.getStatus().equals(Status.CONNECTED)) {
+                            if (peer.isAvailable()) {
                                 bringUpFace(uuid);
                             } else {
                                 bringDownFace(uuid);
@@ -172,6 +178,10 @@ public class OpportunisticFaceManager implements Observer {
     private void createSocket(NsdService svc) {
         Log.i(TAG, "Creating socket for: " + svc.getUuid() + " with " + svc.getHost() + ":" + svc.getPort());
         mOppOutChannels.put(svc.getUuid(), new OpportunisticChannelOut(mContext, svc.getHost(), svc.getPort()));
+    }
+
+    public boolean isSocketAvailable(String uuid) {
+        return mOppOutChannels.containsKey(uuid);
     }
 
     public void sendPacket(Packet packet) {

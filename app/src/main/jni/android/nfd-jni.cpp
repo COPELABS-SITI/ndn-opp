@@ -551,6 +551,40 @@ JNIEXPORT jboolean JNICALL jniIsFaceUp(JNIEnv* env, jobject, jlong faceId) {
     return (bool) false;
 }
 
+/*
+JNIEXPORT jlong JNICALL jniGetFaceId(JNIEnv* env, jobject, jstring uri) {
+    std::string faceUri = convertString(env, uri);
+    if(g_nfd.get() != nullptr) {
+        for(const nfd::Face& face : g_nfd->getFaceTable()) {
+            NFD_LOG_INFO("Trying with " << face.getRemoteUri().toString());
+            if(face.getRemoteUri().toString().compare(faceUri) == 0) {
+                NFD_LOG_INFO("Found " << face.getRemoteUri() << " with face " << face.getId());
+                return face.getId();
+            }
+        }
+    }
+    return -1;
+}
+*/
+
+JNIEXPORT jlong JNICALL jniGetFaceId(JNIEnv* env, jobject, jstring uri) {
+    std::string faceUri = convertString(env, uri);
+    if(g_nfd.get() != nullptr) {
+        for(const nfd::Face& face : g_nfd->getFaceTable()) {
+            NFD_LOG_INFO("Trying with " << face.getRemoteUri().toString());
+            if(face.getRemoteUri().toString().find(":6363") != std::string::npos) {
+                NFD_LOG_INFO("Found " << face.getRemoteUri() << " with face " << face.getId());
+                return face.getId();
+            }
+        }
+    }
+    return -1;
+}
+
+/*
+:6363
+s1.find(s2) != std::string::npos
+*/
 
 static JNINativeMethod nativeMethods[] = {
 	{ "jniStart", "(Ljava/lang/String;Ljava/lang/String;)V", (void*) jniStart },
@@ -563,8 +597,8 @@ static JNINativeMethod nativeMethods[] = {
 	{ "jniGetForwardingInformationBase" , "()Ljava/util/List;"      , (void*) jniGetForwardingInformationBase },
 	{ "jniGetStrategyChoiceTable"       , "()Ljava/util/List;"      , (void*) jniGetStrategyChoiceTable },
 	{ "jniGetContentStore"              , "()Ljava/util/List;"      , (void*) jniGetContentStore },
-	{ "jniIsFaceUp"                     , "(J)Z"   , (void*) jniIsFaceUp },
-	//{ "jniIsFaceUp"                     , "(J)V"   , (void*) jniIsFaceUp },
+	{ "jniIsFaceUp"                     , "(J)Z"                    , (void*) jniIsFaceUp },
+	{ "jniGetFaceId"                    , "(Ljava/lang/String;)J"   , (void*) jniGetFaceId },
 
 	{ "jniCreateFace", "(Ljava/lang/String;IZ)V", (void*) jniCreateFace },
 	{ "jniBringUpFace", "(J)V", (void*) jniBringUpFace },

@@ -71,11 +71,11 @@ public class WifiP2pReceiver extends BroadcastReceiver {
             NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
             if (networkInfo.isConnected()) {
                 Log.i(TAG, "We are connected, will check info now");
-                WifiP2pListenerManager.notifyConnected();
+                WifiP2pListenerManager.notifyConnected(intent);
                 mWifiP2pGo.requestConnectionInfo();
             } else {
                 Log.i(TAG, "We are disconnected!");
-                WifiP2pListenerManager.notifyDisconnected();
+                WifiP2pListenerManager.notifyDisconnected(intent);
             }
         }
     }

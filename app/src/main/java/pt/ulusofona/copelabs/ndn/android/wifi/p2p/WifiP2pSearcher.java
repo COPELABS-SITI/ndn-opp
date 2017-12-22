@@ -18,6 +18,8 @@ import android.util.Log;
 
 import java.util.Map;
 
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.WifiDevice;
+
 
 /**
  * This class is responsible for discover wifi p2p devices, services
@@ -33,7 +35,7 @@ class WifiP2pSearcher implements DnsSdServiceResponseListener, DnsSdTxtRecordLis
     /** This object contains the service request */
     private WifiP2pDnsSdServiceRequest mServiceRequest;
 
-    /** A mChannel that connects the application to the Wifi mWifiP2pManager framework. */
+    /** A mChannel that connects the application to the WifiRegular mWifiP2pManager framework. */
     private WifiP2pManager.Channel mChannel;
 
     /** Android WiFi P2P PacketManager */
@@ -76,7 +78,8 @@ class WifiP2pSearcher implements DnsSdServiceResponseListener, DnsSdTxtRecordLis
      * This method removes the service request
      */
     void removeServiceRequest() {
-        mWifiP2pManager.removeServiceRequest(mChannel, mServiceRequest, null);
+        if(mServiceRequest != null)
+            mWifiP2pManager.removeServiceRequest(mChannel, mServiceRequest, null);
     }
 
     /**
@@ -119,6 +122,23 @@ class WifiP2pSearcher implements DnsSdServiceResponseListener, DnsSdTxtRecordLis
             public void onFailure(int reason) {
                 Log.i(TAG,"Service discovery failed reason: " + reason);
 
+                /*
+                mServiceRequest = WifiP2pDnsSdServiceRequest.newInstance();
+                mWifiP2pManager.removeServiceRequest(mChannel, mServiceRequest, new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        Log.e(TAG,"OK");
+                    }
+
+                    @Override
+                    public void onFailure(int i) {
+                        Log.e(TAG,"NOK");
+                    }
+                });
+
+                mWifiP2pManager.removeLocalService(mChannel, );
+                */
+
             }
         });
     }
@@ -138,6 +158,10 @@ class WifiP2pSearcher implements DnsSdServiceResponseListener, DnsSdTxtRecordLis
     @Override
     public void onPeersAvailable(WifiP2pDeviceList peers) {
         Log.i(TAG, "Peers Available ready");
+        for(WifiP2pDevice peer : peers.getDeviceList()) {
+            WifiDevice wifiDevice = WifiDevice.convert(peer);
+            Log.i(TAG, wifiDevice.toString());
+        }
         WifiP2pListenerManager.notifyPeersAvailable(peers);
     }
 }

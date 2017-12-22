@@ -7,6 +7,7 @@
 package pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pManager;
@@ -16,12 +17,15 @@ import android.widget.Toast;
 import java.util.Map;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.Identity;
+import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
+import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 
 /** PacketManager for WifiP2p connectivity to take care of everything related to forming groups for connecting
  *  devices together. */
-public class OpportunisticConnectivityManager implements WifiP2pManager.ChannelListener {
-    private static final String TAG = OpportunisticConnectivityManager.class.getSimpleName();
+public class OpportunisticConnectivityManager implements WifiP2pManager.ChannelListener,
+        WifiP2pListener.WifiP2pConnectionStatus {
 
+    private static final String TAG = OpportunisticConnectivityManager.class.getSimpleName();
     private boolean mConnected = false;
     private String mAssignedUuid;
     private Context mContext;
@@ -36,6 +40,7 @@ public class OpportunisticConnectivityManager implements WifiP2pManager.ChannelL
     public synchronized void enable(Context context) {
         if(!mEnabled) {
             mContext = context;
+            WifiP2pListenerManager.registerListener(this);
             mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
             mWifiP2pChannel = mWifiP2pManager.initialize(context, context.getMainLooper(), this);
             mAssignedUuid = Identity.getUuid();
@@ -48,6 +53,7 @@ public class OpportunisticConnectivityManager implements WifiP2pManager.ChannelL
     public synchronized void disable() {
         if(mEnabled) {
             mContext = null;
+            WifiP2pListenerManager.unregisterListener(this);
             mWifiP2pManager = null;
             mWifiP2pChannel = null;
             mEnabled = false;
@@ -70,18 +76,23 @@ public class OpportunisticConnectivityManager implements WifiP2pManager.ChannelL
         String selectedUuid = mAssignedUuid;
 
         for (OpportunisticPeer peer : candidates.values()) {
-            if (peer.isGroupOwner()) {
+            if (peer.isGroupOwner() /*&&  peer.isAvailable()*//** ver se esta available */) {
                 selectedUuid = peer.getUuid();
                 break;
-            } else if (/*!peer.hasGroupOwner()*/ !peer.isGroupOwner() && selectedUuid.compareTo(peer.getUuid()) > 0)
+            } else if (/*!peer.hasGroupOwner()*/ peer.isAvailable() && !peer.isGroupOwner() && teste(selectedUuid, peer.getUuid()))
                 selectedUuid = peer.getUuid();
         }
 
+        Log.i(TAG, "Elected GO " + selectedUuid);
         return selectedUuid;
     }
 
     public boolean isAspiringGroupOwner(Map<String, OpportunisticPeer> candidates) {
         return mAssignedUuid.equals(selectGroupOwner(candidates));
+    }
+
+    private boolean teste(String selectedUuid, String uuid) {
+        return Integer.parseInt(uuid) > Integer.parseInt(selectedUuid);
     }
 
     /** Initiate a group formation given a list of candidates. This method implements a simple heuristic to perform
@@ -114,7 +125,7 @@ public class OpportunisticConnectivityManager implements WifiP2pManager.ChannelL
                     Toast.makeText(mContext, "Connecting to : " + connConfig.deviceAddress, Toast.LENGTH_LONG).show();
                     Log.d(TAG, "Connecting to : " + connConfig.deviceAddress);
 
-                    mConnected = true;
+                    //mConnected = true;
                     mWifiP2pManager.connect(mWifiP2pChannel, connConfig, afterConnect);
                 } else {
                     Toast.makeText(mContext, "Aspiring Group Owner", Toast.LENGTH_LONG).show();
@@ -126,15 +137,19 @@ public class OpportunisticConnectivityManager implements WifiP2pManager.ChannelL
 
     /** Leave the currently connected Wi-Fi Direct Group */
     public void leave() {
+        Log.i(TAG, "Leave mEnabled " + mEnabled + " mConnected " + mConnected);
         if(mEnabled && mConnected) {
-            mConnected = false;
+            Log.i(TAG, "Leaving");
+            //mConnected = false;
             mWifiP2pManager.removeGroup(mWifiP2pChannel, afterRemoveGroup);
         }
     }
 
     // Reporting of connection result.
     private WifiP2pManager.ActionListener afterConnect = new WifiP2pManager.ActionListener() {
-        @Override public void onSuccess() {Log.d(TAG, "Connect success"); mConnected = true;}
+        @Override public void onSuccess() {
+            Log.d(TAG, "Message to connect sent");
+        }
         @Override public void onFailure(int e) {Log.d(TAG, "Connect failed (" + e + ")"); mConnected = false;}
     };
 
@@ -145,6 +160,16 @@ public class OpportunisticConnectivityManager implements WifiP2pManager.ChannelL
     };
 
     @Override
-    public void onChannelDisconnected() {
+    public void onConnected(Intent intent) {
+        mConnected = true;
     }
+
+    @Override
+    public void onDisconnected(Intent intent) {
+        mConnected = false;
+    }
+
+    @Override
+    public void onChannelDisconnected() {}
+
 }

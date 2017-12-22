@@ -6,6 +6,7 @@
 package pt.ulusofona.copelabs.ndn.android.wifi.p2p;
 
 
+import android.content.Intent;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.util.Log;
@@ -80,20 +81,20 @@ public abstract class WifiP2pListenerManager {
         }
     }
 
-    static void notifyConnected() {
+    static void notifyConnected(Intent intent) {
         Log.i(TAG, "Wi-Fi connection established");
         for(WifiP2pListener listener : listeners) {
-            if(listener instanceof  WifiP2pListener.ConnectionStatus) {
-                ((WifiP2pListener.ConnectionStatus)listener).onConnected();
+            if(listener instanceof WifiP2pListener.WifiP2pConnectionStatus) {
+                ((WifiP2pListener.WifiP2pConnectionStatus)listener).onConnected(intent);
             }
         }
     }
 
-    static void notifyDisconnected() {
+    static void notifyDisconnected(Intent intent) {
         Log.i(TAG, "Wi-Fi connection dropped down");
         for(WifiP2pListener listener : listeners) {
-            if(listener instanceof  WifiP2pListener.ConnectionStatus) {
-                ((WifiP2pListener.ConnectionStatus)listener).onDisconnected();
+            if(listener instanceof WifiP2pListener.WifiP2pConnectionStatus) {
+                ((WifiP2pListener.WifiP2pConnectionStatus)listener).onDisconnected(intent);
             }
         }
     }

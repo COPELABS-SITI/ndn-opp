@@ -96,11 +96,6 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
     private NsdServiceDiscoverer mServiceTracker = NsdServiceDiscoverer.getInstance();
     private Map<String, NsdService> mServices = new HashMap<>();
 
-
-
-    //private Button mBtn_groupFormation;
-    //private Button mBtn_groupLeave;
-
     // Two variables to remember whether to Group-related buttons have to be enabled or disabled.
     private boolean mCanFormGroup = false; // = can find another potential Group Owner in the vicinity
     private boolean mIsConnectedToGroup = false; // Determines whether the LEAVE button is enabled or not
@@ -220,12 +215,20 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
             and use it to update the UI accordingly. */
             mPeers.clear();
             mPeers.putAll(mPeerTracker.getPeers());
+     
 
-            //mCanFormGroup = !mWifiP2pConnectivityManager.isAspiringGroupOwner(mPeers);
-            //mBtn_groupFormation.setEnabled(mCanFormGroup);
+            mCanFormGroup = !mWifiP2pConnectivityManager.isAspiringGroupOwner(mPeers);
+            mBinding.buttonGroupFormation.setEnabled(mCanFormGroup && !mIsConnectedToGroup);
 
-            if (act != null)
+            //mPeerAdapter.clear();
+            //mPeerAdapter.addAll(mPeers.values());
+
+
+            if (act != null) {
+                //Log.e(TAG, "ENTREI");
                 act.runOnUiThread(mPeerUpdater);
+            }
+
         } else if (observable instanceof NsdServiceDiscoverer) {
             /* When the NSD Service Tracker notifies of some changes to its list, retrieve the new list of services
                and use it to update the UI accordingly. */
@@ -238,8 +241,13 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
                 mServices.putAll(mServiceTracker.getServices());
             }
 
+            //mNsdServiceAdapter.clear();
+            //mNsdServiceAdapter.addAll(mServices.values());
+
+
             if(act != null)
                 act.runOnUiThread(mServiceUpdater);
+
         }
     }
 
@@ -285,7 +293,8 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
                 Log.v(TAG, "Connection changed : " + (wifiP2pConnected ? "CONNECTED" : "DISCONNECTED"));
 
                 mIsConnectedToGroup = wifiP2pConnected;
-                //mBtn_groupLeave.setEnabled(mIsConnectedToGroup);
+                mBinding.buttonGroupLeave.setEnabled(mIsConnectedToGroup);
+                mBinding.buttonGroupFormation.setEnabled(!mIsConnectedToGroup);
             }
         }
     };

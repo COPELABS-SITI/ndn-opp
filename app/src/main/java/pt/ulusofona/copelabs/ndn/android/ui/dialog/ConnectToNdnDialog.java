@@ -57,11 +57,7 @@ public class ConnectToNdnDialog extends DialogFragment {
 
                     String faceUri = "tcp://" + ndnAddr + ":6363";
 
-					fwdDaemon.createFace(
-						faceUri,
-						dialogBinding.isPermanent.isChecked() ? 2 : 0,
-						false
-					);
+					fwdDaemon.createFace(faceUri, dialogBinding.isPermanent.isChecked() ? 2 : 0,false);
 				}
 			})
 			.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {

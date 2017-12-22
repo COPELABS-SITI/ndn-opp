@@ -12,7 +12,7 @@ import android.util.Log;
 import java.lang.reflect.Field;
 
 /** OpportunisticPeer implementation for representing other devices running NDN-Opp. An OpportunisticPeer
- * encapsulates information from a WifiP2pDevice (Device mStatus, MAC address) along with a Service UUID.
+ * encapsulates information from a WifiDevice (Device mStatus, MAC address) along with a Service UUID.
  */
 public class OpportunisticPeer {
     private static final String TAG = OpportunisticPeer.class.getSimpleName();
@@ -27,7 +27,7 @@ public class OpportunisticPeer {
 
     /** Create a Peer from a UUID and a Device
      * @param uu UUID of the NDN-Opp
-     * @param dev WifiP2pDevice used to initialize this OpportunisticPeer
+     * @param dev WifiDevice used to initialize this OpportunisticPeer
      */
     public OpportunisticPeer(String uu, WifiP2pDevice dev) {
         mStatus = Status.convert(dev.status);
@@ -61,8 +61,10 @@ public class OpportunisticPeer {
         return mIsGroupOwner;
     }
 
-    public void setStatus(Status mStatus) {
-        this.mStatus = mStatus;
+    public void setStatus(Status status) {
+        mStatus = status;
+        if(!isAvailable())
+            mIsGroupOwner = false;
     }
 
     public String getUuid() {
@@ -79,5 +81,9 @@ public class OpportunisticPeer {
 
     public String getMacAddress() {
         return mMacAddress;
+    }
+
+    public boolean isAvailable() {
+        return mStatus.equals(Status.AVAILABLE) || mStatus.equals(Status.CONNECTED);
     }
 }

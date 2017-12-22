@@ -40,7 +40,7 @@ import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 
 import static pt.ulusofona.copelabs.ndn.android.umobile.manager.packet.PacketManager.PACKET_KEY_PREFIX;
 
-/** Manages the transfer of small payload packets through the TXT record of Wifi P2P Services.
+/** Manages the transfer of small payload packets through the TXT record of WifiRegular P2P Services.
  *  note that per http://www.drjukka.com/blog/wordpress/?p=127 (), this is not a sensible transfer
  *  mecanisms for passing packets of important size. Android implementations vary and a maximum of
  *  ±900 bytes seems to be the current limit. This does not consider if older versions are used which
@@ -243,17 +243,19 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
                 mWifiP2pManager.removeLocalService(mWifiP2pChannel, descriptor, new WifiP2pManager.ActionListener() {
                     @Override
                     public void onSuccess() {
+                        Log.i(TAG, "Removed local service with success");
                         mRegisteredDescriptors.remove(recipient);
                         registerTransferDescriptor(recipient, pendingPacketsForRecipient);
                     }
 
                     @Override
-                    public void onFailure(int i) {
-
+                    public void onFailure(int error) {
+                        Log.e(TAG, "Removing local service failed with error : " + error);
                     }
                 });
-            } else
+            } else {
                 registerTransferDescriptor(recipient, pendingPacketsForRecipient);
+            }
         }
     }
 

@@ -17,17 +17,16 @@ import java.net.UnknownHostException;
 
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 
-/** Class used to encapsulate the logic of NsdService registration with the framework. */
+/** Class used to encapsulate the logic of NsdData registration with the framework. */
 public class NsdServiceRegistrar {
     private static final String TAG = NsdServiceRegistrar.class.getSimpleName();
 
-    private NsdManager mNsdManager;
-
     private boolean mRegistered = false;
-
+    private NsdManager mNsdManager;
     private String mAssignedUuid;
+    private NsdData mNsdData;
 
-    /** Register a NsdService which will be discoverable within the Wi-Fi Direct Group
+    /** Register a NsdData which will be discoverable within the Wi-Fi Direct Group
      * to which the device is connected
      * @param context context within which the service has to be registered
      * @param uuid UUID of the device to be used as an identifier for the service
@@ -35,29 +34,32 @@ public class NsdServiceRegistrar {
      */
     public synchronized void register(Context context, String uuid, String ipAddress, int port) {
         if(!mRegistered) {
+            mNsdData = new NsdData(uuid, ipAddress, port);
             Log.v(TAG, "Registering " + uuid + "@" + ipAddress + ":" + port);
             mNsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
 
             mAssignedUuid = uuid;
 
-            NsdServiceInfo mDescriptor = new NsdServiceInfo();
-            mDescriptor.setServiceName(mAssignedUuid);
-            mDescriptor.setServiceType(NsdService.SERVICE_TYPE);
-
-            try {
-                mDescriptor.setHost(InetAddress.getByName(ipAddress));
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            }
-
-            mDescriptor.setPort(port);
-
-            Log.d(TAG, "Registering " + mDescriptor);
-            mNsdManager.registerService(mDescriptor, NsdManager.PROTOCOL_DNS_SD, mListener);
+            NsdServiceInfo nsdServiceInfo = buildNsdServiceInfo();
+            Log.d(TAG, "Registering " + nsdServiceInfo);
+            mNsdManager.registerService(nsdServiceInfo, NsdManager.PROTOCOL_DNS_SD, mListener);
 
             mRegistered = true;
         } else
             Log.w(TAG, "Attempt to register a second time.");
+    }
+
+    private synchronized NsdServiceInfo buildNsdServiceInfo() {
+        NsdServiceInfo nsdServiceInfo = new NsdServiceInfo();
+        nsdServiceInfo.setServiceName(mAssignedUuid);
+        nsdServiceInfo.setServiceType(NsdService.SERVICE_TYPE);
+        try {
+            nsdServiceInfo.setHost(InetAddress.getByName(mNsdData.getIpAddress()));
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        nsdServiceInfo.setPort(mNsdData.getPort());
+        return nsdServiceInfo;
     }
 
     /** Unregister the service */
@@ -66,6 +68,7 @@ public class NsdServiceRegistrar {
             Log.v(TAG, "Unregistering");
             mNsdManager.unregisterService(mListener);
             mRegistered = false;
+            mNsdData = null;
         } else
             Log.w(TAG, "Attempt to unregister a second time.");
     }

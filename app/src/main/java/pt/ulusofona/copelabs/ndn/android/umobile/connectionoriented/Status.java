@@ -7,6 +7,7 @@
 package pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented;
 
 import android.net.wifi.p2p.WifiP2pDevice;
+import android.util.Log;
 
 /** Expanded device statuses to handle the case a device is no longer within range. */
 public enum Status {
@@ -36,9 +37,10 @@ public enum Status {
             converted = FAILED;
         else if(st == WifiP2pDevice.AVAILABLE)
             converted = AVAILABLE;
-        else if(st == WifiP2pDevice.UNAVAILABLE)
+        else if(st == WifiP2pDevice.UNAVAILABLE) {
+            Log.e("TESTE", "ENTREI");
             converted = UNAVAILABLE;
-        else
+        } else
             converted = LOST;
 
         return converted;
