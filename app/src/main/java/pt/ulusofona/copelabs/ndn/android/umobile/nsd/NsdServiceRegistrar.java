@@ -18,7 +18,7 @@ import java.net.UnknownHostException;
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 
 /** Class used to encapsulate the logic of NsdData registration with the framework. */
-public class NsdServiceRegistrar {
+public class NsdServiceRegistrar implements NsdManager.RegistrationListener {
     private static final String TAG = NsdServiceRegistrar.class.getSimpleName();
 
     private boolean mRegistered = false;
@@ -42,7 +42,7 @@ public class NsdServiceRegistrar {
 
             NsdServiceInfo nsdServiceInfo = buildNsdServiceInfo();
             Log.d(TAG, "Registering " + nsdServiceInfo);
-            mNsdManager.registerService(nsdServiceInfo, NsdManager.PROTOCOL_DNS_SD, mListener);
+            mNsdManager.registerService(nsdServiceInfo, NsdManager.PROTOCOL_DNS_SD, this);
 
             mRegistered = true;
         } else
@@ -51,7 +51,7 @@ public class NsdServiceRegistrar {
 
     private synchronized NsdServiceInfo buildNsdServiceInfo() {
         NsdServiceInfo nsdServiceInfo = new NsdServiceInfo();
-        nsdServiceInfo.setServiceName(mAssignedUuid);
+        nsdServiceInfo.setServiceName(mNsdData.getUuid());
         nsdServiceInfo.setServiceType(NsdService.SERVICE_TYPE);
         try {
             nsdServiceInfo.setHost(InetAddress.getByName(mNsdData.getIpAddress()));
@@ -66,39 +66,40 @@ public class NsdServiceRegistrar {
     public synchronized void unregister() {
         if(mRegistered) {
             Log.v(TAG, "Unregistering");
-            mNsdManager.unregisterService(mListener);
+            mNsdManager.unregisterService(this);
             mRegistered = false;
             mNsdData = null;
         } else
             Log.w(TAG, "Attempt to unregister a second time.");
     }
 
-    private NsdManager.RegistrationListener mListener = new NsdManager.RegistrationListener() {
-        @Override
-        public void onServiceRegistered(NsdServiceInfo nsdServiceInfo) {
-            Log.d(TAG, "Registration succeeded : " + nsdServiceInfo);
+    @Override
+    public void onServiceRegistered(NsdServiceInfo nsdServiceInfo) {
+        Log.d(TAG, "Registration succeeded : " + nsdServiceInfo);
 
-            // @TODO: deal with the case where my UUID is already used ...
-            if(!mAssignedUuid.equals(nsdServiceInfo.getServiceName()))
-                Log.w(TAG, "UUID not available for Service registration.");
+        // @TODO: deal with the case where my UUID is already used ...
+        if(!mAssignedUuid.equals(nsdServiceInfo.getServiceName()))
+            Log.w(TAG, "UUID not available for Service registration.");
 
-            mRegistered = true;
-        }
+        mRegistered = true;
+    }
 
-        @Override
-        public void onServiceUnregistered(NsdServiceInfo nsdServiceInfo) {
-            Log.v(TAG, "Unregistration succeeded : " + nsdServiceInfo);
-        }
+    @Override
+    public void onServiceUnregistered(NsdServiceInfo nsdServiceInfo) {
+        Log.v(TAG, "Unregistration succeeded : " + nsdServiceInfo);
+        mRegistered = false;
+    }
 
-        @Override
-        public void onRegistrationFailed(NsdServiceInfo nsdServiceInfo, int error) {
-            Log.e(TAG, "Registration failed (" + error + ")");
-            mRegistered = false;
-        }
+    @Override
+    public void onRegistrationFailed(NsdServiceInfo nsdServiceInfo, int error) {
+        Log.e(TAG, "Registration failed (" + error + ")");
+        mRegistered = false;
+    }
 
-        @Override
-        public void onUnregistrationFailed(NsdServiceInfo nsdServiceInfo, int error) {
-            Log.v(TAG, "Unregistration failed (" + error + ")");
-        }
-    };
+    @Override
+    public void onUnregistrationFailed(NsdServiceInfo nsdServiceInfo, int error) {
+        Log.v(TAG, "Unregistration failed (" + error + ")");
+        mRegistered = true;
+    }
+
 }

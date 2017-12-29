@@ -35,8 +35,8 @@ import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Opportunisti
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 import pt.ulusofona.copelabs.ndn.android.umobile.manager.packet.PacketManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.manager.packet.PacketManagerImpl;
-import pt.ulusofona.copelabs.ndn.android.umobile.manager.wifi_face.WifiFaceManager;
-import pt.ulusofona.copelabs.ndn.android.umobile.manager.wifi_face.WifiFaceManagerImpl;
+import pt.ulusofona.copelabs.ndn.android.umobile.manager.multihoming.WifiFaceManager;
+import pt.ulusofona.copelabs.ndn.android.umobile.manager.multihoming.WifiFaceManagerImpl;
 import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceDiscoverer;
 import pt.ulusofona.copelabs.ndn.android.utilities.Utilities;
 import pt.ulusofona.copelabs.ndn.android.wifi.Wifi;

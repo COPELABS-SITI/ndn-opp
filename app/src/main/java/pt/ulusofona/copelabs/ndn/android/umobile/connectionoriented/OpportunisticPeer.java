@@ -86,4 +86,9 @@ public class OpportunisticPeer {
     public boolean isAvailable() {
         return mStatus.equals(Status.AVAILABLE) || mStatus.equals(Status.CONNECTED);
     }
+
+    @Override
+    public String toString() {
+        return mUuid + " " + mStatus;
+    }
 }

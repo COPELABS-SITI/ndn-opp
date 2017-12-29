@@ -10,6 +10,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
+import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pDeviceList;
+import android.net.wifi.p2p.WifiP2pGroup;
+import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -31,7 +35,7 @@ public class OpportunisticConnectivityManager implements WifiP2pManager.ChannelL
     private Context mContext;
     private WifiP2pManager mWifiP2pManager;
     private WifiP2pManager.Channel mWifiP2pChannel;
-    public boolean mEnabled = false;
+    private boolean mEnabled = false;
 
     /** Enable the connectivity manager. When enabled, this manager can be used to perform Group Formations
      * with other detected NDN-Opp peers.
@@ -44,6 +48,8 @@ public class OpportunisticConnectivityManager implements WifiP2pManager.ChannelL
             mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
             mWifiP2pChannel = mWifiP2pManager.initialize(context, context.getMainLooper(), this);
             mAssignedUuid = Identity.getUuid();
+
+
             mEnabled = true;
         }
     }

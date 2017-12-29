@@ -1,4 +1,4 @@
-package pt.ulusofona.copelabs.ndn.android.umobile.manager.wifi_face;
+package pt.ulusofona.copelabs.ndn.android.umobile.manager.multihoming;
 
 
 import android.content.Context;

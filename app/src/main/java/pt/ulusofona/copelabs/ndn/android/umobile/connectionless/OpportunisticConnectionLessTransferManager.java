@@ -139,8 +139,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
     }
 
     /** Request the sending of a packet to an intended recipient.
-     * @param recipient the intended recipient of the packet to be sent (UUID)
-     * @param payload the bytes of the packet to be sent
+     * @param packet the bytes of the packet to be sent
      * @return the Packet ID assigned to this transfer by the manager. Used when the acknowledgement arrives.
      */
     public void sendPacket(Packet packet) {
@@ -226,7 +225,9 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
                 Log.v(TAG, "Local Service added");
                 mRegisteredDescriptors.put(recipient, descriptor);
             }
-            @Override public void onFailure(int i) {}
+            @Override public void onFailure(int error) {
+                Log.e(TAG, "Error on register descriptor : " + error);
+            }
         });
     }
 
@@ -261,7 +262,6 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
 
     /** Specific listener for TXT Records. Invoked by Android when a new TXT-Record is found through a Service Discovery.
      */
-
     @Override
     public void onTxtRecordAvailable(String fulldomain, Map<String, String> txt, WifiP2pDevice srcDevice) {
 
@@ -397,4 +397,5 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
                 mKnownPeers.addAll(peers.keySet());
         }
     }
+
 }

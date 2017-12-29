@@ -29,15 +29,17 @@ import java.util.Observable;
 class NsdServiceResolver extends Observable implements Runnable {
     private static final String TAG = NsdServiceResolver.class.getSimpleName();
 
+    private final Object mResolutionPending = new Object();
+
     private boolean mEnabled = false;
 
     private NsdManager mNsdManager;
 
     private Handler mHandler = new Handler();
 
-    private boolean mResolutionPending = true;
-
     private HashMap<String, NsdServiceInfo> services = new HashMap<>();
+
+    private ResolutionListener mResolutionListener = new ResolutionListener();
 
     /** Enable the resolver; services that are subsequently detected will be resolved serially.
      * @param nsdMgr Android-provided NsdManager
@@ -46,7 +48,6 @@ class NsdServiceResolver extends Observable implements Runnable {
         if(!mEnabled) {
             mNsdManager = nsdMgr;
             mEnabled = true;
-            mResolutionPending = true;
             mHandler.post(this);
         }
     }
@@ -74,10 +75,18 @@ class NsdServiceResolver extends Observable implements Runnable {
     @Override
     public void run() {
         Iterator it = services.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry)it.next();
-            mNsdManager.resolveService((NsdServiceInfo) pair.getValue(), new ResolutionListener());
-            while(mResolutionPending);
+        synchronized (mResolutionPending) {
+            while (it.hasNext()) {
+                Map.Entry pair = (Map.Entry) it.next();
+                mNsdManager.resolveService((NsdServiceInfo) pair.getValue(), mResolutionListener/*new ResolutionListener()*/);
+
+                try {
+                    mResolutionPending.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+            }
         }
         mHandler.postDelayed(this, 20 * 1000);
     }
@@ -88,7 +97,18 @@ class NsdServiceResolver extends Observable implements Runnable {
         @Override
         public void onServiceResolved(NsdServiceInfo descriptor) {
             Log.d(TAG, "ServiceResolved : " + descriptor.getServiceName() + " @ " + descriptor.getHost() + ":" + descriptor.getPort());
-            mResolutionPending = false;
+
+            /*
+            if (descriptor.getHost().toString().contains("12."))
+            synchronized(mResolutionPending) {
+                mResolutionPending.notify();
+            }
+            */
+
+            synchronized(mResolutionPending) {
+                mResolutionPending.notify();
+            }
+
             setChanged();
             notifyObservers(descriptor);
         }
@@ -96,12 +116,19 @@ class NsdServiceResolver extends Observable implements Runnable {
         @Override
         public void onResolveFailed(NsdServiceInfo descriptor, int error) {
             Log.d(TAG, "Resolution error " + error + " : " + descriptor.getServiceName());
+
+            synchronized(mResolutionPending) {
+                mResolutionPending.notify();
+            }
+
+            /*
             try {
-                Thread.sleep(2 * 1000);
+                Thread.sleep(5 * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            mNsdManager.resolveService(descriptor, new ResolutionListener());
+            */
+            //mNsdManager.resolveService(descriptor, new ResolutionListener());
         }
 
     }

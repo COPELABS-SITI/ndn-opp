@@ -20,6 +20,10 @@ class NsdData {
         return mIpAddress;
     }
 
+    String getServiceName() {
+        return mUuid + "_" + mIpAddress;
+    }
+
     int getPort() {
         return mPort;
     }

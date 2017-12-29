@@ -146,6 +146,7 @@ class WifiP2pSearcher implements DnsSdServiceResponseListener, DnsSdTxtRecordLis
     @Override
     public void onDnsSdServiceAvailable(String instanceName, String registrationType, WifiP2pDevice srcDevice) {
         Log.i(TAG, "onDnsSdServiceAvailable " + instanceName + " " + registrationType);
+
         WifiP2pListenerManager.notifyServiceAvailable(instanceName, registrationType, srcDevice);
     }
 

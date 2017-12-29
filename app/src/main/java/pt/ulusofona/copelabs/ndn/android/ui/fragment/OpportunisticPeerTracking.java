@@ -41,6 +41,7 @@ import net.named_data.jndn.OnRegisterSuccess;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
@@ -61,6 +62,7 @@ import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Opportunisti
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticPeerTracker;
 import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceDiscoverer;
+import pt.ulusofona.copelabs.ndn.android.utilities.Utilities;
 import pt.ulusofona.copelabs.ndn.databinding.FragmentOppPeerTrackingBinding;
 import pt.ulusofona.copelabs.ndn.databinding.ItemNdnOppPeerBinding;
 
@@ -215,7 +217,6 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
             and use it to update the UI accordingly. */
             mPeers.clear();
             mPeers.putAll(mPeerTracker.getPeers());
-     
 
             mCanFormGroup = !mWifiP2pConnectivityManager.isAspiringGroupOwner(mPeers);
             mBinding.buttonGroupFormation.setEnabled(mCanFormGroup && !mIsConnectedToGroup);
@@ -223,9 +224,15 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
             //mPeerAdapter.clear();
             //mPeerAdapter.addAll(mPeers.values());
 
+            Map myobjectListB = new HashMap<>(mPeers);
+            Iterator it = myobjectListB.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry pair = (Map.Entry)it.next();
+                Log.i(TAG,pair.getKey() + " = " + pair.getValue().toString());
+                it.remove(); // avoids a ConcurrentModificationException
+            }
 
             if (act != null) {
-                //Log.e(TAG, "ENTREI");
                 act.runOnUiThread(mPeerUpdater);
             }
 
@@ -244,6 +251,13 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
             //mNsdServiceAdapter.clear();
             //mNsdServiceAdapter.addAll(mServices.values());
 
+            Map myobjectListB = new HashMap<>(mServices);
+            Iterator it = myobjectListB.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry pair = (Map.Entry)it.next();
+                Log.i(TAG,pair.getKey() + " = " + pair.getValue().toString());
+                it.remove(); // avoids a ConcurrentModificationException
+            }
 
             if(act != null)
                 act.runOnUiThread(mServiceUpdater);

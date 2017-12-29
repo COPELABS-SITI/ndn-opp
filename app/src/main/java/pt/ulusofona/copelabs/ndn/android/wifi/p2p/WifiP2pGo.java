@@ -13,6 +13,8 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.util.Log;
 
+import java.util.Map;
+
 /**
  * This class is used to manage all features related with wifi p2p GO
  * @author Miguel Tavares (COPELABS/ULHT)
@@ -82,13 +84,12 @@ class WifiP2pGo implements WifiP2pManager.ConnectionInfoListener, WifiP2pManager
      * This method starts the local service
      */
     private void startLocalService() {
-        /*
-        WifiP2pTxtRecordPreferences.setRecord(mContext, BT_MAC_KEY, BTManager.getBTMACAddress(mContext));
-        final Map<String, String> txtRecord =  WifiP2pTxtRecordPreferences.getRecordsMap(mContext);
-        final WifiP2pDnsSdServiceInfo wifiP2pDnsSdServiceInfo = WifiP2pDnsSdServiceInfo.newInstance(instance, SERVICE_TYPE, txtRecord);
-        */
 
-        final WifiP2pDnsSdServiceInfo wifiP2pDnsSdServiceInfo = RequestManager.getDescriptor();
+        /*
+        final Map<String, String> txtRecord =  WifiP2pTxtRecord.getEntries();
+        final WifiP2pDnsSdServiceInfo wifiP2pDnsSdServiceInfo = WifiP2pDnsSdServiceInfo.newInstance(instance, SERVICE_TYPE, txtRecord);
+
+        //final WifiP2pDnsSdServiceInfo wifiP2pDnsSdServiceInfo = RequestManager.getDescriptor();
 
         mWifiP2pManager.clearLocalServices(mChannel, new WifiP2pManager.ActionListener() {
 
@@ -114,6 +115,7 @@ class WifiP2pGo implements WifiP2pManager.ConnectionInfoListener, WifiP2pManager
                 Log.e(TAG, "Service was not announced with success. Error "  + reason);
             }
         });
+        */
 
     }
 

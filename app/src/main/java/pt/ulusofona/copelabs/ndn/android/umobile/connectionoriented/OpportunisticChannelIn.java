@@ -21,9 +21,11 @@ import pt.ulusofona.copelabs.ndn.android.utilities.Utilities;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 
+import static pt.ulusofona.copelabs.ndn.android.models.NsdService.DEFAULT_PORT;
+
 public class OpportunisticChannelIn implements WifiP2pListener.WifiP2pConnectionStatus {
     private static final String TAG = OpportunisticChannelIn.class.getSimpleName();
-    private static final int DEFAULT_PORT = 16363;
+    //public static final int DEFAULT_PORT = 16363;
 
     private NsdServiceRegistrar mRegistrar = new NsdServiceRegistrar();
     private OpportunisticDaemon.Binder mDaemonBinder;
@@ -136,6 +138,7 @@ public class OpportunisticChannelIn implements WifiP2pListener.WifiP2pConnection
         public void run() {
             mEnabled = true;
             Log.d(TAG, "Accepting on " + mAcceptingSocket.toString());
+
             while (mEnabled) {
                 try {
                     // @TODO: multi-threaded receiver.

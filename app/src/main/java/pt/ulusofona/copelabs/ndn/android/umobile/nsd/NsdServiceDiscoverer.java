@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Random;
 
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 import pt.ulusofona.copelabs.ndn.android.utilities.Utilities;
@@ -34,7 +35,8 @@ import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
  * Wi-Fi Direct Group along with their status. This list is maintained even after the current
  * device leaves the Wi-Fi Direct Group.
  */
-public class NsdServiceDiscoverer extends Observable implements Observer, WifiP2pListener.WifiP2pConnectionStatus {
+public class NsdServiceDiscoverer extends Observable implements Observer, NsdServiceDiscovererListener,
+        WifiP2pListener.WifiP2pConnectionStatus {
     private static final String TAG = NsdServiceDiscoverer.class.getSimpleName();
 
     private static NsdServiceDiscoverer INSTANCE = null;
@@ -44,10 +46,12 @@ public class NsdServiceDiscoverer extends Observable implements Observer, WifiP2
     private NsdManager mNsdManager;
     private String mAssignedUuid;
 
+    //private NsdService mMyNsdService;
+
     private boolean mEnabled = false;
     private boolean mStarted = false;
 
-    private final DiscoveryListener mListener = new DiscoveryListener();
+    private DiscoveryListener mDiscoveryListener = new DiscoveryListener();
     private final NsdServiceResolver mResolver = new NsdServiceResolver();
 
     //private final ConnectivityEventDetector mConnectivityDetector = new ConnectivityEventDetector();
@@ -56,16 +60,22 @@ public class NsdServiceDiscoverer extends Observable implements Observer, WifiP2
     // Associates a UUID to a NsdData.
     private Map<String, NsdService> mServices = new HashMap<>();
 
+
+    /*
+    private boolean mIsDiscovering = false;
+
     private Handler mHandler = new Handler();
 
     private Runnable mRunnable = new Runnable() {
 
         @Override
         public void run() {
-            //mNsdManager.discoverServices(NsdService.SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, new DiscoveryListener());
-            //mHandler.postDelayed(this, ((new Random().nextInt(9 - 1) + 20) * 1000));
+            mIsDiscovering = true;
+            mNsdManager.stopServiceDiscovery(mDiscoveryListener);
+            refreshDiscoveryTimer();
         }
     };
+    */
 
     private NsdServiceDiscoverer() {}
 
@@ -87,6 +97,8 @@ public class NsdServiceDiscoverer extends Observable implements Observer, WifiP2
             Log.i(TAG, "Enabling");
             mNsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
             mAssignedUuid = uuid;
+
+            //mMyNsdService = new NsdService(uuid);
 
             mResolver.addObserver(this);
             mResolver.enable(mNsdManager);
@@ -127,9 +139,9 @@ public class NsdServiceDiscoverer extends Observable implements Observer, WifiP2
             Log.i(TAG, "Starting [" + mAssignedIpv4 + "]");
 
             mResolver.enable(mNsdManager);
-            mHandler.post(mRunnable);
+            //mHandler.post(mRunnable);
 
-            mNsdManager.discoverServices(NsdService.SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mListener);
+            mNsdManager.discoverServices(NsdService.SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
             mStarted = true;
         } else
             Log.i(TAG, "Starting TWICE");
@@ -140,17 +152,28 @@ public class NsdServiceDiscoverer extends Observable implements Observer, WifiP2
         if(mEnabled && mStarted) {
             Log.i(TAG, "Stopping");
 
-            mNsdManager.stopServiceDiscovery(mListener);
+            //mHandler.removeCallbacks(mRunnable);
+
+            mNsdManager.stopServiceDiscovery(mDiscoveryListener);
+
             mResolver.disable();
 
             for (NsdService svc : mServices.values())
-                svc.markAsUnavailable();
+                svc.destroy();
+            mServices.clear();
 
             setChanged(); notifyObservers();
             mStarted = false;
         } else
             Log.i(TAG, "Stopping TWICE");
     }
+
+    /*
+    private void refreshDiscoveryTimer() {
+        mHandler.removeCallbacks(mRunnable);
+        mHandler.postDelayed(mRunnable, ((new Random().nextInt(9 - 1) + 20) * 1000));
+    }
+    */
 
     /** Retrieve the list of all NSD services ever detected across all Wi-Fi Direct Groups.
      * @return list of NSD services
@@ -221,7 +244,6 @@ public class NsdServiceDiscoverer extends Observable implements Observer, WifiP2
                 }
             } else
                 mAssignedIpv4 = newIpv4;
-
             start();
         }
     }
@@ -229,6 +251,12 @@ public class NsdServiceDiscoverer extends Observable implements Observer, WifiP2
     @Override
     public void onDisconnected(Intent intent) {
         stop();
+    }
+
+    @Override
+    public void refresh(NsdService nsdService) {
+        setChanged();
+        notifyObservers(nsdService);
     }
 
     private class DiscoveryListener implements NsdManager.DiscoveryListener {
@@ -250,10 +278,37 @@ public class NsdServiceDiscoverer extends Observable implements Observer, WifiP2
         @Override
         public void onDiscoveryStopped(String regType) {
             Log.d(TAG, "Stopped : " + regType);
+            /*
+            if(mIsDiscovering) {
+                mIsDiscovering = false;
+                mDiscoveryListener = new DiscoveryListener();
+                mNsdManager.discoverServices(NsdService.SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
+            }
+            */
         }
 
         @Override
         public void onServiceFound(NsdServiceInfo descriptor) {
+            /*
+            Log.d(TAG, "ServiceFound " + descriptor.getServiceName());
+            refreshDiscoveryTimer();
+            if(descriptor.getServiceType().equals(NsdService.SERVICE_TYPE)) {
+                String uuid = NsdService.convertUuidFromServiceName(descriptor.getServiceName());
+                if (!mAssignedUuid.equals(uuid)) {
+                    if (!mServices.containsKey(uuid)) {
+                        NsdService service = NsdService.convert(descriptor);
+                        service.setOnRefreshListener(NsdServiceDiscoverer.this);
+                        mServices.put(service.getUuid(), service);
+                        setChanged();
+                        notifyObservers(service);
+                    } else {
+                        mServices.get(uuid).refresh();
+                    }
+                }
+            }
+            */
+
+
             String svcUuid = descriptor.getServiceName();
             Log.d(TAG, "ServiceFound " + svcUuid);
             if (!mAssignedUuid.equals(svcUuid)) {
@@ -265,20 +320,24 @@ public class NsdServiceDiscoverer extends Observable implements Observer, WifiP2
                 Log.i(TAG, "Let's resolve the descriptor: " + descriptor.getServiceName());
                 mResolver.resolve(descriptor);
             }
+
         }
 
         @Override
         public void onServiceLost(NsdServiceInfo descriptor) {
+            Log.d(TAG, "ServiceLost " + descriptor.getServiceName());
+            //refreshDiscoveryTimer();
+
             String svcUuid = descriptor.getServiceName();
             if (!mAssignedUuid.equals(svcUuid)) {
                 Log.d(TAG, "ServiceLost " + svcUuid);
-
                 if (mServices.containsKey(svcUuid)) {
                     NsdService svc = mServices.get(svcUuid);
                     svc.markAsUnavailable();
                     setChanged(); notifyObservers(svc);
                 }
             }
+
         }
     }
 
