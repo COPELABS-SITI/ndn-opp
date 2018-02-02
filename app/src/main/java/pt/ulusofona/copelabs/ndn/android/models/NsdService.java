@@ -11,7 +11,6 @@ import android.net.nsd.NsdServiceInfo;
 import android.os.Handler;
 import android.util.Log;
 
-import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceDiscovererListener;
 
 /** The class used to represent NsdServices discovered within the Wi-Fi Direct Group to which this device is connected.
  *  A NsdData associates a UUID with a status along with an IP and a port number. The status reflect whether
@@ -25,8 +24,7 @@ public class NsdService implements Runnable {
     private static final int LOST_TIME_INTERVAL = 40 * 1000;
     private static final String UNKNOWN_HOST = "0.0.0.0";
     private static final int UNKNOWN_PORT = 0;
-    private NsdServiceDiscovererListener mListener;
-    private Handler mHandler = new Handler();
+    //private Handler mHandler = new Handler();
 
     /** Enumeration of possible statuses. */
     public enum Status {
@@ -52,17 +50,24 @@ public class NsdService implements Runnable {
         this.port = UNKNOWN_PORT;
     }
 
-    private NsdService(String uuid, String host, int port) {
+    public NsdService(String uuid, String host) {
+        this.uuid = uuid;
+        this.host = host;
+        this.port = DEFAULT_PORT;
+        this.currently = Status.AVAILABLE;
+    }
+
+    public NsdService(String uuid, String host, int port) {
         this.uuid = uuid;
         this.host = host;
         this.port = port;
         this.currently = Status.AVAILABLE;
-        mHandler.postDelayed(this, LOST_TIME_INTERVAL);
+        //mHandler.postDelayed(this, LOST_TIME_INTERVAL);
     }
 
     public void refresh() {
-        mHandler.removeCallbacks(this);
-        mHandler.postDelayed(this, LOST_TIME_INTERVAL);
+        //mHandler.removeCallbacks(this);
+        //mHandler.postDelayed(this, LOST_TIME_INTERVAL);
     }
 
     public static NsdService convert(NsdServiceInfo descriptor) {
@@ -74,7 +79,6 @@ public class NsdService implements Runnable {
         return serviceName.split("_")[0];
     }
 
-    public void setOnRefreshListener(NsdServiceDiscovererListener listener) { mListener = listener; }
     public Status getStatus() {return currently;}
     public String getUuid() {return uuid;}
     public String getHost() {return host;}
@@ -105,15 +109,17 @@ public class NsdService implements Runnable {
     }
 
     public void destroy() {
-        mHandler.removeCallbacks(this);
-        mListener = null;
+        //mHandler.removeCallbacks(this);
+        //mListener = null;
     }
 
     @Override
     public void run() {
         markAsUnavailable();
+        /*
         if(mListener != null)
             mListener.refresh(this);
+            */
     }
 
     /** Create a pretty-print String of this NsdData.

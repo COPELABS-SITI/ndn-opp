@@ -35,7 +35,7 @@ public class RegisterPrefixTask extends AsyncTask<Void, Void, Integer> {
 
     @Override
     protected Integer doInBackground(Void... params) {
-        Log.d(TAG, "Register Prefix Task (doInBackground)");
+        Log.d(TAG, "ServiceRegister Prefix Task (doInBackground)");
 
         // Create keychain
         KeyChain keyChain;
@@ -47,7 +47,7 @@ public class RegisterPrefixTask extends AsyncTask<Void, Void, Integer> {
             return mRetVal;
         }
 
-        // Register keychain with the face
+        // ServiceRegister keychain with the face
         keyChain.setFace(mFace);
         try {
             mFace.setCommandSigningInfo(keyChain, keyChain.getDefaultCertificateName());
@@ -66,9 +66,9 @@ public class RegisterPrefixTask extends AsyncTask<Void, Void, Integer> {
     @Override
     protected void onPostExecute(final Integer result) {
         if (mRetVal == -1) {
-            Log.d(TAG, "Error Register Prefix Task");
+            Log.d(TAG, "Error ServiceRegister Prefix Task");
         } else {
-            Log.d(TAG, "Register Prefix Task ended (onPostExecute)");
+            Log.d(TAG, "ServiceRegister Prefix Task ended (onPostExecute)");
         }
     }
 
@@ -88,14 +88,14 @@ public class RegisterPrefixTask extends AsyncTask<Void, Void, Integer> {
 
     public void registerPrefix(){
         try {
-            Log.v(TAG, "Register prefix ...");
+            Log.v(TAG, "ServiceRegister prefix ...");
             mFace.registerPrefix(new Name(mPrefix), mOnInterestCallback, new OnRegisterFailed() {
                 @Override
                 public void onRegisterFailed(Name prefix) {
                     Log.e(TAG, "Registration failed : " + prefix);
                 }
             }, mOnRegistrationSuccess);
-            Log.v(TAG, "Register prefix issued ...");
+            Log.v(TAG, "ServiceRegister prefix issued ...");
         } catch (SecurityException e) {
             e.printStackTrace();
         } catch (IOException e) {

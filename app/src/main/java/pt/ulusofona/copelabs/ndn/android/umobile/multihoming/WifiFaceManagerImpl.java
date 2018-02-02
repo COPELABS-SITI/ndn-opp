@@ -1,4 +1,4 @@
-package pt.ulusofona.copelabs.ndn.android.umobile.manager.multihoming;
+package pt.ulusofona.copelabs.ndn.android.umobile.multihoming;
 
 
 import android.content.Context;
@@ -18,8 +18,6 @@ public class WifiFaceManagerImpl implements WifiFaceManager, Runnable, WifiRegul
     private Handler mHandler = new Handler();
     private Context mContext;
     private boolean mEnabled;
-
-
 
     @Override
     public synchronized void enable(Context context, OpportunisticDaemon.Binder binder) {

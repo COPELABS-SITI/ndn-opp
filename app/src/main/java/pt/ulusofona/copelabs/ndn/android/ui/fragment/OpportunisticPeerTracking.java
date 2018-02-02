@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -26,8 +27,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ListView;
 
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
@@ -50,7 +49,6 @@ import java.util.Observer;
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 import pt.ulusofona.copelabs.ndn.android.ui.adapter.NsdServiceAdapter;
-import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.OperationResult;
 import pt.ulusofona.copelabs.ndn.android.ui.adapter.PendingInterestAdapter;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.DisplayDataDialog;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.RespondToInterestDialog;
@@ -58,11 +56,14 @@ import pt.ulusofona.copelabs.ndn.android.ui.tasks.JndnProcessEventTask;
 import pt.ulusofona.copelabs.ndn.android.ui.tasks.RegisterPrefixForPushedDataTask;
 import pt.ulusofona.copelabs.ndn.android.ui.tasks.RegisterPrefixTask;
 import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticDaemon;
+import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticPeerTracker;
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.OperationResult;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticConnectivityManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticPeer;
-import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticPeerTracker;
-import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceDiscoverer;
-import pt.ulusofona.copelabs.ndn.android.utilities.Utilities;
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.NsdInfo;
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.services.ServiceDiscoverer;
+import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
+import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 import pt.ulusofona.copelabs.ndn.databinding.FragmentOppPeerTrackingBinding;
 import pt.ulusofona.copelabs.ndn.databinding.ItemNdnOppPeerBinding;
 
@@ -75,7 +76,11 @@ import pt.ulusofona.copelabs.ndn.databinding.ItemNdnOppPeerBinding;
  * - The Connectivity PacketManagerImpl is used to take care of the formation of a Wi-Fi Direct Group (whether to form a new one or join an existing one)
  * - The NSD Service Tracker is used to know which NDN-Opp daemon can be reached within the Group to which the current device is connected (if it is)
  */
-public class OpportunisticPeerTracking extends Fragment implements Observer, View.OnClickListener, AdapterView.OnItemClickListener, OnInterestCallback, OnData, OnRegisterSuccess, OnPushedDataCallback {
+public class OpportunisticPeerTracking extends Fragment implements Observer, View.OnClickListener,
+        AdapterView.OnItemClickListener, OnInterestCallback, OnData, OnRegisterSuccess, OnPushedDataCallback,
+        ServiceDiscoverer.PeerListDiscoverer, WifiP2pListener.WifiP2pConnectionStatus {
+
+
     private static final String TAG = OpportunisticPeerTracking.class.getSimpleName();
 
     public static final String PREFIX = "/ndn/multicast/opp";
@@ -92,10 +97,8 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
 
     private OpportunisticConnectivityManager mWifiP2pConnectivityManager = new OpportunisticConnectivityManager();
     private OpportunisticPeerTracker mPeerTracker = new OpportunisticPeerTracker();
-    private NsdServiceDiscoverer mNsdServiceDiscoverer;
 
     private Map<String, OpportunisticPeer> mPeers = new HashMap<>();
-    private NsdServiceDiscoverer mServiceTracker = NsdServiceDiscoverer.getInstance();
     private Map<String, NsdService> mServices = new HashMap<>();
 
     // Two variables to remember whether to Group-related buttons have to be enabled or disabled.
@@ -134,13 +137,13 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         mContext.registerReceiver(mBr, mIntentFilter);
 
-        mNsdServiceDiscoverer = NsdServiceDiscoverer.getInstance();
-        mNsdServiceDiscoverer.addObserver(this);
-
         mPeerTracker.addObserver(this);
 
 
         mBinding = FragmentOppPeerTrackingBinding.inflate(getActivity().getLayoutInflater());
+
+        WifiP2pListenerManager.registerListener(this);
+
     }
 
     /** Fragment lifecycle method (see https://developer.android.com/guide/components/fragments.html) */
@@ -149,6 +152,7 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         mHandler.removeCallbacks(mJndnProcessor);
         mPeerTracker.deleteObserver(this);
         mContext.unregisterReceiver(mBr);
+        WifiP2pListenerManager.unregisterListener(this);
         super.onDetach();
     }
 
@@ -186,6 +190,18 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         }
     }
 
+    @Override
+    public void onConnected(Intent intent) {
+        ServiceDiscoverer.registerListener(this);
+    }
+
+    @Override
+    public void onDisconnected(Intent intent) {
+        ServiceDiscoverer.unregisterListener(this);
+        mServices.clear();
+        refreshNsdServices();
+    }
+
     /** Updates the Opportunistic Peer ListView */
     private Runnable mPeerUpdater = new Runnable() {
         @Override
@@ -221,48 +237,29 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
             mCanFormGroup = !mWifiP2pConnectivityManager.isAspiringGroupOwner(mPeers);
             mBinding.buttonGroupFormation.setEnabled(mCanFormGroup && !mIsConnectedToGroup);
 
-            //mPeerAdapter.clear();
-            //mPeerAdapter.addAll(mPeers.values());
-
-            Map myobjectListB = new HashMap<>(mPeers);
-            Iterator it = myobjectListB.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry pair = (Map.Entry)it.next();
-                Log.i(TAG,pair.getKey() + " = " + pair.getValue().toString());
-                it.remove(); // avoids a ConcurrentModificationException
-            }
-
             if (act != null) {
                 act.runOnUiThread(mPeerUpdater);
             }
 
-        } else if (observable instanceof NsdServiceDiscoverer) {
-            /* When the NSD Service Tracker notifies of some changes to its list, retrieve the new list of services
-               and use it to update the UI accordingly. */
-            Log.i(TAG, "observable instanceof NsdServiceDiscoverer");
-            if(obj != null) {
-                NsdService svc = (NsdService) obj;
-                mServices.put(svc.getUuid(), svc);
-            } else {
-                mServices.clear();
-                mServices.putAll(mServiceTracker.getServices());
-            }
-
-            //mNsdServiceAdapter.clear();
-            //mNsdServiceAdapter.addAll(mServices.values());
-
-            Map myobjectListB = new HashMap<>(mServices);
-            Iterator it = myobjectListB.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry pair = (Map.Entry)it.next();
-                Log.i(TAG,pair.getKey() + " = " + pair.getValue().toString());
-                it.remove(); // avoids a ConcurrentModificationException
-            }
-
-            if(act != null)
-                act.runOnUiThread(mServiceUpdater);
-
         }
+    }
+
+    @Override
+    public void onReceivePeerList(ArrayList<NsdInfo> nsdList) {
+        Log.i(TAG, "observable instanceof NsdServiceDiscoverer");
+        mServices.clear();
+        for(NsdInfo nsdInfo : nsdList) {
+            Log.i(TAG, nsdInfo.toString());
+            NsdService svc = new NsdService(nsdInfo.getUuid(), nsdInfo.getIpAddress());
+            mServices.put(svc.getUuid(), svc);
+        }
+        refreshNsdServices();
+    }
+
+    private void refreshNsdServices() {
+        FragmentActivity act = getActivity();
+        if(act != null)
+            act.runOnUiThread(mServiceUpdater);
     }
 
     public Face getFace() {
@@ -274,7 +271,7 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
     private Runnable mJndnProcessor = new Runnable() {
         @Override
         public void run() {
-            new JndnProcessEventTask(mFace).execute();
+            new JndnProcessEventTask(mFace).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             mHandler.postDelayed(mJndnProcessor, PROCESS_INTERVAL);
         }
     };
@@ -294,8 +291,8 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
             } else if (OpportunisticDaemon.STARTED.equals(action)) {
                 mPeerTracker.enable(context);
                 mFace = new Face("127.0.0.1", 6363);
-                new RegisterPrefixTask(mFace, PREFIX, OpportunisticPeerTracking.this, OpportunisticPeerTracking.this).execute();
-                new RegisterPrefixForPushedDataTask(mFace, EMERGENCY, OpportunisticPeerTracking.this, OpportunisticPeerTracking.this).execute();
+                new RegisterPrefixTask(mFace, PREFIX, OpportunisticPeerTracking.this, OpportunisticPeerTracking.this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                new RegisterPrefixForPushedDataTask(mFace, EMERGENCY, OpportunisticPeerTracking.this, OpportunisticPeerTracking.this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                 mHandler.postDelayed(mJndnProcessor, PROCESS_INTERVAL);
             } else if (OpportunisticDaemon.STOPPING.equals(action)) {
                 mPeerTracker.disable();
@@ -342,7 +339,7 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
 
     /** jNDN callback to confirm successful registration of a prefix
      * @param prefix the Prefix that was registered
-     * @param registeredPrefixId an internal ID which can be used to unregister the prefix
+     * @param registeredPrefixId an internal ID which can be used to unregisterListener the prefix
      */
     @Override
     public void onRegisterSuccess(Name prefix, long registeredPrefixId) {

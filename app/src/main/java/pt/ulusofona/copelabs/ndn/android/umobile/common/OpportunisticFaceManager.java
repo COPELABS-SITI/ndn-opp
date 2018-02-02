@@ -7,29 +7,25 @@
 package pt.ulusofona.copelabs.ndn.android.umobile.common;
 
 import android.content.Context;
-import android.content.IntentFilter;
-import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Handler;
 import android.util.Log;
 import android.util.LongSparseArray;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.concurrent.ConcurrentHashMap;
 
 import pt.ulusofona.copelabs.ndn.android.models.Face;
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
-import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticChannelIn;
-import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticChannelOut;
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.channels.OpportunisticChannelOut;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
-import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Status;
-import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceDiscoverer;
-import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceRegistrar;
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.NsdInfo;
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.services.ServiceDiscoverer;
 
 // @TODO: if phone goes to sleep, all the open connections will close.
 
@@ -41,25 +37,22 @@ import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceRegistrar;
  * into bringing the corresponding Faces AVAILABLE and UNAVAILABLE and establishing the connection that those Faces
  * ought to use for communication.
  */
-public class OpportunisticFaceManager implements Observer {
+public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.PeerListDiscoverer {
+
     private static final String TAG = OpportunisticFaceManager.class.getSimpleName();
 
     private OpportunisticDaemon.Binder mDaemonBinder;
 
-    private NsdServiceDiscoverer mNsdServiceDiscoverer;
-
     private Context mContext;
-
     // Associates a UUID to an OpportunisticPeer
     private Map<String, OpportunisticPeer> mUmobilePeers = new HashMap<>();
-
     // Associates a FaceId to a UUID
     private Map<String, Long> mUuidToFaceId = new HashMap<>();
     // Associates a UUID to a FaceId
-    private Map<Long, String> mFaceIdToUuid = new HashMap<>();
-    //private LongSparseArray<String> mFaceIdToUuid = new LongSparseArray<>();
+    //private Map<Long, String> mFaceIdToUuid = new HashMap<>();
+    private LongSparseArray<String> mFaceIdToUuid = new LongSparseArray<>();
     // Associates a OpportunisticChannel to a UUID
-    private Map<String, OpportunisticChannelOut> mOppOutChannels = new HashMap<>();
+    private ConcurrentHashMap<String, OpportunisticChannelOut> mOppOutChannels = new ConcurrentHashMap<>();
 
 
     /** Enable the OppFaceManager. When enabled, it reacts to changes in the connection status to a Wi-Fi Direct Group.
@@ -69,19 +62,13 @@ public class OpportunisticFaceManager implements Observer {
      */
 	public void enable(OpportunisticDaemon.Binder binder, Context context) {
         mDaemonBinder = binder;
-
         mContext = context;
-
-        mNsdServiceDiscoverer = NsdServiceDiscoverer.getInstance();
-        mNsdServiceDiscoverer.addObserver(this);
-
-        //mContext.registerReceiver(mConnectionDetector, new IntentFilter(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION));
-    }
+        ServiceDiscoverer.registerListener(this);
+     }
 
     /** Disable the Routing engine. Changes in the connection status of Wi-Fi Direct Groups will be ignored. */
     public void disable() {
-        //mContext.unregisterReceiver(mConnectionDetector);
-        //disableService();
+        ServiceDiscoverer.unregisterListener(this);
     }
 
     /** Callback method invoked by the ForwardingDaemon when the creation of a Face has been successful.
@@ -134,7 +121,7 @@ public class OpportunisticFaceManager implements Observer {
         }
     }
 
-    /** Update the state of the Routing engine based on what the NSD Service Discoverer reports
+    /** Update the state of the Routing engine based on what the NSD Service DiscovererResult reports
      * @param observable observable notifying of changes
      * @param obj optional parameter passed by the observable
      */
@@ -165,19 +152,49 @@ public class OpportunisticFaceManager implements Observer {
                 }
             }
         }
-        if (observable instanceof NsdServiceDiscoverer) {
-            if(obj != null) {
-                NsdService svc = (NsdService) obj;
-                if(!mOppOutChannels.containsKey(svc.getUuid()) && svc.isHostValid()) {
-                    createSocket(svc);
-                }
+    }
+
+    @Override
+    public synchronized void onReceivePeerList(ArrayList<NsdInfo> nsdInfoList) {
+        checkChannelsToCreate(nsdInfoList);
+        checkChannelsToDelete(nsdInfoList);
+    }
+
+    private synchronized void checkChannelsToCreate(ArrayList<NsdInfo> nsdInfoList) {
+        for(NsdInfo nsdInfo : nsdInfoList) {
+            NsdService svc = new NsdService(nsdInfo.getUuid(), nsdInfo.getIpAddress());
+            if (!mOppOutChannels.containsKey(svc.getUuid()) && svc.isHostValid()) {
+                createChannelOut(svc);
             }
         }
     }
 
-    private void createSocket(NsdService svc) {
+    private synchronized void checkChannelsToDelete(ArrayList<NsdInfo> nsdInfoList) {
+        Map channels = new HashMap<>(mOppOutChannels);
+        Iterator it = channels.entrySet().iterator();
+        while (it.hasNext()) {
+            boolean found = false;
+            Map.Entry pair = (Map.Entry)it.next();
+            for(NsdInfo nsdInfo : nsdInfoList) {
+                if(pair.getKey().equals(nsdInfo.getUuid())) {
+                    found = true;
+                    break;
+                }
+            }
+            if(!found) {
+                deleteChannelOut(pair.getKey().toString());
+            }
+        }
+    }
+
+    private void createChannelOut(NsdService svc) {
         Log.i(TAG, "Creating socket for: " + svc.getUuid() + " with " + svc.getHost() + ":" + svc.getPort());
         mOppOutChannels.put(svc.getUuid(), new OpportunisticChannelOut(mContext, svc.getHost(), svc.getPort()));
+    }
+
+    private void deleteChannelOut(String uuid) {
+        Log.i(TAG, "Deleting socket : " + uuid);
+        mOppOutChannels.remove(uuid);
     }
 
     public boolean isSocketAvailable(String uuid) {
@@ -185,7 +202,9 @@ public class OpportunisticFaceManager implements Observer {
     }
 
     public void sendPacket(Packet packet) {
-        mOppOutChannels.get(packet.getRecipient()).sendPacket(packet);
+        if(packet != null) {
+            mOppOutChannels.get(packet.getRecipient()).sendPacket(packet);
+        }
     }
 
     public String getUuid(long faceId) {
@@ -195,4 +214,5 @@ public class OpportunisticFaceManager implements Observer {
     public Long getFaceId(String uuid) {
         return mUuidToFaceId.get(uuid);
     }
+
 }

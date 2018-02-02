@@ -38,7 +38,7 @@ import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 
-import static pt.ulusofona.copelabs.ndn.android.umobile.manager.packet.PacketManagerImpl.PACKET_KEY_PREFIX;
+import static pt.ulusofona.copelabs.ndn.android.umobile.common.PacketManagerImpl.PACKET_KEY_PREFIX;
 
 /** Manages the transfer of small payload packets through the TXT record of WifiRegular P2P Services.
  *  note that per http://www.drjukka.com/blog/wordpress/?p=127 (), this is not a sensible transfer
@@ -102,7 +102,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
         // Retrieve the UUID this application should use.
         mAssignedUuid = Identity.getUuid();
 
-        // Retrieve the instance of the WiFi P2P PacketManagerImpl, the Channel and create the DNS-SD Service request.
+        // Retrieve the instance of the WiFi P2P PacketManagerImpl, the CommOut and create the DNS-SD Service request.
 
 
         mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
@@ -113,7 +113,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
 
         WifiP2pListenerManager.registerListener(this);
 
-        // Startup the Broadcast Receiver to react to changes in the state of WiFi P2P.
+        // Startup the Broadcast DiscovererResult to react to changes in the state of WiFi P2P.
         mContext.registerReceiver(mIntentReceiver, new IntentFilter(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION));
     }
 
@@ -142,7 +142,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
      * @param packet the bytes of the packet to be sent
      * @return the Packet ID assigned to this transfer by the manager. Used when the acknowledgement arrives.
      */
-    public void sendPacket(Packet packet) {
+    public synchronized void sendPacket(Packet packet) {
         Log.i(TAG, "sendPacket [sha1sum=" + packet.getPayloadSize() + "] <" + digest(packet.getPayload()) + ">");
         //String pktId = generatePacketId();
 
@@ -166,7 +166,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
      * @param recipient the intended recipient of the packet to be sent. Base64-encoded UUID.
      * @param pktId the ID of the packet to be cancelled
      */
-    public void cancelPacket(String recipient, String pktId) {
+    public synchronized void cancelPacket(String recipient, String pktId) {
         // Retrieve its pending packets
         Map<String, String> pendingPackets = mPendingPackets.get(recipient);
         Log.d(TAG, "Cancelling packet : " + pktId + " for <" + recipient + ">");
@@ -187,7 +187,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
      * we must an update packet in our TXT-Record for that remote with the new list of acknowledgements.
      * @param sender the sender for whom our list of acknowledgements has changed
      */
-    private void updatePendingAcknowledgements(String sender) {
+    private synchronized void updatePendingAcknowledgements(String sender) {
         String acknowledgementList = "";
         List<String> pendingAcknowledgementsForSender = new ArrayList<>();
         if(mPendingAcknowledgements.containsKey(sender))
@@ -217,16 +217,16 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
      * @param recipient the intended recipient of this transfer (UUID)
      * @param pendingPacketsForRecipient the packets to be sent (PKT:ID, <payload>)
      */
-    private void registerTransferDescriptor(final String recipient, Map<String, String> pendingPacketsForRecipient) {
+    private synchronized void registerTransferDescriptor(final String recipient, Map<String, String> pendingPacketsForRecipient) {
         final WifiP2pDnsSdServiceInfo descriptor = Identity.getTransferDescriptorWithTxtRecord(recipient, pendingPacketsForRecipient);
-        Log.v(TAG, "Register Descriptor : " + recipient + " = " + pendingPacketsForRecipient.toString());
+        Log.v(TAG, "ServiceRegisterResult Descriptor : " + recipient + " = " + pendingPacketsForRecipient.toString());
         mWifiP2pManager.addLocalService(mWifiP2pChannel, descriptor, new WifiP2pManager.ActionListener() {
             @Override public void onSuccess() {
                 Log.v(TAG, "Local Service added");
                 mRegisteredDescriptors.put(recipient, descriptor);
             }
             @Override public void onFailure(int error) {
-                Log.e(TAG, "Error on register descriptor : " + error);
+                Log.e(TAG, "Error on start descriptor : " + error);
             }
         });
     }
@@ -234,7 +234,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
     /** Updates the registered TXT Record for an intended recipient. Called when some changes happen in the list of packets (cancellation or acknowledgement)
      * @param recipient the intended recipient of this transfer (UUID).
      */
-    private void updateRegisteredDescriptor(final String recipient) {
+    private synchronized void updateRegisteredDescriptor(final String recipient) {
         final Map<String, String> pendingPacketsForRecipient = mPendingPackets.get(recipient);
         if(pendingPacketsForRecipient != null) {
             Log.d(TAG, "Updating Registered Descriptor :" + recipient + " = " + pendingPacketsForRecipient.toString());

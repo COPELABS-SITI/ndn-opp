@@ -1,9 +1,8 @@
-package pt.ulusofona.copelabs.ndn.android.umobile.manager.packet;
+package pt.ulusofona.copelabs.ndn.android.umobile.common;
 
 
 import android.content.Context;
 
-import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticFaceManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 
 public interface PacketManager {

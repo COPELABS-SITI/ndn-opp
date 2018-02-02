@@ -30,14 +30,12 @@ import pt.ulusofona.copelabs.ndn.android.models.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.models.SctEntry;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.Identity;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.OpportunisticConnectionLessTransferManager;
-import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticChannelIn;
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.channels.OpportunisticChannelIn;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticConnectivityManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
-import pt.ulusofona.copelabs.ndn.android.umobile.manager.packet.PacketManager;
-import pt.ulusofona.copelabs.ndn.android.umobile.manager.packet.PacketManagerImpl;
-import pt.ulusofona.copelabs.ndn.android.umobile.manager.multihoming.WifiFaceManager;
-import pt.ulusofona.copelabs.ndn.android.umobile.manager.multihoming.WifiFaceManagerImpl;
-import pt.ulusofona.copelabs.ndn.android.umobile.nsd.NsdServiceDiscoverer;
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.NsdManager;
+import pt.ulusofona.copelabs.ndn.android.umobile.multihoming.WifiFaceManager;
+import pt.ulusofona.copelabs.ndn.android.umobile.multihoming.WifiFaceManagerImpl;
 import pt.ulusofona.copelabs.ndn.android.utilities.Utilities;
 import pt.ulusofona.copelabs.ndn.android.wifi.Wifi;
 
@@ -58,7 +56,6 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
     }
 
     private enum State { STARTED , STOPPED }
-    private NsdServiceDiscoverer mServiceTracker = NsdServiceDiscoverer.getInstance();
 
     public class Binder extends android.os.Binder {
 
@@ -104,6 +101,7 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
 
     private WifiFaceManager mWifiFaceManager = new WifiFaceManagerImpl();
     private PacketManager.Manager mPacketManager = new PacketManagerImpl();
+    private NsdManager mNsdManager = new NsdManager();
     private Wifi mWifi;
 
 
@@ -157,17 +155,16 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
             mPeerTracker.enable(this);
             mOppFaceManager.enable(local, this);
             mConnectionLessManager.enable(this);
-            mOppChannelIn.enable(local, this);
+            mOppChannelIn.enable(this);
 
             mConnectivityManager.enable(this);
             mWifi = new Wifi(this);
             mWifi.start();
 
-            mServiceTracker.addObserver(mOppFaceManager);
-            mServiceTracker.enable(this, mAssignedUuid);
-
             mPacketManager.enable(this, this, mOppFaceManager);
             mWifiFaceManager.enable(this, local);
+
+            mNsdManager.enable(local);
 
             Log.d(TAG, STARTED);
             sendBroadcast(new Intent(STARTED));
@@ -197,6 +194,7 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
             mPeerTracker.disable();
             mPacketManager.disable();
             mWifiFaceManager.disable();
+            mNsdManager.disable();
 
             /** Last one to close */
             mWifi.close();
@@ -217,40 +215,40 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
     }
 
     // Called by the C++ daemon when it adds a Face to its FaceTable.
-    private void afterFaceAdded(Face face) {
+    private synchronized void afterFaceAdded(Face face) {
         long faceId = face.getFaceId();
         mFacetable.put(faceId, face);
         mOppFaceManager.afterFaceAdded(face);
     }
 
     // Called by the C++ daemon when it adds a Face to its FaceTable.
-    private void beforeFaceRemoved(Face face) {
+    private synchronized void beforeFaceRemoved(Face face) {
         long faceId = face.getFaceId();
         mFacetable.remove(faceId);
     }
 
     // Called from JNI
-    private void transferData(long faceId, String name, byte[] payload) {
+    private synchronized void transferData(long faceId, String name, byte[] payload) {
         Log.d(TAG, "Transfer Data : " + faceId + " " + name + " length (" + payload.length + ") [" + Base64.encodeToString(payload, Base64.NO_PADDING) + "]");
         String recipient = mOppFaceManager.getUuid(faceId);
         mPacketManager.onTransferData(mAssignedUuid, recipient, payload, name);
     }
 
     // Called from JNI
-    private void transferInterest(long faceId, int nonce, byte[] payload) {
+    private synchronized void transferInterest(long faceId, int nonce, byte[] payload) {
         Log.d(TAG, "Transfer Interest : " + faceId + " " + nonce + " length (" + ((payload != null) ? payload.length : "NULL") + ")");
         String recipient = mOppFaceManager.getUuid(faceId);
         mPacketManager.onTransferInterest(mAssignedUuid, recipient, payload, nonce);
     }
 
     // Called from JNI
-    private void cancelInterest(long faceId, int nonce) {
+    private synchronized void cancelInterest(long faceId, int nonce) {
         Log.d(TAG, "Cancel Interest : " + faceId + " " + nonce);
         mPacketManager.onCancelInterest(faceId, nonce);
     }
 
     @Override
-    public void onPacketTransferred(String recipient, String pktId) {
+    public synchronized void onPacketTransferred(String recipient, String pktId) {
         Log.i(TAG, "Packet transferred from : " + recipient + " with id : [" + pktId + "]");
         Long faceId = mOppFaceManager.getFaceId(recipient);
         if(faceId != null) {
@@ -259,32 +257,32 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
     }
 
     @Override
-    public void onInterestPacketTransferred(String recipient, int nonce) {
+    public synchronized void onInterestPacketTransferred(String recipient, int nonce) {
         jniOnInterestTransferred(mOppFaceManager.getFaceId(recipient), nonce);
     }
 
     @Override
-    public void onDataPacketTransferred(String recipient, String name) {
+    public synchronized void onDataPacketTransferred(String recipient, String name) {
         jniOnDataTransferred(mOppFaceManager.getFaceId(recipient), name);
     }
 
     @Override
-    public void onCancelPacketSentOverConnectionLess(Packet packet) {
+    public synchronized void onCancelPacketSentOverConnectionLess(Packet packet) {
         mConnectionLessManager.cancelPacket(packet.getRecipient(), packet.getId());
     }
 
     @Override
-    public void onSendOverConnectionOriented(Packet packet) {
+    public synchronized void onSendOverConnectionOriented(Packet packet) {
         mOppFaceManager.sendPacket(packet);
     }
 
     @Override
-    public void onSendOverConnectionLess(Packet packet) {
+    public synchronized void onSendOverConnectionLess(Packet packet) {
         mConnectionLessManager.sendPacket(packet);
     }
 
     @Override
-    public void onPacketReceived(String sender, byte[] payload) {
+    public synchronized void onPacketReceived(String sender, byte[] payload) {
         Log.i(TAG, "Packet received from : " + sender + " with length : [" + payload.length + "]");
         Long faceId = mOppFaceManager.getFaceId(sender);
         if(faceId != null)

@@ -51,7 +51,7 @@ public class Identity {
      * @param txtRecord the TXT-Record to embed in this Service Descriptor that will be provided to a remote WifiRegular P2P Peers during the Service Discovery Phase
      * @return the Service Descriptor
      */
-    public static WifiP2pDnsSdServiceInfo getTransferDescriptorWithTxtRecord(String recipient, Map<String, String> txtRecord) {
+    public synchronized static WifiP2pDnsSdServiceInfo getTransferDescriptorWithTxtRecord(String recipient, Map<String, String> txtRecord) {
         if(!mInitialized)
             throw new RuntimeException("Uninitialized Identity. Call initialize(Context context) method prior to retrieving descriptor.");
         return WifiP2pDnsSdServiceInfo.newInstance(mAssignedUuid, SVC_TRANSFER_TYPE + "." + recipient, txtRecord);

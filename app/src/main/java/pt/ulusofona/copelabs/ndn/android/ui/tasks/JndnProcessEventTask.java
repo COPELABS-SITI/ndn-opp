@@ -37,9 +37,9 @@ public class JndnProcessEventTask extends AsyncTask<Void, Void, Integer> {
     @Override
     protected void onPostExecute(final Integer result) {
         if (mRetVal == -1) {
-            Log.e(TAG, "Error Register Prefix Task");
+            Log.e(TAG, "Error ServiceRegister Prefix Task");
         } else {
-            //Log.d(TAG, "Register Prefix Task ended (onPostExecute)");
+            //Log.d(TAG, "ServiceRegister Prefix Task ended (onPostExecute)");
         }
     }
 }

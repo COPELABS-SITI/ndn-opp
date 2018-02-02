@@ -10,6 +10,7 @@ package pt.ulusofona.copelabs.ndn.android.ui.dialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.databinding.DataBindingUtil;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
@@ -66,7 +67,7 @@ public class SendDataDialog extends DialogFragment {
 					Blob blob = new Blob(dialogBinding.dataContent.getText().toString());
 					Log.v(TAG, "Blob : " + dialogBinding.dataContent.getText().toString() + " > " + Base64.encodeToString(blob.getImmutableArray(), Base64.NO_PADDING));
 					data.setContent(blob);
-					new RespondToInterestTask(mFace, data).execute();
+					new RespondToInterestTask(mFace, data).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 				}
 			})
 			.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {

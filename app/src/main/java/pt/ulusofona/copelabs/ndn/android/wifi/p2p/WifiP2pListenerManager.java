@@ -17,7 +17,7 @@ import java.util.Map;
 
 /**
  * This class is responsible to manage the wifi p2p listeners.
- * Register, unregister and notify them.
+ * RegisterResult, unregisterListener and notify them.
  * @author Miguel Tavares (COPELABS/ULHT)
  * @version 1.0, 2017
  */
@@ -95,6 +95,24 @@ public abstract class WifiP2pListenerManager {
         for(WifiP2pListener listener : listeners) {
             if(listener instanceof WifiP2pListener.WifiP2pConnectionStatus) {
                 ((WifiP2pListener.WifiP2pConnectionStatus)listener).onDisconnected(intent);
+            }
+        }
+    }
+
+    static void notifyGoIpAddressAvailable(String ipAddress) {
+        Log.i(TAG, "Group Owner ip address is " + ipAddress);
+        for(WifiP2pListener listener : listeners) {
+            if(listener instanceof WifiP2pListener.GoIpAvailable) {
+                ((WifiP2pListener.GoIpAvailable)listener).onGoIpAddressAvailable(ipAddress);
+            }
+        }
+    }
+
+    static void notifyIamGo() {
+        Log.i(TAG, "I'm Go!!");
+        for(WifiP2pListener listener : listeners) {
+            if(listener instanceof WifiP2pListener.GoIpAvailable) {
+                ((WifiP2pListener.GoIpAvailable)listener).onIamGo();
             }
         }
     }

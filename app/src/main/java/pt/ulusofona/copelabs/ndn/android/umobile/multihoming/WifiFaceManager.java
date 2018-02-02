@@ -1,4 +1,4 @@
-package pt.ulusofona.copelabs.ndn.android.umobile.manager.multihoming;
+package pt.ulusofona.copelabs.ndn.android.umobile.multihoming;
 
 
 import android.content.Context;

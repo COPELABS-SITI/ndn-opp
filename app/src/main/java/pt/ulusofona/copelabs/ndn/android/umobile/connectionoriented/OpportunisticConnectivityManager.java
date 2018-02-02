@@ -85,7 +85,7 @@ public class OpportunisticConnectivityManager implements WifiP2pManager.ChannelL
             if (peer.isGroupOwner() /*&&  peer.isAvailable()*//** ver se esta available */) {
                 selectedUuid = peer.getUuid();
                 break;
-            } else if (/*!peer.hasGroupOwner()*/ peer.isAvailable() && !peer.isGroupOwner() && teste(selectedUuid, peer.getUuid()))
+            } else if (/*!peer.hasGroupOwner()*/ peer.isAvailable() && !peer.isGroupOwner() && isHigher(selectedUuid, peer.getUuid()))
                 selectedUuid = peer.getUuid();
         }
 
@@ -97,7 +97,7 @@ public class OpportunisticConnectivityManager implements WifiP2pManager.ChannelL
         return mAssignedUuid.equals(selectGroupOwner(candidates));
     }
 
-    private boolean teste(String selectedUuid, String uuid) {
+    private boolean isHigher(String selectedUuid, String uuid) {
         return Integer.parseInt(uuid) > Integer.parseInt(selectedUuid);
     }
 

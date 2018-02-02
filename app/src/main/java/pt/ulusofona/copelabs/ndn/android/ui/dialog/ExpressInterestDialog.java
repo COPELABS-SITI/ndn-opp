@@ -9,6 +9,7 @@ package pt.ulusofona.copelabs.ndn.android.ui.dialog;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
@@ -56,7 +57,7 @@ public class ExpressInterestDialog extends DialogFragment {
 					Name name = new Name(OpportunisticPeerTracking.PREFIX + "/" + dialogBinding.interestName.getText().toString());
 					Interest interest = new Interest(name, OpportunisticPeerTracking.INTEREST_LIFETIME);
 					interest.setLongLived(dialogBinding.isLongLived.isChecked());
-					new ExpressInterestTask(mFace, interest, mOnDataReceived).execute();
+					new ExpressInterestTask(mFace, interest, mOnDataReceived).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 				}
 			})
 			.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {

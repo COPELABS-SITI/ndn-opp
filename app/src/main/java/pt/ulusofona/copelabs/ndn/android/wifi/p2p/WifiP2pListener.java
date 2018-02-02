@@ -36,4 +36,9 @@ public interface WifiP2pListener {
         void onDisconnected(Intent intent);
     }
 
+    interface GoIpAvailable extends WifiP2pListener {
+        void onIamGo();
+        void onGoIpAddressAvailable(String ipAddress);
+    }
+
 }

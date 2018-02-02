@@ -1,4 +1,4 @@
-package pt.ulusofona.copelabs.ndn.android.umobile.manager.packet;
+package pt.ulusofona.copelabs.ndn.android.umobile.common;
 
 
 import android.content.Context;
@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import pt.ulusofona.copelabs.ndn.android.preferences.Configuration;
-import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticFaceManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
@@ -50,14 +49,16 @@ public class PacketManagerImpl implements PacketManager.Manager, WifiP2pListener
     }
 
     @Override
-    public void disable() {
-        WifiP2pListenerManager.unregisterListener(this);
-        mConnectionEstablished = false;
-        mEnable = false;
+    public synchronized void disable() {
+        if(mEnable) {
+            WifiP2pListenerManager.unregisterListener(this);
+            mConnectionEstablished = false;
+            mEnable = false;
+        }
     }
 
     @Override
-    public void onTransferInterest(String sender, String recipient, byte[] payload, int nonce) {
+    public synchronized void onTransferInterest(String sender, String recipient, byte[] payload, int nonce) {
         Log.i(TAG, "Transferring interest from " + sender + " to " + recipient);
         String pktId = generatePacketId();
         Log.i(TAG, "It's packet id is " + pktId);
@@ -68,7 +69,7 @@ public class PacketManagerImpl implements PacketManager.Manager, WifiP2pListener
     }
 
     @Override
-    public void onTransferData(String sender, String recipient, byte[] payload, String name) {
+    public synchronized void onTransferData(String sender, String recipient, byte[] payload, String name) {
         Log.i(TAG, "Transferring interest from " + sender + " to " + recipient);
         String pktId = generatePacketId();
         Log.i(TAG, "It's packet id is " + pktId);
@@ -79,7 +80,7 @@ public class PacketManagerImpl implements PacketManager.Manager, WifiP2pListener
     }
 
     @Override
-    public void onPacketTransferred(String pktId) {
+    public synchronized void onPacketTransferred(String pktId) {
         Packet packet = mPendingPackets.remove(pktId);
         if(isDataPacket(pktId)) {
             Log.i(TAG, "Data packet with id " + pktId + " was transferred");
@@ -91,7 +92,7 @@ public class PacketManagerImpl implements PacketManager.Manager, WifiP2pListener
     }
 
     @Override
-    public void onCancelInterest(long faceId, int nonce) {
+    public synchronized void onCancelInterest(long faceId, int nonce) {
         String pktId = mPendingInterestIdsFromNonces.get(nonce);
         Log.i(TAG, "Cancelling interest packet id " + pktId);
         Packet packet = mPendingPackets.remove(pktId);
@@ -113,7 +114,7 @@ public class PacketManagerImpl implements PacketManager.Manager, WifiP2pListener
         mConnectionEstablished = false;
     }
 
-    private synchronized String generatePacketId() {
+    private String generatePacketId() {
         return PACKET_KEY_PREFIX + (mPacketId++);
     }
 
@@ -147,26 +148,26 @@ public class PacketManagerImpl implements PacketManager.Manager, WifiP2pListener
         return mPendingDataNamesFromIds.get(pktId) != null;
     }
 
-    private void pushDataPacket(String pktId, String name) {
+    private synchronized void pushDataPacket(String pktId, String name) {
         Log.i(TAG, "Pushing data packet id " + pktId);
         mPendingDataIdsFromNames.put(name, pktId);
         mPendingDataNamesFromIds.put(pktId, name);
     }
 
-    private String removeDataPacket(String pktId) {
+    private synchronized String removeDataPacket(String pktId) {
         Log.i(TAG, "Removing data packet id " + pktId);
         String name = mPendingDataNamesFromIds.remove(pktId);
         mPendingDataIdsFromNames.remove(name);
         return name;
     }
 
-    private void pushInterestPacket(String pktId, int nonce) {
+    private synchronized void pushInterestPacket(String pktId, int nonce) {
         Log.i(TAG, "Pushing interest packet id " + pktId);
         mPendingInterestIdsFromNonces.put(nonce, pktId);
         mPendingInterestNoncesFromIds.put(pktId, nonce);
     }
 
-    private int removeInterestPacket(String pktId) {
+    private synchronized int removeInterestPacket(String pktId) {
         Log.i(TAG, "Removing interest packet id " + pktId);
         int nonce = mPendingInterestNoncesFromIds.remove(pktId);
         mPendingInterestIdsFromNonces.remove(nonce);
