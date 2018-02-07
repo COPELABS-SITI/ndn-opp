@@ -26,10 +26,15 @@ import pt.ulusofona.copelabs.ndn.databinding.DialogExpressInterestBinding;
 
 /** Dialog for the addition of a new Route to the RIB and FIB of the running daemon. */
 public class ExpressInterestDialog extends DialogFragment {
+
+	/** This variable is used to debug ExpressInterestDialog class */
 	private static final String TAG = ExpressInterestDialog.class.getSimpleName();
 
-	private Face mFace;
+	/** This object is used to receive the data related with the interest send */
 	private OnData mOnDataReceived;
+
+	/** This object is used to define which face the interest will be send. */
+	private Face mFace;
 
 	/** Method to be used for creating a new AddRouteDialog.
 	 * @return the AddRouteDialog

@@ -15,10 +15,6 @@ import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.util.Base64;
 import android.util.Log;
-import android.view.View;
-import android.widget.CheckBox;
-import android.widget.EditText;
-import android.widget.TextView;
 
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
@@ -33,21 +29,27 @@ import pt.ulusofona.copelabs.ndn.databinding.DialogRespondToInterestBinding;
 
 /** Dialog for the addition of a new Route to the RIB and FIB of the running daemon. */
 public class RespondToInterestDialog extends DialogFragment {
+
+	/** This variable is used to debug RespondToInterestDialog */
 	private static final String TAG = RespondToInterestDialog.class.getSimpleName();
 
+	/** This object is used to remove the interest from incoming interests */
 	private OpportunisticPeerTracking mPeerTracking;
 
-	private Face mFace;
+	/** This object is used to reference which interest are we responding */
 	private Interest mInterest;
+
+	/** This object is used to set which face the interest will be responded. */
+	private Face mFace;
 
 	/** Method to be used for creating a new AddRouteDialog.
 	 * @return the AddRouteDialog
 	 */
 	public static RespondToInterestDialog create(OpportunisticPeerTracking opt, Face face, Interest interest) {
 		RespondToInterestDialog fragment = new RespondToInterestDialog();
+		fragment.mInterest = interest;
 		fragment.mPeerTracking = opt;
 		fragment.mFace = face;
-		fragment.mInterest = interest;
 		return fragment;
 	}
 
@@ -63,7 +65,7 @@ public class RespondToInterestDialog extends DialogFragment {
 
 		return new AlertDialog.Builder(getActivity())
 			.setView(dialogBinding.getRoot())
-			.setTitle("Send Data")
+			.setTitle("Send WifiP2pCache")
 			.setPositiveButton(R.string.send, new DialogInterface.OnClickListener() {
 				@Override public void onClick(DialogInterface di, int id) {
 					Name dName = new Name(dialogBinding.dataName.getText().toString());

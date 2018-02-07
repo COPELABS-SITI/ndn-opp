@@ -1,3 +1,10 @@
+/**
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
+ * Task to register a prefix for pushed data.
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.ui.tasks;
 
 import android.os.AsyncTask;
@@ -5,7 +12,6 @@ import android.util.Log;
 
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Name;
-import net.named_data.jndn.OnInterestCallback;
 import net.named_data.jndn.OnPushedDataCallback;
 import net.named_data.jndn.OnRegisterFailed;
 import net.named_data.jndn.OnRegisterSuccess;
@@ -18,6 +24,8 @@ import net.named_data.jndn.security.identity.MemoryPrivateKeyStorage;
 import java.io.IOException;
 
 public class RegisterPrefixForPushedDataTask extends AsyncTask<Void, Void, Integer> {
+
+    /** This variable is used to debug RegisterPrefixForPushedDataTask class */
     private static final String TAG = RegisterPrefixForPushedDataTask.class.getSimpleName();
 
     private Face mFace;
@@ -36,7 +44,7 @@ public class RegisterPrefixForPushedDataTask extends AsyncTask<Void, Void, Integ
 
     @Override
     protected Integer doInBackground(Void... params) {
-        Log.d(TAG, "ServiceRegister Prefix Task (doInBackground)");
+        Log.d(TAG, "ServiceRegister Prefix WifiP2pCacheRefresher (doInBackground)");
 
         // Create keychain
         KeyChain keyChain;
@@ -67,9 +75,9 @@ public class RegisterPrefixForPushedDataTask extends AsyncTask<Void, Void, Integ
     @Override
     protected void onPostExecute(final Integer result) {
         if (mRetVal == -1) {
-            Log.d(TAG, "Error ServiceRegister Prefix Task");
+            Log.d(TAG, "Error ServiceRegister Prefix WifiP2pCacheRefresher");
         } else {
-            Log.d(TAG, "ServiceRegister Prefix Task ended (onPostExecute)");
+            Log.d(TAG, "ServiceRegister Prefix WifiP2pCacheRefresher ended (onPostExecute)");
         }
     }
 

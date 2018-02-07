@@ -1,3 +1,10 @@
+/**
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2018-01-31
+ * This class receives data from a socket and insert it into a buffer
+ * @author Miguel Tavares (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.buffering;
 
 import android.util.Log;
@@ -9,9 +16,12 @@ import java.net.Socket;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 
 
-public class BufferIn extends Thread{
+public class BufferIn extends Thread {
 
+    /** This variable is used to debug BufferIn class */
     private static final String TAG = BufferIn.class.getSimpleName();
+
+    /** This socket is used to receive the data */
     private Socket mSocket;
 
     public BufferIn(Socket socket) {

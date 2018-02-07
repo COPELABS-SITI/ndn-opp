@@ -1,9 +1,12 @@
 /**
- *  @version 1.0
+ * @version 1.1
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
  * Implementation of the Name entry class.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
- */package pt.ulusofona.copelabs.ndn.android.models;
+ * @author Miguel Tavares (COPELABS/ULHT)
+ */
+
+package pt.ulusofona.copelabs.ndn.android.models;
 
 import android.support.annotation.NonNull;
 
@@ -11,17 +14,23 @@ import android.support.annotation.NonNull;
  * Uses a single cell layout for displaying.
  */
 public class Name implements Comparable<Name> {
-	private String name;
+
+	/** Attribute mName */
+	private String mName;
 
 	/** Main constructor.
 	 * @param name Name associated to this entry.
 	 */
 	public Name(String name) {
-		this.name = name;
+		this.mName = name;
 	}
 
+	/**
+	 * Getter for attribute name
+	 * @return name
+	 */
 	public String getName() {
-		return name;
+		return mName;
 	}
 
 	/** Comparison of Name
@@ -30,12 +39,13 @@ public class Name implements Comparable<Name> {
 	 */
 	@Override
 	public int compareTo(@NonNull Name that) {
-		return this.name.compareTo(that.name);
+		return this.mName.compareTo(that.mName);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		Name that = (Name) obj;
-		return name.equals(that.name);
+		return mName.equals(that.mName);
 	}
+
 }

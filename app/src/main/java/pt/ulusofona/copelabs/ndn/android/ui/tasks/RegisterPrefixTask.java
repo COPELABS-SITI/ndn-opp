@@ -1,3 +1,10 @@
+/**
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
+ * Task to register a prefix.
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.ui.tasks;
 
 import android.os.AsyncTask;
@@ -35,7 +42,7 @@ public class RegisterPrefixTask extends AsyncTask<Void, Void, Integer> {
 
     @Override
     protected Integer doInBackground(Void... params) {
-        Log.d(TAG, "ServiceRegister Prefix Task (doInBackground)");
+        Log.d(TAG, "ServiceRegister Prefix WifiP2pCacheRefresher (doInBackground)");
 
         // Create keychain
         KeyChain keyChain;
@@ -66,9 +73,9 @@ public class RegisterPrefixTask extends AsyncTask<Void, Void, Integer> {
     @Override
     protected void onPostExecute(final Integer result) {
         if (mRetVal == -1) {
-            Log.d(TAG, "Error ServiceRegister Prefix Task");
+            Log.d(TAG, "Error ServiceRegister Prefix WifiP2pCacheRefresher");
         } else {
-            Log.d(TAG, "ServiceRegister Prefix Task ended (onPostExecute)");
+            Log.d(TAG, "ServiceRegister Prefix WifiP2pCacheRefresher ended (onPostExecute)");
         }
     }
 

@@ -16,11 +16,6 @@
             android:layout_height="wrap_content"
             android:text="@string/groupLeave" />
 
-        <Button android:id="@+id/btn_start_peer_discovery"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/startPeerDiscovery" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">

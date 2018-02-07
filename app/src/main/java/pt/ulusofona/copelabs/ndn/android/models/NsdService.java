@@ -8,7 +8,6 @@
 package pt.ulusofona.copelabs.ndn.android.models;
 
 import android.net.nsd.NsdServiceInfo;
-import android.os.Handler;
 import android.util.Log;
 
 
@@ -16,15 +15,12 @@ import android.util.Log;
  *  A NsdData associates a UUID with a status along with an IP and a port number. The status reflect whether
  *  the service is currently reachable or not at the associated IP and port.
  */
-public class NsdService implements Runnable {
+public class NsdService {
 
     public static final int DEFAULT_PORT = 16363;
-    public static final String SERVICE_TYPE = "_ndnopp._tcp.";
     private static final String TAG = NsdService.class.getSimpleName();
-    private static final int LOST_TIME_INTERVAL = 40 * 1000;
     private static final String UNKNOWN_HOST = "0.0.0.0";
     private static final int UNKNOWN_PORT = 0;
-    //private Handler mHandler = new Handler();
 
     /** Enumeration of possible statuses. */
     public enum Status {
@@ -40,16 +36,6 @@ public class NsdService implements Runnable {
     public String host;
     public int port;
 
-    /** Default constructor.
-     * @param uuid UUID of the device advertising the NsdData.
-     */
-    public NsdService(String uuid) {
-        this.currently = Status.UNAVAILABLE;
-        this.uuid = uuid;
-        this.host = UNKNOWN_HOST;
-        this.port = UNKNOWN_PORT;
-    }
-
     public NsdService(String uuid, String host) {
         this.uuid = uuid;
         this.host = host;
@@ -57,26 +43,9 @@ public class NsdService implements Runnable {
         this.currently = Status.AVAILABLE;
     }
 
-    public NsdService(String uuid, String host, int port) {
-        this.uuid = uuid;
-        this.host = host;
-        this.port = port;
-        this.currently = Status.AVAILABLE;
-        //mHandler.postDelayed(this, LOST_TIME_INTERVAL);
-    }
-
-    public void refresh() {
-        //mHandler.removeCallbacks(this);
-        //mHandler.postDelayed(this, LOST_TIME_INTERVAL);
-    }
-
     public static NsdService convert(NsdServiceInfo descriptor) {
         String[] data = descriptor.getServiceName().split("_");
-        return new NsdService(data[0], data[1], DEFAULT_PORT);
-    }
-
-    public static String convertUuidFromServiceName(String serviceName) {
-        return serviceName.split("_")[0];
+        return new NsdService(data[0], data[1]);
     }
 
     public Status getStatus() {return currently;}
@@ -91,35 +60,12 @@ public class NsdService implements Runnable {
      */
     public void resolved(NsdServiceInfo descriptor) {
         currently = Status.AVAILABLE;
-        refresh();
         if(isHostValid(descriptor.getHost().getHostAddress())) {
             // Use the broken host resolution implementation on older APIs
             host = descriptor.getHost().getHostAddress();
             Log.v(TAG, "Resolved " + this.uuid + "@" + this.host);
             port = descriptor.getPort();
         }
-    }
-
-    /** Updates the NsdData to the unavailable state */
-    public void markAsUnavailable() {
-        Log.e(TAG, uuid + " expired. Was marked as unavailable");
-        currently = Status.UNAVAILABLE;
-        host = UNKNOWN_HOST;
-        port = UNKNOWN_PORT;
-    }
-
-    public void destroy() {
-        //mHandler.removeCallbacks(this);
-        //mListener = null;
-    }
-
-    @Override
-    public void run() {
-        markAsUnavailable();
-        /*
-        if(mListener != null)
-            mListener.refresh(this);
-            */
     }
 
     /** Create a pretty-print String of this NsdData.

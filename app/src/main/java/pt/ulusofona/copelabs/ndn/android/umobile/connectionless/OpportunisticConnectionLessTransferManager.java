@@ -1,8 +1,9 @@
 /**
- * @version 1.0
+ * @version 1.1
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-08-25
  * This class implements the connection-less transfers using the Wi-Fi P2P Service Discovery
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ * @author Miguel Tavares (COPELABS/ULHT)
  */
 package pt.ulusofona.copelabs.ndn.android.umobile.connectionless;
 
@@ -17,11 +18,8 @@ import android.net.wifi.p2p.nsd.WifiP2pServiceInfo;
 import android.util.Base64;
 import android.util.Log;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,14 +29,15 @@ import java.util.Observer;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticPeerTracker;
 import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketObserver;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticPeer;
-import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticPeerTracker;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 
 import static pt.ulusofona.copelabs.ndn.android.umobile.common.PacketManagerImpl.PACKET_KEY_PREFIX;
+import static pt.ulusofona.copelabs.ndn.android.utilities.Utilities.digest;
 
 /** Manages the transfer of small payload packets through the TXT record of WifiRegular P2P Services.
  *  note that per http://www.drjukka.com/blog/wordpress/?p=127 (), this is not a sensible transfer
@@ -64,96 +63,106 @@ import static pt.ulusofona.copelabs.ndn.android.umobile.common.PacketManagerImpl
  */
 public class OpportunisticConnectionLessTransferManager implements Observer, WifiP2pManager.ChannelListener,
         WifiP2pListener.TxtRecordAvailable {
-    public static final String TAG = OpportunisticConnectionLessTransferManager.class.getSimpleName();
 
-    // Key used in the TXT-Record to store packets. Packet ID is appended after it.
-    //private static final String PACKET_KEY_PREFIX = "PKT:";
-    //private static int CURRENT_PACKET_ID = 0;
+    /** This variable is used to debug OpportunisticConnectionLessTransferManager class */
+    private static final String TAG = OpportunisticConnectionLessTransferManager.class.getSimpleName();
 
-    // Key used in the TXT-Record to store the list of acknowledgments. The value is a comma-separated
-    // string with all the Packet IDs that are being acknowledged.
+    /**
+     * Key used in the TXT-Record to store the list of acknowledgments. The
+     * value is a comma-separated string with all the Packet IDs
+     * that are being acknowledged.
+     * */
     private static final String ACKNOWLEDGMENTS_KEY = "ACKs";
     private static final String ACKNOWLEDGMENT_ID_SEPARATOR = ",";
 
-    private Context mContext;
-    private WifiP2pManager mWifiP2pManager;
-    private WifiP2pManager.Channel mWifiP2pChannel;
-    private WifiP2pServiceInfo mDescriptor;
-
-    // The Context to which this PacketManagerImpl is attached.
-    private PacketObserver mObservingContext;
-    private String mAssignedUuid;
-
-    private Set<String> mKnownPeers = new HashSet<>();
-
-    // Associates the UUID of a recipient with the packets pending for it (PKT:ID, PAYLOAD)
+    /** Associates the UUID of a recipient with the packets pending for it (PKT:ID, PAYLOAD) */
     private Map<String, Map<String, String>> mPendingPackets = new HashMap<>();
-    // Associates the UUID of a recipient with the descriptor containing the packets pending for it.
+
+    /**
+     * Associates the UUID of a recipient with the descriptor containing
+     * the packets pending for it.
+     */
     private Map<String, WifiP2pDnsSdServiceInfo> mRegisteredDescriptors = new HashMap<>();
 
-    // Associates the UUID of a packet sender with the acknowledgements addressed to that sender
+    /**
+     * Associates the UUID of a packet sender with the acknowledgements
+     * addressed to that sender
+    */
     private Map<String, Set<String>> mPendingAcknowledgements = new HashMap<>();
 
+    /** The Context to which this PacketManagerImpl is attached. */
+    private PacketObserver mObservingContext;
+
+    /** This object holds all known peers */
+    private Set<String> mKnownPeers = new HashSet<>();
+
+    /** These three objects are used to establish Wi-Fi P2P connection less communications */
+    private WifiP2pManager.Channel mWifiP2pChannel;
+    private WifiP2pManager mWifiP2pManager;
+    private WifiP2pServiceInfo mDescriptor;
+
+    /** This variable holds this device uuid */
+    private String mAssignedUuid;
+
+    /** This variable holds the application context */
+    private Context mContext;
+
+    /** This variable holds the state of this class. If is running or not */
+    private boolean mRunning;
+
+    /**
+     * This method enables the connection less feature
+     * @param context application context
+     */
     public void enable(Context context) {
-        mContext = context;
-        // Store the reference to the context observing us for calling back when packets are received or transfers acknowledged.
-        mObservingContext = (PacketObserver) context;
-
-        // Retrieve the UUID this application should use.
-        mAssignedUuid = Identity.getUuid();
-
-        // Retrieve the instance of the WiFi P2P PacketManagerImpl, the CommOut and create the DNS-SD Service request.
-
-
-        mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
-        mWifiP2pChannel = mWifiP2pManager.initialize(context, context.getMainLooper(), this);
-        //mWifiP2pManager.setDnsSdResponseListeners(mWifiP2pChannel, null, this);
-
-        mDescriptor = Identity.getDescriptor();
-
-        WifiP2pListenerManager.registerListener(this);
-
-        // Startup the Broadcast DiscovererResult to react to changes in the state of WiFi P2P.
-        mContext.registerReceiver(mIntentReceiver, new IntentFilter(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION));
-    }
-
-    public void disable() {
-        // Cleanup upon detachment.
-        mContext.unregisterReceiver(mIntentReceiver);
-        WifiP2pListenerManager.unregisterListener(this);
-        mWifiP2pManager.setDnsSdResponseListeners(mWifiP2pChannel, null, null);
-    }
-
-    private static String digest(byte[] payload) {
-        String sha1 = "FAIL";
-        try {
-            byte[] sha1sum = MessageDigest.getInstance("SHA-1").digest(payload);
-            Formatter fmt = new Formatter();
-            for(byte b : sha1sum)
-                fmt.format("%02x", b);
-            sha1 = fmt.toString();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+        if (!mRunning) {
+            mContext = context;
+            // Store the reference to the context observing us for calling back when packets are received or transfers acknowledged.
+            mObservingContext = (PacketObserver) context;
+            // Retrieve the UUID this application should use.
+            mAssignedUuid = Identity.getUuid();
+            // Retrieve the instance of the WiFi P2P PacketManagerImpl, the CommOut and create the DNS-SD Service request.
+            mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
+            mWifiP2pChannel = mWifiP2pManager.initialize(context, context.getMainLooper(), this);
+            // Retrieve the this device descriptor
+            mDescriptor = Identity.getDescriptor();
+            // Registers a listener in order to be notified every time a Txt Record is received
+            WifiP2pListenerManager.registerListener(this);
+            // Startup the Broadcast DiscovererResult to react to changes in the state of WiFi P2P.
+            mContext.registerReceiver(mIntentReceiver, new IntentFilter(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION));
+            mRunning = true;
         }
-        return sha1;
     }
 
-    /** Request the sending of a packet to an intended recipient.
+    /**
+     * This method disables the connection less feature
+     */
+    public void disable() {
+        if (mRunning) {
+            // Cleanup upon detachment.
+            mContext.unregisterReceiver(mIntentReceiver);
+            WifiP2pListenerManager.unregisterListener(this);
+            mWifiP2pManager.setDnsSdResponseListeners(mWifiP2pChannel, null, null);
+            mRunning = false;
+        }
+    }
+
+    /**
+     * Request the sending of a packet to an intended recipient.
      * @param packet the bytes of the packet to be sent
-     * @return the Packet ID assigned to this transfer by the manager. Used when the acknowledgement arrives.
      */
     public synchronized void sendPacket(Packet packet) {
         Log.i(TAG, "sendPacket [sha1sum=" + packet.getPayloadSize() + "] <" + digest(packet.getPayload()) + ">");
-        //String pktId = generatePacketId();
 
         // Retrieve the packets pending for the recipient.
         Map<String, String> pendingPacketsForRecipient = mPendingPackets.get(packet.getRecipient());
         if(pendingPacketsForRecipient == null)
             pendingPacketsForRecipient = new HashMap<>();
 
-        // Base64 encoding of the String that guarantees Android works. NO_PADDING because if there are trailing ==, Android
-        // does not report the TXT-Record ...
+        // Base64 encoding of the String that guarantees Android works. NO_PADDING
+        // because if there are trailing ==, Android does not report the TXT-Record
         String data = Base64.encodeToString(packet.getPayload(), Base64.NO_PADDING);
+
         // Add the new packet to those intended for the recipient.
         pendingPacketsForRecipient.put(packet.getId(), data);
         mPendingPackets.put(packet.getRecipient(), pendingPacketsForRecipient);
@@ -213,7 +222,8 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
         mPendingPackets.put(sender, pendingPacketsForRemote);
     }
 
-    /** Performs the registration of a Transfer Service Instance containing a TXT Records with all the pending packets.
+    /**
+     * Performs the registration of a Transfer Service Instance containing a TXT Records with all the pending packets.
      * @param recipient the intended recipient of this transfer (UUID)
      * @param pendingPacketsForRecipient the packets to be sent (PKT:ID, <payload>)
      */
@@ -231,7 +241,8 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
         });
     }
 
-    /** Updates the registered TXT Record for an intended recipient. Called when some changes happen in the list of packets (cancellation or acknowledgement)
+    /**
+     * Updates the registered TXT Record for an intended recipient. Called when some changes happen in the list of packets (cancellation or acknowledgement)
      * @param recipient the intended recipient of this transfer (UUID).
      */
     private synchronized void updateRegisteredDescriptor(final String recipient) {
@@ -361,7 +372,8 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
         }
     }
 
-    @Override public void onChannelDisconnected() {
+    @Override
+    public void onChannelDisconnected() {
         Log.e(TAG, "onChannelDisconnected");
     }
 
@@ -382,7 +394,8 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
         }
     };
 
-    /** Used by the Opportunistic Peer Tracker to notify of changes in the list of Peers.
+    /**
+     * Used by the Opportunistic Peer Tracker to notify of changes in the list of Peers.
      * @param observable
      * @param obj
      */

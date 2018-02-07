@@ -1,3 +1,10 @@
+/**
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2018-01-31
+ * This class is manages the NSD implementation.
+ * @author Miguel Tavares (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd;
 
 
@@ -19,16 +26,38 @@ import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 
 public class NsdManager implements WifiP2pListener.WifiP2pConnectionStatus, WifiP2pListener.GoIpAvailable {
 
+    /** This variable is used to debug NsdManager class */
     private static final String TAG = NsdManager.class.getSimpleName();
+
+    /** This port is used to establish a communication between devices that uses this NSD implementation */
     private static final int PORT = 26363;
+
+    /** These variables are used to hold the status of some NSD features */
     private boolean mEnabled, mRunning, mGroupOwning, mDiscovering;
+
+    /** This interface is used to communicate with the daemon */
     private OpportunisticDaemon.Binder mDaemonBinder;
+
+    /** This object does the peer discovery */
     private ServiceDiscoverer mServiceDiscoverer;
+
+    /** This object does the NSD registration */
     private ServiceRegister mServiceRegister;
+
+    /** This object manages all peer's status */
     private ServiceLeader mServiceLeader;
+
+    /** This object holds the leader's host info */
     private HostInfo mLeaderInfo;
+
+    /** This object holds the this device host info */
     private NsdInfo mMeInfo;
 
+
+    /**
+     * This method enables the NSD Manager
+     * @param binder
+     */
     public synchronized void enable(OpportunisticDaemon.Binder binder) {
         if(!mEnabled) {
             Log.i(TAG, "Enabling NsdManager");
@@ -39,6 +68,9 @@ public class NsdManager implements WifiP2pListener.WifiP2pConnectionStatus, Wifi
         }
     }
 
+    /**
+     * This method disables the NSD Manager
+     */
     public synchronized void disable() {
         if(mEnabled) {
             Log.i(TAG, "Disabling NsdManager");
@@ -49,6 +81,10 @@ public class NsdManager implements WifiP2pListener.WifiP2pConnectionStatus, Wifi
         }
     }
 
+
+    /**
+     * This method enable some features related with NSD service
+     */
     private synchronized void enableService() {
         if(!mRunning) {
             Log.i(TAG, "Enabling services of NsdManager");
@@ -59,6 +95,9 @@ public class NsdManager implements WifiP2pListener.WifiP2pConnectionStatus, Wifi
         }
     }
 
+    /**
+     * This method disables all the features related with NSD service
+     */
     private synchronized void disableService() {
         if(mRunning) {
             Log.i(TAG, "Disabling services of NsdManager");
@@ -75,6 +114,11 @@ public class NsdManager implements WifiP2pListener.WifiP2pConnectionStatus, Wifi
         }
     }
 
+    /**
+     * This method is invoked when is detected a Wi-FI P2P connection
+     * It starts automatically the discovery process and also detects this device info.
+     * @param intent
+     */
     @Override
     public void onConnected(Intent intent) {
         Log.i(TAG, "Connected");
@@ -89,12 +133,19 @@ public class NsdManager implements WifiP2pListener.WifiP2pConnectionStatus, Wifi
         }
     }
 
+    /**
+     * This method is invoked when a Wi-Fi P2P connection goes down
+     * @param intent
+     */
     @Override
     public void onDisconnected(Intent intent) {
         Log.i(TAG, "Disconnected");
         disableService();
     }
 
+    /**
+     * This method is invoked when this device is elected as a GO
+     */
     @Override
     public void onIamGo() {
         if(!mGroupOwning) {
@@ -105,6 +156,10 @@ public class NsdManager implements WifiP2pListener.WifiP2pConnectionStatus, Wifi
         }
     }
 
+    /**
+     * This method is invoked when GO's IP address is discovered
+     * @param ipAddress GO's IP address
+     */
     @Override
     public void onGoIpAddressAvailable(String ipAddress) {
         if(!mDiscovering) {

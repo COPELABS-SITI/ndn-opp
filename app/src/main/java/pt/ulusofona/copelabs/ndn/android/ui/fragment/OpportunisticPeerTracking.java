@@ -15,7 +15,6 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
@@ -40,7 +39,6 @@ import net.named_data.jndn.OnRegisterSuccess;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
@@ -57,7 +55,6 @@ import pt.ulusofona.copelabs.ndn.android.ui.tasks.RegisterPrefixForPushedDataTas
 import pt.ulusofona.copelabs.ndn.android.ui.tasks.RegisterPrefixTask;
 import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticDaemon;
 import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticPeerTracker;
-import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.OperationResult;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticConnectivityManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.NsdInfo;
@@ -81,36 +78,27 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         ServiceDiscoverer.PeerListDiscoverer, WifiP2pListener.WifiP2pConnectionStatus {
 
 
-    private static final String TAG = OpportunisticPeerTracking.class.getSimpleName();
-
     public static final String PREFIX = "/ndn/multicast/opp";
     public static final String EMERGENCY = PREFIX + "/emergency";
-
-    private static int PROCESS_INTERVAL = 1000;
     public static double INTEREST_LIFETIME = 600000;
 
-    private Context mContext;
-    private WifiP2pManager mWifiP2pManager;
-    private WifiP2pManager.Channel mWifiP2pChannel;
-
-    private FragmentOppPeerTrackingBinding mBinding;
+    private static final String TAG = OpportunisticPeerTracking.class.getSimpleName();
+    private static int PROCESS_INTERVAL = 1000;
 
     private OpportunisticConnectivityManager mWifiP2pConnectivityManager = new OpportunisticConnectivityManager();
     private OpportunisticPeerTracker mPeerTracker = new OpportunisticPeerTracker();
-
     private Map<String, OpportunisticPeer> mPeers = new HashMap<>();
+    private List<Interest> mPendingInterests = new ArrayList<>();
     private Map<String, NsdService> mServices = new HashMap<>();
+    private FragmentOppPeerTrackingBinding mBinding;
+    private Context mContext;
 
-    // Two variables to remember whether to Group-related buttons have to be enabled or disabled.
+    /** Two variables to remember whether to Group-related buttons have to be enabled or disabled. */
     private boolean mCanFormGroup = false; // = can find another potential Group Owner in the vicinity
     private boolean mIsConnectedToGroup = false; // Determines whether the LEAVE button is enabled or not
-
     private OpportunisticPeerAdapter mPeerAdapter;
     private NsdServiceAdapter mNsdServiceAdapter;
     private PendingInterestAdapter mInterestAdapter;
-
-    private List<Interest> mPendingInterests = new ArrayList<>();
-
     private Face mFace;
 
     /** Fragment lifecycle method. See https://developer.android.com/guide/components/fragments.html
@@ -122,8 +110,6 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
 
         Log.v(TAG, "onAttach");
         mContext = context;
-        mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
-        mWifiP2pChannel = mWifiP2pManager.initialize(context, Looper.getMainLooper(), null);
         mWifiP2pConnectivityManager.enable(context);
 
         mPeerAdapter = new OpportunisticPeerAdapter(mContext);
@@ -138,8 +124,6 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         mContext.registerReceiver(mBr, mIntentFilter);
 
         mPeerTracker.addObserver(this);
-
-
         mBinding = FragmentOppPeerTrackingBinding.inflate(getActivity().getLayoutInflater());
 
         WifiP2pListenerManager.registerListener(this);
@@ -163,7 +147,6 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         mBinding.buttonGroupFormation.setOnClickListener(this);
         mBinding.buttonGroupLeave.setOnClickListener(this);
 
-        mBinding.btnStartPeerDiscovery.setOnClickListener(this);
         mBinding.listWifiP2pPeers.setAdapter(mPeerAdapter);
 
         mBinding.listNsdServices.setAdapter(mNsdServiceAdapter);
@@ -178,11 +161,8 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.btn_start_peer_discovery:
-                mWifiP2pManager.discoverPeers(mWifiP2pChannel, new OperationResult(TAG, "Peer Discovery"));
-                break;
             case R.id.button_group_formation:
-                mWifiP2pConnectivityManager.join(mPeerTracker.getPeers());
+                mWifiP2pConnectivityManager.join(/*mPeerTracker.getPeers()*/ mPeers);
                 break;
             case R.id.button_group_leave:
                 mWifiP2pConnectivityManager.leave();
@@ -232,7 +212,7 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
             /* When the PeerTracker notifies of some changes to its list, retrieve the new list of Peers
             and use it to update the UI accordingly. */
             mPeers.clear();
-            mPeers.putAll(mPeerTracker.getPeers());
+            mPeers.putAll((Map<String, OpportunisticPeer>) obj);
 
             mCanFormGroup = !mWifiP2pConnectivityManager.isAspiringGroupOwner(mPeers);
             mBinding.buttonGroupFormation.setEnabled(mCanFormGroup && !mIsConnectedToGroup);
@@ -240,7 +220,6 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
             if (act != null) {
                 act.runOnUiThread(mPeerUpdater);
             }
-
         }
     }
 
@@ -302,7 +281,6 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
                 NetworkInfo netInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
                 boolean wifiP2pConnected = netInfo.isConnected();
                 Log.v(TAG, "Connection changed : " + (wifiP2pConnected ? "CONNECTED" : "DISCONNECTED"));
-
                 mIsConnectedToGroup = wifiP2pConnected;
                 mBinding.buttonGroupLeave.setEnabled(mIsConnectedToGroup);
                 mBinding.buttonGroupFormation.setEnabled(!mIsConnectedToGroup);
@@ -346,23 +324,23 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         Log.v(TAG, "Registration Success : " + prefix.toString());
     }
 
-    /** jNDN callback to notify Data was received in response to an Interest
-     * @param interest the Interest for which the Data matches
-     * @param data the Data which matches the Interest
+    /** jNDN callback to notify WifiP2pCache was received in response to an Interest
+     * @param interest the Interest for which the WifiP2pCache matches
+     * @param data the WifiP2pCache which matches the Interest
      */
     @Override
     public void onData(Interest interest, Data data) {
-        Log.v(TAG, "Received Data : " + data.getName().toString() + " > " + data.getContent().toString());
+        Log.v(TAG, "Received WifiP2pCache : " + data.getName().toString() + " > " + data.getContent().toString());
         DisplayDataDialog dialog = DisplayDataDialog.create(data);
         dialog.show(getChildFragmentManager(), dialog.getTag());
     }
 
     /** jNDN callback to notify when PushedData is received
-     * @param data the Data packet received
+     * @param data the WifiP2pCache packet received
      */
     @Override
     public void onPushedData(Data data) {
-        Log.v(TAG, "Push Data Received : " + data.getName().toString());
+        Log.v(TAG, "Push WifiP2pCache Received : " + data.getName().toString());
         DisplayDataDialog dialog = DisplayDataDialog.create(data);
         dialog.show(getChildFragmentManager(), dialog.getTag());
     }

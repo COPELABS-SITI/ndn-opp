@@ -24,6 +24,8 @@ import pt.ulusofona.copelabs.ndn.android.models.NsdService;
  * cfr. https://developer.android.com/reference/android/widget/Adapter.html
  */
 public class NsdServiceAdapter extends ArrayAdapter<NsdService> {
+
+
     private LayoutInflater mInflater;
 
     /** Main constructor

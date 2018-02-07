@@ -19,6 +19,8 @@ import android.util.Log;
 import java.util.Map;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.WifiDevice;
+import pt.ulusofona.copelabs.ndn.android.utilities.Utilities;
+import pt.ulusofona.copelabs.ndn.android.wifi.p2p.cache.WifiP2pCache;
 
 
 /**
@@ -41,7 +43,11 @@ class WifiP2pSearcher implements DnsSdServiceResponseListener, DnsSdTxtRecordLis
     /** Android WiFi P2P PacketManager */
     private WifiP2pManager mWifiP2pManager;
 
+    /** Application context */
+    private Context mContext;
+
     WifiP2pSearcher(Context context) {
+        mContext = context;
         mWifiP2pManager = (android.net.wifi.p2p.WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
         mChannel = mWifiP2pManager.initialize(context, context.getMainLooper(), null);
         mWifiP2pManager.setDnsSdResponseListeners(mChannel, this, this);
@@ -120,25 +126,25 @@ class WifiP2pSearcher implements DnsSdServiceResponseListener, DnsSdTxtRecordLis
 
             @Override
             public void onFailure(int reason) {
-                Log.i(TAG,"Service discovery failed reason: " + reason);
+                Log.e(TAG,"Service discovery failed reason: " + reason);
+                reallocateServices();
+            }
+        });
+    }
 
-                /*
-                mServiceRequest = WifiP2pDnsSdServiceRequest.newInstance();
-                mWifiP2pManager.removeServiceRequest(mChannel, mServiceRequest, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        Log.e(TAG,"OK");
-                    }
+    private void reallocateServices() {
+        Log.i(TAG, "Reallocating services.");
+        mServiceRequest = WifiP2pDnsSdServiceRequest.newInstance();
+        mWifiP2pManager.removeServiceRequest(mChannel, mServiceRequest, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Log.i(TAG,"Service request removed");
+                addServiceRequest();
+            }
 
-                    @Override
-                    public void onFailure(int i) {
-                        Log.e(TAG,"NOK");
-                    }
-                });
-
-                mWifiP2pManager.removeLocalService(mChannel, );
-                */
-
+            @Override
+            public void onFailure(int i) {
+                Log.e(TAG,"Service request not removed");
             }
         });
     }
@@ -146,7 +152,7 @@ class WifiP2pSearcher implements DnsSdServiceResponseListener, DnsSdTxtRecordLis
     @Override
     public void onDnsSdServiceAvailable(String instanceName, String registrationType, WifiP2pDevice srcDevice) {
         Log.i(TAG, "onDnsSdServiceAvailable " + instanceName + " " + registrationType);
-
+        WifiP2pCache.addDevice(mContext, instanceName, srcDevice.deviceAddress, Utilities.getTimestamp());
         WifiP2pListenerManager.notifyServiceAvailable(instanceName, registrationType, srcDevice);
     }
 

@@ -8,13 +8,18 @@
 
 package pt.ulusofona.copelabs.ndn.android.umobile.common;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.BitmapFactory;
 import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
 import android.util.Base64;
 import android.util.Log;
 import android.util.LongSparseArray;
+import android.view.View;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -28,11 +33,12 @@ import pt.ulusofona.copelabs.ndn.android.models.FibEntry;
 import pt.ulusofona.copelabs.ndn.android.models.Name;
 import pt.ulusofona.copelabs.ndn.android.models.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.models.SctEntry;
+import pt.ulusofona.copelabs.ndn.android.ui.MainActivity;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.Identity;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.OpportunisticConnectionLessTransferManager;
-import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.channels.OpportunisticChannelIn;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticConnectivityManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.channels.OpportunisticChannelIn;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.NsdManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.multihoming.WifiFaceManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.multihoming.WifiFaceManagerImpl;
@@ -108,12 +114,37 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
     // Custom lock to regulate the transitions between STARTED and STOPPED.
     // @TODO: Replace this with a standard lock.
 
-    private State current = State.STOPPED;
+    private static State current = State.STOPPED;
 	private synchronized State getAndSetState(State nextState) {
 		State oldValue = current;
 		current = nextState;
 		return oldValue;
 	}
+
+
+    /**
+     * This method shows the NDN-OPP icon on status bar
+     */
+    public void showIconOnNotificationbar(){
+        Notification notification = new NotificationCompat.Builder(this)
+                .setSmallIcon(R.mipmap.ic_ndn_opp)
+                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_ndn_opp))
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText(getString(R.string.app_name))
+                .build();
+
+        int smallIconId = getResources().getIdentifier("right_icon", "id", android.R.class.getPackage().getName());
+        if (smallIconId != 0) {
+            if (notification.contentView != null)
+                notification.contentView.setViewVisibility(smallIconId, View.INVISIBLE);
+        }
+
+        startForeground(112, notification);
+    }
+
+	public static boolean isRunning() {
+	    return current == State.STARTED;
+    }
 
     /** Initializes the ForwardingDaemon; retrieve the UUID, initialize the Routing Engine, construct the configuration string.
      *  Service lifecycle method. See https://developer.android.com/guide/components/services.html */
@@ -132,7 +163,7 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
             Log.d(TAG, "I/O error while reading configuration : " + e.getMessage());
         }
         Log.d(TAG, "Read configuration : " + configuration.length());
-
+        showIconOnNotificationbar();
         mConfiguration = configuration.toString();
 
     }
@@ -183,7 +214,7 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
      * See https://developer.android.com/guide/components/services.html */
 	@Override
 	public void onDestroy() {
-		if(State.STARTED == getAndSetState(State.STOPPED)) {
+	    if(State.STARTED == getAndSetState(State.STOPPED)) {
 
 			jniStop();
 
@@ -229,7 +260,7 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
 
     // Called from JNI
     private synchronized void transferData(long faceId, String name, byte[] payload) {
-        Log.d(TAG, "Transfer Data : " + faceId + " " + name + " length (" + payload.length + ") [" + Base64.encodeToString(payload, Base64.NO_PADDING) + "]");
+        Log.d(TAG, "Transfer WifiP2pCache : " + faceId + " " + name + " length (" + payload.length + ") [" + Base64.encodeToString(payload, Base64.NO_PADDING) + "]");
         String recipient = mOppFaceManager.getUuid(faceId);
         mPacketManager.onTransferData(mAssignedUuid, recipient, payload, name);
     }
@@ -339,7 +370,7 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
      */
     private native void jniBringDownFace(long id);
 
-    /** [JNI] Send all Pushed-Data present in the ContentStore through a Face
+    /** [JNI] Send all Pushed-WifiP2pCache present in the ContentStore through a Face
      * @param id the FaceId of the Face to which data should be pushed
      */
     private native void jniPushData(long id, String name);
@@ -354,9 +385,9 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
     private native void jniOnInterestTransferred(long faceId, int nonce);
 
     /** [JNI] Used by the OpportunisticConnectivityManager to notify its encapsulating Face of the result of the
-     * transmission of a Data.
+     * transmission of a WifiP2pCache.
      * @param faceId the FaceId of the Face to notify
-     * @param name the Name of the Data concerned
+     * @param name the Name of the WifiP2pCache concerned
      */
     private native void jniOnDataTransferred(long faceId, String name);
 

@@ -1,41 +1,44 @@
 /**
- *  @version 1.0
+ * @version 1.1
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
  * Implementation of the Pending Interest Table entry class.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ * @author Miguel Tavares (COPELABS/ULHT)
  */
 package pt.ulusofona.copelabs.ndn.android.models;
 
 import android.support.annotation.NonNull;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /** The model class used to represent entries from the PendingInterestTable within the Android app.
  *  A PitEntry associates two lists to keep track which Interests arrived on which Faces (Incoming Faces)
  *  and down which Faces they were sent (Outgoing Faces).
  */
 public class PitEntry implements Comparable<PitEntry> {
-    private String name;
-	// Associates a FaceId with the last Nonce received on that Face
+
+	/** Associates a name to the PitEntry */
+    private String mName;
+
+	/** Associates a FaceId with the last Nonce received on that Face */
     private Map<Long, Integer> mInRecords = new HashMap<>();
-	// Associates a FaceId with the last Nonce sent out on that Face
+
+	/** Associates a FaceId with the last Nonce sent out on that Face */
     private Map<Long, Integer> mOutRecords = new HashMap<>();
 
 	/** Main constructor. Refer to NFD Developer's Guide Section 3.4. Pending Interest Table (p. 23) for details about the meaning of the fields
-	 * @param name NDN name associated to this PitEntry.
+	 * @param name NDN mName associated to this PitEntry.
 	 */
     public PitEntry(String name) {
-        this.name = name;
+        mName = name;
     }
 
 	/** Retrieve the NDN Name of this entry.
 	 * @return NDN Name
 	 */
 	public String getName() {
-        return this.name;
+        return mName;
     }
 
 	/** Add a new IN-Record for this PitEntry which records the information on the last Interest packet received on a Face.
@@ -82,12 +85,12 @@ public class PitEntry implements Comparable<PitEntry> {
 	 */
 	@Override
     public int compareTo(@NonNull PitEntry that) {
-        return this.name.compareTo(that.name);
+        return this.mName.compareTo(that.mName);
     }
 
 	@Override
 	public boolean equals(Object obj) {
 		PitEntry that = (PitEntry) obj;
-		return name.equals(that.name) && mInRecords.equals(that.mInRecords) && mOutRecords.equals(that.mOutRecords);
+		return mName.equals(that.mName) && mInRecords.equals(that.mInRecords) && mOutRecords.equals(that.mOutRecords);
 	}
 }

@@ -1,19 +1,17 @@
 /**
- *  @version 1.0
+ * @version 1.1
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-03-23
  * This class provides management of WiFi P2P Group Formation.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ * @author Miguel Tavares (COPELABS/ULHT)
  */
+
 package pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented;
 
 import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
-import android.net.wifi.p2p.WifiP2pDevice;
-import android.net.wifi.p2p.WifiP2pDeviceList;
-import android.net.wifi.p2p.WifiP2pGroup;
-import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -60,6 +58,7 @@ public class OpportunisticConnectivityManager implements WifiP2pManager.ChannelL
         if(mEnabled) {
             mContext = null;
             WifiP2pListenerManager.unregisterListener(this);
+            mWifiP2pManager.removeGroup(mWifiP2pChannel, null);
             mWifiP2pManager = null;
             mWifiP2pChannel = null;
             mEnabled = false;

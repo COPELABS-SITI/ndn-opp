@@ -1,9 +1,10 @@
 /**
  *  @version 1.0
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
- * Main Activity of the NDN-Opp app.
+ * MainActivity Activity of the NDN-Opp app.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
+
 package pt.ulusofona.copelabs.ndn.android.ui;
 
 import android.content.ComponentName;
@@ -20,7 +21,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.Toast;
 
@@ -30,7 +30,6 @@ import java.util.TimerTask;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.preferences.Configuration;
-import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.Identity;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.AddRouteDialog;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.ConnectToNdnDialog;
 import pt.ulusofona.copelabs.ndn.android.ui.dialog.CreateFaceDialog;
@@ -43,12 +42,15 @@ import pt.ulusofona.copelabs.ndn.android.ui.fragment.NameTree;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.OpportunisticPeerTracking;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.PendingInterestTable;
 import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticDaemon;
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.Identity;
+import pt.ulusofona.copelabs.ndn.android.wifi.p2p.cache.WifiP2pCache;
 import pt.ulusofona.copelabs.ndn.databinding.ActivityMainBinding;
 
-/** Main interface of NDN-Opp. Brings together the various app sections with the connection to the
+/** MainActivity interface of NDN-Opp. Brings together the various app sections with the connection to the
  * ForwardingDaemon. */
-public class Main extends AppCompatActivity implements ServiceConnection {
-    private static final String TAG = Main.class.getSimpleName();
+
+public class MainActivity extends AppCompatActivity implements ServiceConnection {
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     private MainTabListener mTabListener;
     private AppSections mAppSections = new AppSections(getSupportFragmentManager());
@@ -116,8 +118,9 @@ public class Main extends AppCompatActivity implements ServiceConnection {
 		mBinding.nfdSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 			@Override
 			public void onCheckedChanged(CompoundButton button, boolean isOn) {
-                if(isOn) startService(mDaemonIntent);
-				else {
+                if(isOn) {
+                    startService(mDaemonIntent);
+                } else {
                     disconnectDaemon();
                     stopService(mDaemonIntent);
                 }
@@ -125,6 +128,7 @@ public class Main extends AppCompatActivity implements ServiceConnection {
 		});
 
         mBinding.uuid.setText(Identity.getUuid());
+
 	}
 
     @Override
@@ -190,6 +194,9 @@ public class Main extends AppCompatActivity implements ServiceConnection {
             case R.id.sendPacketsConfiguration:
                 item.setChecked(!item.isChecked());
                 Configuration.setSendOption(this, item.isChecked());
+                break;
+            case R.id.wipe_wifi_p2p_cache:
+                WifiP2pCache.wipeCache(this);
                 break;
         }
 
@@ -279,13 +286,14 @@ public class Main extends AppCompatActivity implements ServiceConnection {
     }
 
     private class DaemonBroadcastReceiver extends android.content.BroadcastReceiver {
+
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             Log.d(TAG, "ForwardingDaemon : " + action);
-            Toast.makeText(Main.this, "Daemon : " + action.substring(action.lastIndexOf('.') + 1, action.length()), Toast.LENGTH_LONG).show();
+            Toast.makeText(MainActivity.this, "Daemon : " + action.substring(action.lastIndexOf('.') + 1, action.length()), Toast.LENGTH_LONG).show();
             if(action.equals(OpportunisticDaemon.STARTED))
-                bindService(mDaemonIntent, Main.this, Context.BIND_AUTO_CREATE);
+                bindService(mDaemonIntent, MainActivity.this, Context.BIND_AUTO_CREATE);
         }
     }
 }

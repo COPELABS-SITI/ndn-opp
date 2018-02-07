@@ -12,12 +12,10 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
-import android.view.View;
 import android.widget.TextView;
 
 import net.named_data.jndn.Data;
 
-import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.databinding.DialogDisplayDataBinding;
 
 /** Dialog for the addition of a new Route to the RIB and FIB of the running daemon. */
@@ -49,7 +47,7 @@ public class DisplayDataDialog extends DialogFragment {
 		StringBuilder title = new StringBuilder("Received ");
 		if(mData.isPushed())
 			title.append("Pushed ");
-		title.append("Data");
+		title.append("WifiP2pCache");
 
 		return new AlertDialog.Builder(getActivity())
 			.setView(dialogBinding.getRoot())

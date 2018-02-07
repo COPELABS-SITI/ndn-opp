@@ -1,3 +1,11 @@
+/**
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2018-01-31
+ * This class is used to receive NDN packets from other devices.
+ * It creates a new socket to allow multithreading
+ * @author Miguel Tavares (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.channels;
 
 
@@ -11,18 +19,24 @@ import java.net.Socket;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketObserver;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.HostInfo;
 
 public class OpportunisticChannelOutTask extends AsyncTask<Void, Void, Boolean> {
 
+    /** This variable is used to debug OpportunisticChannelOutTask class */
     private static final String TAG = OpportunisticChannelOutTask.class.getSimpleName();
+
+    /** This interface is used to notify the transfer status */
     private PacketObserver mObservingContext;
-    private String mHost;
-    private int mPort;
+
+    /** This object is used to hold host info. IP Address and Port */
+    private HostInfo mHost;
+
+    /** This object is used to encapsulate a packet */
     private Packet mPacket;
 
-    public OpportunisticChannelOutTask(PacketObserver observingContext, String host, int port, Packet packet) {
+    OpportunisticChannelOutTask(PacketObserver observingContext, HostInfo host, Packet packet) {
         mHost = host;
-        mPort = port;
         mPacket = packet;
         mObservingContext = observingContext;
     }
@@ -38,7 +52,7 @@ public class OpportunisticChannelOutTask extends AsyncTask<Void, Void, Boolean> 
         boolean transferSucceeded;
         try {
             Socket connection = new Socket();
-            connection.connect(new InetSocketAddress(mHost, mPort));
+            connection.connect(new InetSocketAddress(mHost.getIpAddress(), mHost.getPort()));
             Log.d(TAG, "Connection established to " + connection.toString() + " ? " + connection.isConnected());
             ObjectOutputStream oos = new ObjectOutputStream(connection.getOutputStream());
             oos.writeObject(mPacket);

@@ -10,6 +10,8 @@ import android.content.Context;
 import android.content.IntentFilter;
 import android.util.Log;
 
+import pt.ulusofona.copelabs.ndn.android.wifi.p2p.cache.WifiP2pCacheRefresher;
+
 import static android.net.wifi.WifiManager.WIFI_STATE_CHANGED_ACTION;
 import static android.net.wifi.p2p.WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION;
 import static android.net.wifi.p2p.WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION;
@@ -38,6 +40,9 @@ public class WifiP2p {
     /** This object enables the wifi p2p GO features */
     private WifiP2pGo mWifiP2pGo;
 
+    /** This object is used for cache refreshing */
+    private WifiP2pCacheRefresher mWifiP2pCacheRefresher;
+
     /** This object stores the application context */
     private Context mContext;
 
@@ -45,8 +50,9 @@ public class WifiP2p {
         mContext = context;
         mWifiP2pGo = new WifiP2pGo(context);
         mWifiP2pSearcher = new WifiP2pSearcher(context);
+        mWifiP2pCacheRefresher = new WifiP2pCacheRefresher(context);
         mWifiP2pReceiver = new WifiP2pReceiver(mWifiP2pSearcher, mWifiP2pGo);
-        mWifiP2pScheduler = new WifiP2pScheduler(mWifiP2pGo, mWifiP2pSearcher);
+        mWifiP2pScheduler = new WifiP2pScheduler(mWifiP2pSearcher);
     }
 
     /**
@@ -55,6 +61,7 @@ public class WifiP2p {
     public void start() {
         Log.i(TAG, "Start");
         mWifiP2pScheduler.start();
+        mWifiP2pCacheRefresher.startRefreshing();
         mContext.registerReceiver(mWifiP2pReceiver, buildIntentFilter());
     }
 
@@ -64,6 +71,7 @@ public class WifiP2p {
     public void stop() {
         Log.i(TAG, "Stop");
         mWifiP2pScheduler.stop();
+        mWifiP2pCacheRefresher.stopRefreshing();
         mContext.unregisterReceiver(mWifiP2pReceiver);
     }
 

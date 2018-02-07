@@ -1,7 +1,8 @@
-/*
+/**
  * @version 1.0
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-mm-dd
- * A FragmentPagerAdapter for the TabLayout of the MainActivity. Based on official Android example.
+ * A FragmentPagerAdapter for the TabLayout of the MainActivity.
+ * Based on official Android example.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
 

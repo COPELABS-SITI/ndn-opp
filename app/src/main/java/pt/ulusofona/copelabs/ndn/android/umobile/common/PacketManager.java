@@ -1,3 +1,11 @@
+/**
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-12-22
+ * This interface refer all methods that packet manage and
+ * the requester must implement.
+ * @author Miguel Tavares (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.umobile.common;
 
 

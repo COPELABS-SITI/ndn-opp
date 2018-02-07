@@ -19,6 +19,8 @@ import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticDaemon;
 import pt.ulusofona.copelabs.ndn.databinding.DialogCreateFaceBinding;
 
 public class CreateFaceDialog extends DialogFragment {
+
+	/** This variable is used to debug CreateFaceDialog class */
 	private static final String TAG = CreateFaceDialog.class.getSimpleName();
 
 	/** Method to be used for creating a new CreateFaceDialog.
@@ -31,7 +33,6 @@ public class CreateFaceDialog extends DialogFragment {
 		args.putBinder("ForwardingDaemon", binder);
 		fragment.setArguments(args);
 		return fragment;
-
 	}
 
 	/** Constructs a dialog window which enables the creation of Faces. Three parameters are requested through its fields;

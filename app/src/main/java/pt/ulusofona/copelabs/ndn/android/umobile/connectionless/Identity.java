@@ -1,20 +1,32 @@
+/**
+ *  @version 1.1
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
+ * This class is used to identify the user and also NDN-OPP.
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ * @author Miguel Tavares (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.umobile.connectionless;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 
 import java.util.Map;
-import java.util.UUID;
 
 import pt.ulusofona.copelabs.ndn.android.utilities.Utilities;
 
-public class Identity {
+public abstract class Identity {
 
+    /** This variable is used to identify NDN-OPP service */
     public static final String SVC_INSTANCE_TYPE = "_ndnopp";
+
+    /** This variable is used to announce a transfer over Wi-Fi P2P using connection less */
     public static final String SVC_TRANSFER_TYPE = SVC_INSTANCE_TYPE + "tfr" ;
 
+    /** This variable holds the state of this class, if is already initialized or not */
     private static boolean mInitialized = false;
+
+    /** This variable holds the user's uuid */
     private static String mAssignedUuid = null;
 
     /** Initialize the NDN-Opp Identity for the current device. This enables to get its UUID, the Service Type used throughout the system
@@ -32,8 +44,7 @@ public class Identity {
      * @return UUID of the current device.
      */
     public static String getUuid() {
-        if(!mInitialized)
-            throw new RuntimeException("Uninitialized Identity. Call initialize(Context context) method prior to retrieving UUID.");
+        while(!mInitialized);
         return mAssignedUuid;
     }
 
@@ -42,8 +53,7 @@ public class Identity {
      */
 
     public static WifiP2pDnsSdServiceInfo getDescriptor() {
-        if(!mInitialized)
-            throw new RuntimeException("Uninitialized Identity. Call initialize(Context context) method prior to retrieving descriptor.");
+        while(!mInitialized);
         return WifiP2pDnsSdServiceInfo.newInstance(mAssignedUuid, SVC_INSTANCE_TYPE, null);
     }
 

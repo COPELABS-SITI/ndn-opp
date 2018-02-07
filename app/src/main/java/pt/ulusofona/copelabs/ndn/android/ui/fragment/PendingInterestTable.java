@@ -1,9 +1,10 @@
-/*
+/**
  * @version 1.0
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-mm-dd
- *
+ * Fragment for displaying the PIT.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
+
 package pt.ulusofona.copelabs.ndn.android.ui.fragment;
 
 import android.content.Context;
@@ -28,6 +29,7 @@ import pt.ulusofona.copelabs.ndn.databinding.ItemPitEntryBinding;
 
 /** Fragment used to display the PendingInterestTable of the running daemon. */
 public class PendingInterestTable extends Fragment implements Refreshable {
+
     private FragmentTableBinding mTableBinding;
     private List<PitEntry> mPitEntries = new ArrayList<>();
 	private PitEntryAdapter mPitEntriesAdapter;

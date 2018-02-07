@@ -1,9 +1,10 @@
 /**
- *  @version 1.0
+ *  @version 1.1
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-03-23
  * This class implements the Peer tracking functionality which keeps track of WiFi P2P peers
  * in the neighborhood.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ * @author Miguel Tavares (COPELABS/ULHT)
  */
 package pt.ulusofona.copelabs.ndn.android.umobile.common;
 
@@ -18,28 +19,31 @@ import java.util.Observable;
 import java.util.regex.Pattern;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.Identity;
-import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Status;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticPeer;
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Status;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
+import pt.ulusofona.copelabs.ndn.android.wifi.p2p.cache.WifiP2pCache;
 
 /** The Peer Tracker is used to maintain up-to-date the lists of all NDN-Opp Peers ever detected.
  * The Peer Tracker integrates three components; the DeviceDiscoverer, the ServiceDiscoverer and
  * the ServiceRegistrar. */
 public class OpportunisticPeerTracker extends Observable implements WifiP2pListener.PeersAvailable, WifiP2pListener.ServiceAvailable {
 
+    /** This variable is used to debug OpportunisticPeerTracker class */
     private static final String TAG = OpportunisticPeerTracker.class.getSimpleName();
 
-    private String mAssignedUuid;
-
-    // Associates UUID to OpportunisticPeer
+    /** Associates UUID to OpportunisticPeer */
     private Map<String, OpportunisticPeer> mPeers = new HashMap<>();
-    // Associates MAC Address to UUID
+
+    /** Associates MAC Address to UUID */
     private Map<String, String> mDevices = new HashMap<>();
 
-    public Map<String, OpportunisticPeer> getPeers() {
-        return mPeers;
-    }
+    /** This variable holds the uuid of this device */
+    private String mAssignedUuid;
+
+    /** This variable holds the application context */
+    private Context mContext;
 
     /** Enables the PeerTracker. When enabled, it automatically performs ServiceDiscovery based on the current status of the Wi-Fi
      * P2P component of Android. At that point, it notifies any Observer whenever there is a change to the state of the list of NDN-Opp peers.
@@ -55,11 +59,16 @@ public class OpportunisticPeerTracker extends Observable implements WifiP2pListe
      * @param context
      */
     public void enable(Context context) {
+        mContext = context;
         mAssignedUuid = Identity.getUuid();
+        loadDevicesFromCache();
         WifiP2pListenerManager.registerListener(this);
     }
 
-    /** Disables the PeerTracker. All OpportunisticPeer objects are marked as Unavailable and all the Observers are notified. */
+    /**
+     * Disables the PeerTracker. All OpportunisticPeer
+     *  objects are marked as Unavailable and all the Observers are notified.
+     */
     public void disable() {
         WifiP2pListenerManager.unregisterListener(this);
         for(String peerUuid : mPeers.keySet())
@@ -67,11 +76,16 @@ public class OpportunisticPeerTracker extends Observable implements WifiP2pListe
         setChanged(); notifyObservers(mPeers);
     }
 
+    /**
+     * Load peer list from cache
+     */
+    private void loadDevicesFromCache() {
+        mDevices.putAll(WifiP2pCache.getData(mContext));
+    }
 
     @Override
     public void onServiceAvailable(String uuid, String type, WifiP2pDevice dev) {
         Log.d(TAG, "Service Found : " + uuid + " : " + type + "@" + dev.deviceAddress);
-
         // Exclude the UUID of the current device
         if (!mAssignedUuid.equals(uuid)) {
             String[] components = type.split(Pattern.quote("."));
@@ -88,7 +102,6 @@ public class OpportunisticPeerTracker extends Observable implements WifiP2pListe
 
     @Override
     public void onPeersAvailable(WifiP2pDeviceList peers) {
-        //WifiP2pDeviceList devList = intent.getParcelableExtra(WifiP2pManager.EXTRA_P2P_DEVICE_LIST);
         // TODO: Improve this update sequence
         Map<String, OpportunisticPeer> peerList = new HashMap<>();
         Map<String, Status> scanResult = new HashMap<>();
@@ -100,9 +113,18 @@ public class OpportunisticPeerTracker extends Observable implements WifiP2pListe
         for(String mac : mDevices.keySet()) {
             if(!scanResult.containsKey(mac)) {
                 String uuid = mDevices.get(mac);
-                OpportunisticPeer peer = mPeers.get(uuid);
-                peer.setStatus(Status.UNAVAILABLE);
-                peerList.put(uuid, peer);
+                if(mPeers.get(uuid) == null) {
+                    for (WifiP2pDevice device : peers.getDeviceList()) {
+                        if (device.deviceAddress.equals(mac)) {
+                            mPeers.put(uuid, new OpportunisticPeer(uuid, device));
+                        }
+                    }
+                }
+                if(mPeers.get(uuid) != null) {
+                    OpportunisticPeer peer = mPeers.get(uuid);
+                    peer.setStatus(Status.UNAVAILABLE);
+                    peerList.put(uuid, peer);
+                }
             }
         }
 
@@ -116,6 +138,6 @@ public class OpportunisticPeerTracker extends Observable implements WifiP2pListe
             }
         }
 
-        setChanged(); notifyObservers(peerList);
+        setChanged(); notifyObservers(mPeers);
     }
 }

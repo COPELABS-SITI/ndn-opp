@@ -1,3 +1,10 @@
+/**
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-08-31
+ * This class is used to receive NDN packets from other devices
+ * @author Miguel Tavares (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.channels;
 
 
@@ -22,24 +29,42 @@ import static pt.ulusofona.copelabs.ndn.android.models.NsdService.DEFAULT_PORT;
 
 public class OpportunisticChannelIn extends Thread implements WifiP2pListener.WifiP2pConnectionStatus {
 
+    /** This variable is used to debug OpportunisticChannelIn class */
     private static final String TAG = OpportunisticChannelIn.class.getSimpleName();
+
+    /** This object is used to implement multithreading receiving */
     private OpportunisticChannelInTask mTask;
+
+    /** This interface is used to notify the packet reception */
     private PacketObserver mObservingContext;
+
+    /** This object is used to deliver the messages to NDN-OPP */
     private BufferOut mBufferOut;
+
+    /** This method holds the status of this class*/
     private boolean mEnabled;
 
-
+    /**
+     * This method enables the features on this class
+     * @param context application context
+     */
     public synchronized void enable(Context context) {
         mObservingContext = (PacketObserver) context;
         WifiP2pListenerManager.registerListener(this);
     }
 
-    /** Disable the Routing engine. Changes in the connection status of Wi-Fi Direct Groups will be ignored. */
+    /**
+     * This method stops all the mechanisms on this class
+     */
     public synchronized void disable() {
         WifiP2pListenerManager.unregisterListener(this);
         disableService();
     }
 
+    /**
+     * This method enables a socket and a task to receive NDN packets
+     * @param assignedIp device's IP Address
+     */
     private synchronized void enableService(String assignedIp) {
         if(!mEnabled) {
             try {
@@ -57,7 +82,9 @@ public class OpportunisticChannelIn extends Thread implements WifiP2pListener.Wi
         }
     }
 
-    /** Disable the packet transfer service. */
+    /**
+     * Disable the packet transfer service
+     */
     private synchronized void disableService() {
         if (mEnabled) {
             mTask.close();
@@ -66,6 +93,10 @@ public class OpportunisticChannelIn extends Thread implements WifiP2pListener.Wi
         }
     }
 
+    /**
+     * This method is invoked when the device establishes a Wi-Fi P2P connection
+     * @param intent
+     */
     @Override
     public void onConnected(Intent intent) {
         Log.i(TAG, "Connected");
@@ -78,6 +109,10 @@ public class OpportunisticChannelIn extends Thread implements WifiP2pListener.Wi
         }
     }
 
+    /**
+     * This method is invoked when the Wi-Fi P2P connection goes down
+     * @param intent
+     */
     @Override
     public void onDisconnected(Intent intent) {
         disableService();

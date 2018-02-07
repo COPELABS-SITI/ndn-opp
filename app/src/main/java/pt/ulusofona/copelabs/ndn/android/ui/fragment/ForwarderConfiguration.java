@@ -1,7 +1,7 @@
-/*
+/**
  * @version 1.0
- * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-mm-dd
- *
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
+ * Fragment for displaying the forwarder configuration
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
 

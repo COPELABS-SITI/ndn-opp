@@ -1,3 +1,10 @@
+/**
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2018-01-31
+ * This class is a model to store NSD data
+ * @author Miguel Tavares (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models;
 
 
@@ -5,6 +12,7 @@ import java.io.Serializable;
 
 public class NsdInfo extends HostInfo implements Serializable {
 
+    /** This variable holds a device uuid */
     private String mUuid;
 
     public NsdInfo(String uuid, String ipAddress, int port) {
@@ -12,6 +20,10 @@ public class NsdInfo extends HostInfo implements Serializable {
         mUuid = uuid;
     }
 
+    /**
+     * This method is a getter for mUuid attribue
+     * @return mUuid
+     */
     public String getUuid() {
         return mUuid;
     }

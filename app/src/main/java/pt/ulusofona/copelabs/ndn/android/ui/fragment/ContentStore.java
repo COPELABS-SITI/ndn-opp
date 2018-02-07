@@ -70,6 +70,7 @@ public class ContentStore extends Fragment implements Refreshable {
 	}
 
 	private class ContentStoreAdapter extends ArrayAdapter<CsEntry> {
+
 		private LayoutInflater mInflater;
 
 		ContentStoreAdapter(@NonNull Context context, @LayoutRes int resource) {

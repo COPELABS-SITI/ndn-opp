@@ -24,6 +24,7 @@ import pt.ulusofona.copelabs.ndn.databinding.DialogAddRouteBinding;
 
 /** Dialog for the addition of a new Route to the RIB and FIB of the running daemon. */
 public class AddRouteDialog extends DialogFragment {
+
 	/** Method to be used for creating a new AddRouteDialog.
 	 * @param binder used to access the locally running daemon
 	 * @return the AddRouteDialog

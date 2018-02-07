@@ -1,4 +1,4 @@
-/* @version 1.0
+/** @version 1.0
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
  * Implementation of a Routing engine that serves as the interface between the NOD
  * and the Contextual Manager.
@@ -21,9 +21,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import pt.ulusofona.copelabs.ndn.android.models.Face;
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
-import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.channels.OpportunisticChannelOut;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.channels.OpportunisticChannelOut;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.NsdInfo;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.services.ServiceDiscoverer;
 
@@ -57,7 +57,7 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
 
     /** Enable the OppFaceManager. When enabled, it reacts to changes in the connection status to a Wi-Fi Direct Group.
      * As the Group Formation results in the device being assigned an IP address, a listening socket will be opened and
-     * used for the reception of Interest/Data packets from other devices connected to the same Group. Furthermore,
+     * used for the reception of Interest/WifiP2pCache packets from other devices connected to the same Group. Furthermore,
      * @param binder Binder to the ForwardingDaemon
      */
 	public void enable(OpportunisticDaemon.Binder binder, Context context) {
@@ -142,9 +142,11 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
                         Long faceId = mUuidToFaceId.get(uuid);
                         if(faceId != null) {
                             if (peer.isAvailable()) {
-                                bringUpFace(uuid);
+                                if(!mDaemonBinder.isFaceUp(faceId))
+                                    bringUpFace(uuid);
                             } else {
-                                bringDownFace(uuid);
+                                if(mDaemonBinder.isFaceUp(faceId))
+                                    bringDownFace(uuid);
                             }
                         }
                     }
@@ -154,12 +156,20 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
         }
     }
 
+    /**
+     * Updated list of connected peers
+     * @param nsdInfoList updated list
+     */
     @Override
     public synchronized void onReceivePeerList(ArrayList<NsdInfo> nsdInfoList) {
         checkChannelsToCreate(nsdInfoList);
         checkChannelsToDelete(nsdInfoList);
     }
 
+    /**
+     * This method checks if there is a new peer available. If there is, creates a channel for it
+     * @param nsdInfoList updated peer list
+     */
     private synchronized void checkChannelsToCreate(ArrayList<NsdInfo> nsdInfoList) {
         for(NsdInfo nsdInfo : nsdInfoList) {
             NsdService svc = new NsdService(nsdInfo.getUuid(), nsdInfo.getIpAddress());
@@ -169,6 +179,10 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
         }
     }
 
+    /**
+     * This method checks if some peer is missing. If there is, it deletes the channel
+     * @param nsdInfoList updated peer list
+     */
     private synchronized void checkChannelsToDelete(ArrayList<NsdInfo> nsdInfoList) {
         Map channels = new HashMap<>(mOppOutChannels);
         Iterator it = channels.entrySet().iterator();
@@ -187,30 +201,57 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
         }
     }
 
+    /**
+     * This method creates a channel and store it in an HashMap
+     * @param svc peer info
+     */
     private void createChannelOut(NsdService svc) {
         Log.i(TAG, "Creating socket for: " + svc.getUuid() + " with " + svc.getHost() + ":" + svc.getPort());
         mOppOutChannels.put(svc.getUuid(), new OpportunisticChannelOut(mContext, svc.getHost(), svc.getPort()));
     }
 
+    /**
+     * This method deletes the channel related with uuid passed as a parameter
+     * @param uuid uuid related with the channel to delete
+     */
     private void deleteChannelOut(String uuid) {
         Log.i(TAG, "Deleting socket : " + uuid);
         mOppOutChannels.remove(uuid);
     }
 
+    /**
+     * This method returns true if there is a connection for this uuid. Returns false if not
+     * @param uuid uuid to check if the connection is available
+     * @return
+     */
     public boolean isSocketAvailable(String uuid) {
         return mOppOutChannels.containsKey(uuid);
     }
 
+    /**
+     * This method sends data through a socket
+     * @param packet data to be sent
+     */
     public void sendPacket(Packet packet) {
         if(packet != null) {
             mOppOutChannels.get(packet.getRecipient()).sendPacket(packet);
         }
     }
 
+    /**
+     * Returns the uuid associated with the face id in parameter
+     * @param faceId face id in order to get uuid
+     * @return
+     */
     public String getUuid(long faceId) {
         return mFaceIdToUuid.get(faceId);
     }
 
+    /**
+     * Returns the face id associated with a uuid in parameter
+     * @param uuid uuid in order to get face id
+     * @return
+     */
     public Long getFaceId(String uuid) {
         return mUuidToFaceId.get(uuid);
     }

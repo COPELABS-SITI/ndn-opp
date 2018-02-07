@@ -1,3 +1,10 @@
+/**
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2018-01-31
+ * This class is used to send NSD requests
+ * @author Miguel Tavares (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.communications;
 
 
@@ -15,13 +22,24 @@ import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.N
 
 public class CommOut {
 
+    /** This variable is used to debug CommOut class */
     private static final String TAG = CommOut.class.getSimpleName();
 
+    /**
+     * This method is used to send nsd data to a specific host
+     * @param host destination host
+     * @param object payload object
+     */
     public void sendData(HostInfo host, Object object) {
         Log.i(TAG, "Attempting to send to " + host.toString());
         new SenderTask(host, object).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
+    /**
+     * This method is used to broadcast nsd data
+     * @param hosts destination hosts
+     * @param object payload object
+     */
     public void broadcast(ArrayList<NsdInfo> hosts, Object object) {
         Log.i(TAG, "Broadcasting data");
         for(HostInfo host : hosts) {

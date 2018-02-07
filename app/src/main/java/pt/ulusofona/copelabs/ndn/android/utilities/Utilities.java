@@ -1,8 +1,9 @@
 /**
- *  @version 1.0
+ * @version 1.1
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-03-23
- * This class only provides a utility function to retrieve or generate a UUID.
+ * This class only provides utilities functions
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ * @author Miguel Tavares (COPELABS/ULHT)
  */
 package pt.ulusofona.copelabs.ndn.android.utilities;
 
@@ -10,7 +11,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pGroup;
-import android.util.Base64;
 import android.util.Log;
 
 import java.net.Inet4Address;
@@ -18,20 +18,28 @@ import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.Formatter;
 import java.util.Random;
-import java.util.UUID;
 
 /** Utility class for methods used throughout the application. */
 public abstract class Utilities {
 
+    /** This variable is used to debug Utilities class */
     private static final String TAG = Utilities.class.getSimpleName();
+
+    /** This variable is the key of UUID store */
     private static final String PROPERTY_UUID_KEY = "UMOBILE_UUID";
 
+    /**
+     * This method generates a new uuid in case of it does not exists. The generated
+     * UUID is also stored in shared preferences. In case of already exists an UUID,
+     * it returns it.
+     * @param context application context
+     * @return UUID
+     */
     public static String generateUuid(Context context) {
         String uuid;
         SharedPreferences storage = context.getSharedPreferences("Configuration", Context.MODE_PRIVATE);
@@ -46,12 +54,20 @@ public abstract class Utilities {
         return uuid;
     }
 
+    /**
+     * This method turns on the Wi-Fi if it is turned off.
+     * @param context
+     */
     public static void turnOnWifi(Context context) {
         WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         if(!wifiManager.isWifiEnabled())
             wifiManager.setWifiEnabled(true);
     }
 
+    /**
+     * This method generates a random small UUID with 4 chars
+     * @return UUID
+     */
     private static String generateSmallUuid() {
         StringBuilder sb = new StringBuilder();
         Random random = new Random();
@@ -85,6 +101,33 @@ public abstract class Utilities {
             }
         }
         return ipAddress;
+    }
+
+    /**
+     * This method returns a timestamp
+     * @return timestamp
+     */
+    public static long getTimestamp() {
+        return System.currentTimeMillis();
+    }
+
+    /**
+     * This method generates a SHA hash based on the payload parameter
+     * @param payload data to be hashed
+     * @return SHA generated
+     */
+    public static String digest(byte[] payload) {
+        String sha1 = "FAIL";
+        try {
+            byte[] sha1sum = MessageDigest.getInstance("SHA-1").digest(payload);
+            Formatter fmt = new Formatter();
+            for(byte b : sha1sum)
+                fmt.format("%02x", b);
+            sha1 = fmt.toString();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return sha1;
     }
 
 }

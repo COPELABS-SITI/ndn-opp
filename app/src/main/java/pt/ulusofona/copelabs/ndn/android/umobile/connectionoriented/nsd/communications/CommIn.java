@@ -1,3 +1,10 @@
+/**
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2018-01-31
+ * This class is used to receive NSD requests
+ * @author Miguel Tavares (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.communications;
 
 
@@ -16,10 +23,19 @@ import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.N
 
 public class CommIn extends AsyncTask<Void, Void, Void> {
 
+    /** This variable is used to debug CommIn class */
     private static final String TAG = CommIn.class.getSimpleName();
+
+    /** This interface is used to notify when data arrives */
     private DiscovererListener.Discoverer mListener;
+
+    /** This socket is used to receive connections from other devices */
     private ServerSocket mServerSocket;
+
+    /** This variable is used to hold this class status */
     private boolean mEnabled = false;
+
+    /** This object is used to hold host info. IP Address and Port */
     private HostInfo mMyInfo;
 
     public CommIn(DiscovererListener.Discoverer listener, HostInfo myInfo) {
@@ -27,6 +43,9 @@ public class CommIn extends AsyncTask<Void, Void, Void> {
         mMyInfo = myInfo;
     }
 
+    /**
+     * This method is used to start receiving communications
+     */
     public synchronized void start() {
         if(!mEnabled) {
             try {
@@ -78,6 +97,9 @@ public class CommIn extends AsyncTask<Void, Void, Void> {
         return null;
     }
 
+    /**
+     * This method is to stop receiving communications
+     */
     public void close() {
         if(!mServerSocket.isClosed()) {
             try {

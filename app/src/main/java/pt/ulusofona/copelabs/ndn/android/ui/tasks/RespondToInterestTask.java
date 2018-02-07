@@ -1,3 +1,10 @@
+/**
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
+ * Task to respond to an interest.
+ * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.ui.tasks;
 
 import android.os.AsyncTask;
@@ -24,7 +31,7 @@ public class RespondToInterestTask extends AsyncTask<Void, Void, Integer> {
 
     @Override
     protected Integer doInBackground(Void... params) {
-        Log.d(TAG, "Responding with Data [" + Base64.encodeToString(mData.getContent().getImmutableArray(), Base64.NO_PADDING) + "]");
+        Log.d(TAG, "Responding with WifiP2pCache [" + Base64.encodeToString(mData.getContent().getImmutableArray(), Base64.NO_PADDING) + "]");
 
         try {
             mFace.putData(mData);

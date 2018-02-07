@@ -14,6 +14,7 @@ import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 
 import pt.ulusofona.copelabs.ndn.R;
+import pt.ulusofona.copelabs.ndn.android.preferences.Configuration;
 import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticDaemon;
 import pt.ulusofona.copelabs.ndn.databinding.DialogConnectNdnBinding;
 
@@ -21,6 +22,7 @@ import pt.ulusofona.copelabs.ndn.databinding.DialogConnectNdnBinding;
  * (cfr. https://named-data.net/ndn-testbed)
  */
 public class ConnectToNdnDialog extends DialogFragment {
+
 	/** Method to be used for creating a new ConnectToNdnDialog.
 	 * @param binder used to access the locally running daemon
 	 * @return the ConnectToNdnDialog
@@ -56,6 +58,7 @@ public class ConnectToNdnDialog extends DialogFragment {
 					String ndnAddr = getContext().getResources().getStringArray(R.array.ndn_nodes_addrs)[ndnNodeIndex];
 
                     String faceUri = "tcp://" + ndnAddr + ":6363";
+					Configuration.setNdnNode(getContext(), faceUri);
 
 					fwdDaemon.createFace(faceUri, dialogBinding.isPermanent.isChecked() ? 2 : 0,false);
 				}

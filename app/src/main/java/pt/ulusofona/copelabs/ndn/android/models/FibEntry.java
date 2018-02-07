@@ -1,8 +1,9 @@
 /**
- *  @version 1.0
+ *  @version 1.1
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
  * Implementation of the Forwarding Information Base entry class.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ * @author Miguel Tavares (COPELABS/ULHT)
  */
 package pt.ulusofona.copelabs.ndn.android.models;
 
@@ -15,17 +16,19 @@ import java.util.Map;
  *  A FibEntry associates a list of pairs (FaceID, Cost) to a Name mPrefix.
  */
 public class FibEntry implements Comparable<FibEntry> {
-    // The Prefix associated to this entry
-	private String mPrefix;
-    // The list of FaceIds with their corresponding Cost. mFaceIds.get(faceId) gives the <cost> for <faceId>
-	private Map<Long, Integer> mFaceIds;
+
+    /** The list of FaceIds with their corresponding Cost.
+     * mFaceIds.get(faceId) gives the <cost> for <faceId> */
+	private Map<Long, Integer> mFaceIds = new HashMap<>();
+
+    /** The Prefix associated to this entry */
+    private String mPrefix;
 
     /** Main constructor. Refer to NFD Developer's Guide Section 3. Forwarding Information Base (p. 19) for details about the meaning of the fields
      * @param prefix NDN Name mPrefix associated to this FibEntry.
      */
 	public FibEntry(String prefix) {
-		this.mPrefix = prefix;
-		this.mFaceIds = new HashMap<>();
+		mPrefix = prefix;
 	}
 
     /** Associate a pair (Face, Cost) to this FibEntry. Updates the Cost of the Face if it is
@@ -37,10 +40,18 @@ public class FibEntry implements Comparable<FibEntry> {
 		mFaceIds.put(faceId, cost);
 	}
 
+    /**
+     * Getter for attribute prefix
+     * @return prefix
+     */
 	public String getPrefix() {
         return mPrefix;
     }
 
+    /**
+     * Return a string with the next hops
+     * @return next hops
+     */
     public String getNextHops() {
         StringBuilder builder = new StringBuilder();
         for(long key : mFaceIds.keySet()) {

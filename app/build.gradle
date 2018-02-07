@@ -2,13 +2,15 @@ import org.apache.tools.ant.taskdefs.condition.Os
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 25
+    compileSdkVersion 26
     buildToolsVersion '26.0.2'
 
     defaultConfig {
+        versionCode 1
+        versionName "1.0"
         applicationId "pt.ulusofona.copelabs.ndn"
         minSdkVersion 18
-        targetSdkVersion 23
+        targetSdkVersion 21
     }
 
     buildTypes {
@@ -44,8 +46,16 @@ android {
     }
 }
 
+allprojects {
+    repositories {
+        maven { url 'https://jitpack.io' }
+    }
+}
+
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile 'cat.ereza:customactivityoncrash:2.2.0'
+    compile 'com.balsikandar.android:crashreporter:1.0.9'
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support:design:25.3.1'
     compile files('libs/copelabs-jndn.jar')
