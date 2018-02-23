@@ -1,63 +1,82 @@
 /**
- *  @version 1.0
+ * @version 1.1
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
  * Implementation of the Pending Interest Table entry class.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ * @author Miguel Tavares (COPELABS/ULHT)
  */
 package pt.ulusofona.copelabs.ndn.android.models;
 
 import android.support.annotation.NonNull;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 /** The model class used to represent entries from the PendingInterestTable within the Android app.
  *  A PitEntry associates two lists to keep track which Interests arrived on which Faces (Incoming Faces)
  *  and down which Faces they were sent (Outgoing Faces).
  */
 public class PitEntry implements Comparable<PitEntry> {
-    private String name;
-	// Associates a FaceId with the last Nonce received on that Face
-    private Set<FaceRecord> mInRecords = new HashSet<>();
-	// Associates a FaceId with the last Nonce sent out on that Face
-    private Set<FaceRecord> mOutRecords = new HashSet<>();
 
+	/** Associates a name to the PitEntry */
+    private String mName;
+
+	/** Associates a FaceId with the last Nonce received on that Face */
+    private Map<Long, Integer> mInRecords = new HashMap<>();
+
+	/** Associates a FaceId with the last Nonce sent out on that Face */
+    private Map<Long, Integer> mOutRecords = new HashMap<>();
+
+	/** Main constructor. Refer to NFD Developer's Guide Section 3.4. Pending Interest Table (p. 23) for details about the meaning of the fields
+	 * @param name NDN mName associated to this PitEntry.
+	 */
     public PitEntry(String name) {
-        this.name = name;
+        mName = name;
     }
 
-    public String getName() {
-        return this.name;
+	/** Retrieve the NDN Name of this entry.
+	 * @return NDN Name
+	 */
+	public String getName() {
+        return mName;
     }
 
-	/** Add a new IN-Record for this PitEntry which records the information on the last Interest packet received on a Face
+	/** Add a new IN-Record for this PitEntry which records the information on the last Interest packet received on a Face.
+	 * NOTE: This has no effect on the PIT of the running Daemon, it only updates this object.
 	 * @param faceId ID of the Incoming Face
      * @param nonce the nonce of the last Interest packet received on the Face
 	 */
 	public void addInRecord(long faceId, int nonce) {
-        mInRecords.add(new FaceRecord(faceId, nonce));
+        mInRecords.put(faceId, nonce);
 	}
 
     /** Obtain the IN-Records of this PitEntry.
      * @return the set of all IN-Records of this PitEntry.
      */
-	public Set<FaceRecord> getInRecords() {
-        return mInRecords;
+	public String getInRecords() {
+		StringBuilder sb = new StringBuilder();
+		for(Long faceId : mInRecords.keySet())
+			sb.append(faceId + "=" + mInRecords.get(faceId) + " ");
+		return sb.toString();
     }
 
-	/** Add a new OUT-Record to this PitEntry which records the information on the last Interest packet sent on a Face
+	/** Add a new OUT-Record to this PitEntry which records the information on the last Interest packet sent on a Face.
+	 * NOTE: This has no effect on the PIT of the running Daemon, it only updates this object.
 	 * @param faceId ID of the Outgoing Face
      * @param nonce the nonce of the last Interest packet sent down the Face
 	 */
 	public void addOutRecord(long faceId, int nonce) {
-        mOutRecords.add(new FaceRecord(faceId, nonce));
+        mOutRecords.put(faceId, nonce);
 	}
 
     /** Obtain the OUT-Records of this PitEntry.
      * @return the set of all OUT-Records of this PitEntry.
      */
-	public Set<FaceRecord> getOutRecords() {
-        return mOutRecords;
+	public String getOutRecords() {
+		StringBuilder sb = new StringBuilder();
+		for(Long faceId : mOutRecords.keySet())
+			sb.append(faceId + "=" + mOutRecords.get(faceId) + " ");
+		return sb.toString();
     }
 
 	/** Comparison of PitEntries based on their Interest Name
@@ -66,24 +85,12 @@ public class PitEntry implements Comparable<PitEntry> {
 	 */
 	@Override
     public int compareTo(@NonNull PitEntry that) {
-        return this.name.compareTo(that.name);
+        return this.mName.compareTo(that.mName);
     }
 
-	public class FaceRecord {
-		private long faceId;
-		private int nonce;
-
-		FaceRecord(long faceId, int nonce) {
-			this.faceId = faceId;
-			this.nonce = nonce;
-		}
-
-		public long getFaceId() {
-            return faceId;
-        }
-
-        public int getNonce() {
-            return nonce;
-        }
-    }
+	@Override
+	public boolean equals(Object obj) {
+		PitEntry that = (PitEntry) obj;
+		return mName.equals(that.mName) && mInRecords.equals(that.mInRecords) && mOutRecords.equals(that.mOutRecords);
+	}
 }

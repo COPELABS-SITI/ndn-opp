@@ -1,7 +1,7 @@
-/*
+/**
  * @version 1.0
- * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-mm-dd
- *
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
+ * Listener to switch between tabs.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  */
 
@@ -28,15 +28,9 @@ class MainTabListener implements ActionBar.TabListener {
         }
     }
 
-    @Override
-    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
+    @Override public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {}
 
-    }
-
-    @Override
-    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
-
-    }
+    @Override public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {}
 
     int getCurrentPosition() {
         return mCurrentPosition;

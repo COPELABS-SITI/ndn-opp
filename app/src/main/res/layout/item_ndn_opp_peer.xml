@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <data>
+        <variable name="peer" type="pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticPeer"/>
+    </data>
+
+    <android.support.constraint.ConstraintLayout
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent">
+
+        <TextView
+            android:id="@+id/text_peer_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="1dp"
+            android:background="@color/lightgray"
+            android:fontFamily="monospace"
+            android:padding="2dp"
+            android:text="@{peer.status.symbol}"
+            app:layout_constraintBaseline_toBaselineOf="@+id/text_peer_uuid"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <TextView
+            android:id="@+id/text_peer_uuid"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="0dp"
+            android:layout_marginStart="2dp"
+            android:layout_marginTop="0dp"
+            android:background="@color/lightgray"
+            android:fontFamily="sans-serif"
+            android:gravity="end"
+            android:maxLines="1"
+            android:padding="2dp"
+            android:text="@{peer.uuid}"
+            app:layout_constraintLeft_toRightOf="@+id/text_peer_status"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+    </android.support.constraint.ConstraintLayout>
+</layout>

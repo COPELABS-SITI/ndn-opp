@@ -24,6 +24,8 @@ import pt.ulusofona.copelabs.ndn.android.models.NsdService;
  * cfr. https://developer.android.com/reference/android/widget/Adapter.html
  */
 public class NsdServiceAdapter extends ArrayAdapter<NsdService> {
+
+
     private LayoutInflater mInflater;
 
     /** Main constructor
@@ -35,8 +37,8 @@ public class NsdServiceAdapter extends ArrayAdapter<NsdService> {
     }
 
     /** Used by Android to retrieve the View corresponding to a certain item in the list of NsdServices.
-     * @param position position of the NsdService for which the View is requested
-     * @param convertView available View to be filled with the NsdService details
+     * @param position position of the NsdData for which the View is requested
+     * @param convertView available View to be filled with the NsdData details
      * @param parent parent View in the hierarchy
      * @return the View to be used
      */
@@ -60,7 +62,7 @@ public class NsdServiceAdapter extends ArrayAdapter<NsdService> {
             textStatus.setText(svc.getStatus().toString());
             textHost.setText(String.format(Locale.getDefault(), "%1$15s", svc.getHost()));
             textPort.setText(String.format(Locale.getDefault(), "%1$5d", svc.getPort()));
-            textUuid.setText(svc.getUuid().substring(24));
+            textUuid.setText(svc.getUuid());
         }
 
         return entry;

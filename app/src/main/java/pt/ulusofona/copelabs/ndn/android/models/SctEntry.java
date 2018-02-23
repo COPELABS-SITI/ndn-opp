@@ -1,60 +1,62 @@
 /**
- *  @version 1.0
+ * @version 1.0
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
  * Implementation of the Strategy Choice Table entry class.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ * @author Miguel Tavares (COPELABS/ULHT)
  */
 package pt.ulusofona.copelabs.ndn.android.models;
 
 import android.support.annotation.NonNull;
-import android.view.LayoutInflater;
-import android.view.View;
-
-import android.widget.TextView;
-
-import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
 /** The model class used to represent entries from the StrategyChoiceTable within the Android app.
- *  A SctEntry associates a forwarding strategy (identified by a string) to a Name prefix.
+ *  A SctEntry associates a forwarding mStrategy (identified by a string) to a Name mPrefix.
  */
-public class SctEntry implements Table.Entry, Comparable<SctEntry> {
-    private String prefix;
-	private String strategy;
+public class SctEntry implements Comparable<SctEntry> {
 
-    /** Main constructor.
-     * @param prefix the Name prefix associated with this entry
-     * @param strategy the name of the strategy associated with this entry
+    /** Associates a prefix to the strategy entry */
+    private String mPrefix;
+
+    /** Associates a strategy to the strategy entry */
+	private String mStrategy;
+
+    /** Main constructor. Refer to NFD Developer's Guide Section 3.6. Strategy Choice Table (p. 25) for details about the meaning of the fields
+     * @param prefix the Name mPrefix associated with this entry
+     * @param strategy the name of the mStrategy associated with this entry
      */
 	public SctEntry(String prefix, String strategy) {
-		this.prefix = prefix;
-		this.strategy = strategy;
+		mPrefix = prefix;
+		mStrategy = strategy;
 	}
 
-    /** Constructs the View to use to display an instance of SctEntry.
-     * @param inflater the system inflater to used for turning the layout file into objects.
-     * @return the View to be used for displaying an instance of SctEntry.
+    /**
+     * Getter for prefix attribute
+     * @return prefix
      */
-    @Override
-	public View getView(LayoutInflater inflater) {
-		return inflater.inflate(R.layout.item_cell_two, null, false);
-	}
-
-    /** Initialize the fields of a View with the values stored in this SctEntry.
-     * @param entry the View to use for displaying this SctEntry.
-     */
-    @Override
-    public void setViewContents(View entry) {
-        ((TextView) entry.findViewById(R.id.left)).setText(this.prefix);
-        ((TextView) entry.findViewById(R.id.right)).setText(this.strategy);
+	public String getPrefix() {
+        return mPrefix;
     }
 
-    /** Comparison of SctEntries based on their Name prefix
+    /**
+     * Getter for strategy attribute
+     * @return strategy
+     */
+    public String getStrategy() {
+        return mStrategy;
+    }
+
+    /** Comparison of SctEntries based on their Name mPrefix
      * @param that other entry to compare this with
-     * @return lexicographic distance between the two prefix Names (based on String.compareTo)
+     * @return lexicographic distance between the two mPrefix Names (based on String.compareTo)
      */
     @Override
     public int compareTo(@NonNull SctEntry that) {
-        return this.prefix.compareTo(that.prefix);
+        return this.mPrefix.compareTo(that.mPrefix);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        SctEntry that = (SctEntry) obj;
+        return mPrefix.equals(that.mPrefix) && mStrategy.equals(that.mStrategy);
     }
 }

@@ -1,11 +1,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+	xmlns:tools="http://schemas.android.com/tools"
     tools:context="pt.ulusofona.copelabs.siti.nfd.ui.MainActivity" >
 
 	<item
 		android:id="@+id/connectNdn"
 		android:orderInCategory="0"
-		android:title="@string/connectNdn"/>
+		android:title="@string/selectNdnNode"/>
 
 	<item
         android:id="@+id/createFace"
@@ -16,5 +16,27 @@
 		android:id="@+id/addRoute"
 		android:orderInCategory="2"
 		android:title="@string/addRoute"/>
+
+	<item
+		android:id="@+id/expressInterest"
+		android:orderInCategory="3"
+		android:title="@string/express_interest"/>
+
+	<item
+		android:id="@+id/sendPushedData"
+		android:orderInCategory="4"
+		android:title="@string/send_pushed_data"/>
+
+	<item
+		android:id="@+id/sendPacketsConfiguration"
+		android:checkable="true"
+		android:checked="true"
+		android:orderInCategory="5"
+		android:title="@string/backup_option" />
+
+	<item
+		android:id="@+id/wipe_wifi_p2p_cache"
+		android:orderInCategory="6"
+		android:title="@string/wipe_p2p_cache" />
 
 </menu>

@@ -1,29 +1,31 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:tools="http://schemas.android.com/tools"
-             style="@style/match"
-             tools:context="pt.ulusofona.copelabs.ndn.android.ui.fragment.OpportunisticPeerTracking">
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
 
     <LinearLayout
-        style="@style/fill"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent">
 
-        <Button
-            android:id="@+id/button_group_formation"
-            style="@style/piece"
-            android:text="@string/groupFormation"/>
+        <Button android:id="@+id/button_group_formation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/groupFormation" />
 
-        <Button
-            android:id="@+id/button_group_leave"
-            style="@style/piece"
-            android:text="@string/groupLeave"/>
+        <Button android:id="@+id/button_group_leave"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/groupLeave" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
             <TextView
-                style="@style/title"
-                android:text="@string/wifiP2pPeers"/>
+                android:text="@string/ndnOppPeers"
+                android:layout_height="wrap_content"
+                android:textColor="@color/black"
+                android:layout_width="wrap_content"
+                android:textAllCaps="true"/>
 
             <ProgressBar
                 android:id="@+id/discoveryInProgress"
@@ -35,15 +37,34 @@
 
         <ListView
             android:id="@+id/list_wifiP2pPeers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             style="@style/piece"/>
 
         <TextView
-            style="@style/title"
-            android:text="@string/nsdServices"/>
+            android:text="@string/nsdServices"
+            android:layout_height="wrap_content"
+            android:textColor="@color/black"
+            android:layout_width="wrap_content"
+            android:textAllCaps="true"/>
 
         <ListView
             android:id="@+id/list_nsd_services"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/piece"/>
+
+        <TextView
+            android:text="@string/received_interests"
+            android:layout_height="wrap_content"
+            android:textColor="@color/black"
+            android:layout_width="wrap_content"
+            android:textAllCaps="true"/>
+
+        <ListView
+            android:id="@+id/list_pending_interests"
             style="@style/piece"/>
 
     </LinearLayout>
-</FrameLayout>
+
+</layout>

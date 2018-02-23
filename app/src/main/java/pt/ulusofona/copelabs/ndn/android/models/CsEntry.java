@@ -1,52 +1,48 @@
 /**
- *  @version 1.0
+ *  @version 1.1
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2017-02-14
  * Implementation of the ContentStore entry class.
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
+ * @author Miguel Tavares (COPELABS/ULHT)
  */
 package pt.ulusofona.copelabs.ndn.android.models;
 
 import android.support.annotation.NonNull;
-import android.view.LayoutInflater;
-import android.view.View;
-
-import android.widget.TextView;
-
-import pt.ulusofona.copelabs.ndn.R;
-import pt.ulusofona.copelabs.ndn.android.ui.fragment.Table;
 
 /** The model class used to represent entries from the ContentStore within the Android app.
  *  Given that an entry from CS is a Name + Content, a layout with two cells is used.
  */
-public class CsEntry implements Table.Entry, Comparable<CsEntry> {
+public class CsEntry implements Comparable<CsEntry> {
+
+    /** Attribute to store entry's name */
     private String name;
+
+    /** Attribute to store entry's data */
 	private String data;
 
     /** Main constructor.
-     * @param name the Name of this entry
-     * @param data a string encoding the Data packet associated to the Name of this entry
+     * @param name the NDN Name associated to this entry
+     * @param data a string encoding the WifiP2pCache packet associated to the Name of this entry
      */
 	public CsEntry(String name, String data) {
 		this.name = name;
 		this.data = data;
 	}
 
-    /** Constructs the View to use to display an instance of CsEntry.
-     * @param inflater the system inflater to used for turning the layout file into objects.
-     * @return the View to be used for displaying an instance of CsEntry.
+    /**
+     * Getter for attribute name
+     * @return name
      */
-    @Override
-	public View getView(LayoutInflater inflater) {
-        return inflater.inflate(R.layout.item_cell_two, null, false);
+	public String getName() {
+        return name;
     }
 
-    /** Initialize the fields of a View with the values stored in this CsEntry.
-     * @param entry the View to use for displaying this CsEntry.
+    /**
+     * Getter for attribute data
+     * @return data
      */
-    @Override
-    public void setViewContents(View entry) {
-        ((TextView) entry.findViewById(R.id.left)).setText(name);
-        ((TextView) entry.findViewById(R.id.right)).setText(data);
+    public String getData() {
+        return data;
     }
 
     /** Comparison of CsEntry based on their Name
@@ -56,5 +52,11 @@ public class CsEntry implements Table.Entry, Comparable<CsEntry> {
     @Override
     public int compareTo(@NonNull CsEntry that) {
         return this.name.compareTo(that.name);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        CsEntry that = (CsEntry) obj;
+        return name.equals(that.name) && data.equals(that.data);
     }
 }

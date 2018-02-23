@@ -1,6 +1,6 @@
 #include <jni.h>
-#include <coffeejni.h>
-#include <coffeecatch.h>
+// #include <coffeejni.h>
+// #include <coffeecatch.h>
 #include <stdlib.h>
 #include <map>
 
@@ -48,6 +48,7 @@ static std::unique_ptr<nfd::rib::Service> g_nrd;
 
 JavaVM* g_vm;
 jobject forwardingDaemonInstance;
+
 // Caching of java.util.ArrayList
 static jclass list;
 static jmethodID newList;
@@ -61,6 +62,10 @@ static jmethodID newFace;
 
 static jclass forwardingDaemon;
 static jmethodID afterFaceAdded;
+static jmethodID beforeFaceRemoved;
+static jmethodID mth_transfer_intr;
+static jmethodID mth_cancel_intr;
+static jmethodID mth_transfer_data;
 
 static jclass fibEntry;
 static jmethodID newFibEntry;
@@ -76,9 +81,6 @@ static jmethodID newSctEntry;
 
 static jclass csEntry;
 static jmethodID newCsEntry;
-
-static jclass cls_opp_channel;
-static jmethodID mth_send;
 
 void initializeLogging(nfd::ConfigSection& cfg) {
 	nfd::ConfigFile config(&nfd::ConfigFile::ignoreUnknownSection);
@@ -137,6 +139,13 @@ void afterFaceAdd(const nfd::Face& current) {
     );
 }
 
+void beforeFaceRemove(const nfd::Face& current) {
+    PERFORM_ATTACHED(
+        NFD_LOG_INFO("Face added : " << current.getId() << " faceUri=" << current.getRemoteUri());
+        env->CallVoidMethod(forwardingDaemonInstance, beforeFaceRemoved, constructFace(env, current));
+    );
+}
+
 void beforePitEntryRemove(const nfd::pit::Entry& entry) {
     NFD_LOG_INFO("PitEntry removal : " << entry.getName());
     for(auto && outEntry : entry.getOutRecords()) {
@@ -144,13 +153,26 @@ void beforePitEntryRemove(const nfd::pit::Entry& entry) {
         if(face.getRemoteUri().getScheme().compare("opp") == 0) {
             NFD_LOG_DEBUG("PitEntry.OutRecord [Opp] : " << face.getId());
             nfd::face::OppTransport *oppTransport = dynamic_cast<nfd::face::OppTransport*>(face.getTransport());
-            oppTransport->removePacket(outEntry.getLastNonce());
+            uint32_t nonce = outEntry.getLastNonce();
+            oppTransport->removeInterest(nonce);
+            PERFORM_ATTACHED(
+                env->CallVoidMethod(forwardingDaemonInstance, mth_cancel_intr, face.getId(), nonce);
+            );
         }
     }
 }
 
 void beforeOutRecordUpdate(uint32_t nonce) {
     NFD_LOG_INFO("Update to Out-Record : " << nonce << " will be removed.");
+    for(const nfd::Face& face : g_nfd->getFaceTable())
+        if(face.getRemoteUri().getScheme().compare("opp") == 0) {
+            NFD_LOG_DEBUG("PitEntry.OutRecord [Opp] : " << face.getId());
+            nfd::face::OppTransport *oppTransport = dynamic_cast<nfd::face::OppTransport*>(face.getTransport());
+            oppTransport->removeInterest(nonce);
+            PERFORM_ATTACHED(
+                env->CallVoidMethod(forwardingDaemonInstance, mth_cancel_intr, face.getId(), nonce);
+            );
+        }
     // Should remove that packet from the queues.
 }
 
@@ -177,6 +199,7 @@ JNIEXPORT void JNICALL jniStart(JNIEnv* env, jobject fDaemon, jstring homepath, 
 
     NFD_LOG_INFO("Connecting FaceTable.afterAdd & Pit.beforeRemove signals.");
     g_nfd->getFaceTable().afterAdd.connect(afterFaceAdd);
+    g_nfd->getFaceTable().beforeRemove.connect(beforeFaceRemove);
     g_nfd->getPendingInterestTable().beforeRemove.connect(beforePitEntryRemove);
 
     g_nfd->getForwarder().beforeOutRecordUpdate.connect(beforeOutRecordUpdate);
@@ -198,7 +221,7 @@ JNIEXPORT void JNICALL jniStart(JNIEnv* env, jobject fDaemon, jstring homepath, 
 }
 
 JNIEXPORT void JNICALL jniStop(JNIEnv* env, jobject) {
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         nfd::getGlobalIoService().post( [] {
             NFD_LOG_DEBUG("Stopping I/O service.");
             nfd::getGlobalIoService().stop();
@@ -214,83 +237,119 @@ JNIEXPORT void JNICALL jniStop(JNIEnv* env, jobject) {
             NFD_LOG_INFO("Resetting Global I/O Service");
             nfd::resetGlobalIoService();
         });
-    );
+    //);
 }
 
-static jstring jniGetVersion(JNIEnv* env, jobject) {
+JNIEXPORT jstring JNICALL jniGetVersion(JNIEnv* env, jobject) {
 	return env->NewStringUTF(NFD_VERSION_BUILD_STRING);
 }
 
-static jobject jniGetNameTree(JNIEnv* env, jobject) {
+JNIEXPORT jobject JNICALL jniGetNameTree(JNIEnv* env, jobject) {
     jobject nametree = env->NewObject(list, newList);
 
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr)
             for(auto&& entry : g_nfd->getNameTree())
                 env->CallBooleanMethod(nametree, listAdd,
                     env->NewObject(name, newName, env->NewStringUTF(entry.getName().toUri().c_str())));
-    );
+    //);
 
 	return nametree;
 }
 
-static jobject jniGetFaceTable(JNIEnv* env, jobject) {
+JNIEXPORT jobject JNICALL jniGetFaceTable(JNIEnv* env, jobject) {
 	jobject faceList = env->NewObject(list, newList);
 
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if (g_nfd.get() != nullptr)
             for(const nfd::Face& current : g_nfd->getFaceTable())
                 env->CallBooleanMethod(faceList, listAdd, constructFace(env, current));
-    );
+    //);
 
 	return faceList;
 }
 
-static void jniCreateFace(JNIEnv* env, jobject, jstring uri, jint persistency, jboolean localFields) {
-    COFFEE_TRY_JNI(env,
+JNIEXPORT void JNICALL jniCreateFace(JNIEnv* env, jobject, jstring uri, jint persistency, jboolean localFields) {
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             std::string faceUri = convertString(env, uri);
             NFD_LOG_INFO("CreateFace: " << faceUri);
             g_nfd->createFace(faceUri, (ndn::nfd::FacePersistency) persistency, (bool) localFields);
         }
-    );
+    //);
 }
 
-std::map<long, jobject> m_opportunistic_channels;
-
-void performSend(long faceId, ndn::Block bl) {
+void transferInterest(long faceId, uint32_t nonce, ndn::Block bl) {
     PERFORM_ATTACHED(
-        NFD_LOG_INFO("Perform Send from Face : " << faceId << " of " << bl.size() << " bytes.");
+        NFD_LOG_INFO("Transfer Interest on Face : " << faceId << " #" << nonce);
         nfd::Face *current = g_nfd->getFaceTable().get(faceId);
-        if(current != nullptr && current->getTransport()->getState() == nfd::face::TransportState::UP) {
-            jobject oppChannel = m_opportunistic_channels.find(faceId)->second;
-            jbyteArray packetBytes = env->NewByteArray(bl.size());
-            if(packetBytes != NULL) {
+        if(current != nullptr) {
+            jbyteArray payload = env->NewByteArray(bl.size());
+            if(payload != NULL) {
                 NFD_LOG_INFO("Attempting to map ByteArray region.");
-                env->SetByteArrayRegion(packetBytes, 0, bl.size(), (const jbyte*) bl.wire());
-                NFD_LOG_INFO("Calling actual mth_send.");
-                env->CallVoidMethod(oppChannel, mth_send, packetBytes);
+                env->SetByteArrayRegion(payload, 0, bl.size(), (const jbyte*) bl.wire());
+                NFD_LOG_INFO("Mapping succeeded. Issueing send request.");
+                env->CallVoidMethod(forwardingDaemonInstance, mth_transfer_intr, (jlong) faceId, (jint) nonce, payload);
             } else
                 NFD_LOG_WARN("Cannot allocate buffer for sending Block.");
         }
     );
 }
 
-static void jniSendComplete(JNIEnv* env, jobject, jlong faceId, jboolean result) {
-    COFFEE_TRY_JNI(env,
-        if(g_nfd.get() != nullptr) {
-            nfd::Face *current = g_nfd->getFaceTable().get(faceId);
-            if(current != nullptr) {
-                nfd::face::OppTransport* oppTransport = (nfd::face::OppTransport*) current->getTransport();
-                oppTransport->onSendComplete(result);
+void cancelInterest(long faceId, uint32_t nonce) {
+    PERFORM_ATTACHED(
+        NFD_LOG_INFO("Cancel Interest on Face : " << faceId << " #" << nonce);
+        nfd::Face *current = g_nfd->getFaceTable().get(faceId);
+        if(current != nullptr)
+            env->CallVoidMethod(forwardingDaemonInstance, mth_cancel_intr, (jlong) faceId, (jint) nonce);
+    );
+}
+
+void transferData(long faceId, std::string name, ndn::Block bl) {
+    PERFORM_ATTACHED(
+        NFD_LOG_INFO("Transfer Data on Face : " << faceId);
+        nfd::Face *current = g_nfd->getFaceTable().get(faceId);
+        if(current != nullptr) {
+            jbyteArray payload = env->NewByteArray(bl.size());
+            if(payload != NULL) {
+                NFD_LOG_INFO("Attempting to map ByteArray region.");
+                env->SetByteArrayRegion(payload, 0, bl.size(), (const jbyte*) bl.wire());
+                NFD_LOG_INFO("Mapping succeeded. Issueing send request.");
+                env->CallVoidMethod(forwardingDaemonInstance, mth_transfer_data, (jlong) faceId, env->NewStringUTF(name.c_str()), payload);
             } else
-                NFD_LOG_ERROR("Could not retrieve face #" << faceId);
+                NFD_LOG_WARN("Cannot allocate buffer for sending Block.");
         }
     );
 }
 
-static void jniReceiveOnFace(JNIEnv* env, jobject, jlong faceId, jint receivedBytes, jbyteArray buffer) {
-    COFFEE_TRY_JNI(env,
+JNIEXPORT void JNICALL jniOnInterestTransferred(JNIEnv* env, jobject, jlong faceId, jint nonce, jboolean result) {
+    //COFFEE_TRY_JNI(env,
+        if(g_nfd.get() != nullptr) {
+            nfd::Face *current = g_nfd->getFaceTable().get(faceId);
+            if(current != nullptr) {
+                nfd::face::OppTransport* oppTransport = (nfd::face::OppTransport*) current->getTransport();
+                oppTransport->onInterestTransferred(nonce);
+            } else
+                NFD_LOG_ERROR("Could not retrieve face #" << faceId);
+        }
+    //);
+}
+
+JNIEXPORT void JNICALL jniOnDataTransferred(JNIEnv* env, jobject, jlong faceId, jstring name) {
+    //COFFEE_TRY_JNI(env,
+        if(g_nfd.get() != nullptr) {
+            nfd::Face *current = g_nfd->getFaceTable().get(faceId);
+            if(current != nullptr) {
+                nfd::face::OppTransport* oppTransport = (nfd::face::OppTransport*) current->getTransport();
+                oppTransport->onDataTransferred(convertString(env, name));
+            } else
+                NFD_LOG_ERROR("Could not retrieve face #" << faceId);
+        }
+    //);
+}
+
+JNIEXPORT void JNICALL jniReceiveOnFace(JNIEnv* env, jobject, jlong faceId, jint receivedBytes, jbyteArray buffer) {
+    //COFFEE_TRY_JNI(env,
         NFD_LOG_DEBUG("Receive on Face " << faceId << " buffer=" << buffer << ", receivedBytes=" << (int) receivedBytes);
         if(g_nfd.get() != nullptr) {
             nfd::Face *current = g_nfd->getFaceTable().get(faceId);
@@ -303,30 +362,27 @@ static void jniReceiveOnFace(JNIEnv* env, jobject, jlong faceId, jint receivedBy
             } else
                 NFD_LOG_ERROR("Could not retrieve face #" << faceId);
         }
-    );
+    //);
 }
 
-static void jniBringUpFace(JNIEnv* env, jobject, jlong faceId, jobject oppChannel) {
-    COFFEE_TRY_JNI(env,
+JNIEXPORT void JNICALL jniBringUpFace(JNIEnv* env, jobject, jlong faceId) {
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             nfd::Face* current = g_nfd->getFaceTable().get(faceId);
             if(current != nullptr) {
                 nfd::face::OppTransport* oppT = (nfd::face::OppTransport*) current->getTransport();
                 if(oppT->getState() == nfd::face::TransportState::DOWN) {
-                    // Associate faceId to oppChannel so that it is used when OppTransport sends.
-                    // Also when a packet is received it should be passed through that Transport.
-                    NFD_LOG_INFO("Associating OppChannel to face #" << faceId);
-                    m_opportunistic_channels[faceId] = env->NewGlobalRef(oppChannel);
+                    // When a packet is received it should be passed through that Transport.
                     NFD_LOG_INFO("Commuting transport state of face #" << faceId << " to UP.");
                     oppT->commuteState(nfd::face::TransportState::UP);
                 }
             }
         }
-    );
+    //);
 }
 
-static void jniBringDownFace(JNIEnv* env, jobject, jlong faceId) {
-    COFFEE_TRY_JNI(env,
+JNIEXPORT void JNICALL jniBringDownFace(JNIEnv* env, jobject, jlong faceId) {
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             nfd::Face* current = g_nfd->getFaceTable().get(faceId);
             if(current != nullptr) {
@@ -334,35 +390,48 @@ static void jniBringDownFace(JNIEnv* env, jobject, jlong faceId) {
                 if(oppT->getState() == nfd::face::TransportState::UP) {
                     NFD_LOG_INFO("Commuting transport state of face #" << faceId << " to DOWN.");
                     oppT->commuteState(nfd::face::TransportState::DOWN);
-                    NFD_LOG_INFO("Detaching OppChannel from face #" << faceId);
-                    jobject oppChannel = m_opportunistic_channels.find(faceId)->second;
-                    env->DeleteGlobalRef(oppChannel);
                 }
             }
         }
-    );
+    //);
 }
 
-static void jniPushData(JNIEnv* env, jobject, jlong faceId, jstring name) {
+JNIEXPORT void JNICALL jniPushData(JNIEnv* env, jobject, jlong faceId, jstring name) {
     NFD_LOG_INFO("PushData " << name);
     if(g_nfd.get() != nullptr) {
 
     }
 }
 
-static void jniDestroyFace(JNIEnv* env, jobject, jlong faceId) {
-    COFFEE_TRY_JNI(env,
+JNIEXPORT void JNICALL jniPassInterests(JNIEnv* env, jobject, jlong faceId, jstring name) {
+    NFD_LOG_INFO("Passing Interests Opportunistically " << name);
+    if(g_nfd.get() != nullptr) {
+        std::string nameUri = convertString(env, name);
+        for(auto&& entry : g_nfd->getPendingInterestTable()) {
+            ndn::Name nameCpp(nameUri);
+            if(entry.getName().isPrefixOf(nameCpp)) {
+                NFD_LOG_INFO("Found matching Interests : " << entry.getName().toUri().c_str() << " for FaceId " << faceId);
+                nfd::Face *face = g_nfd->getFaceTable().get(faceId);
+                auto &interest = entry.getInterest();
+                g_nfd->getForwarder().onOutgoingInterestCustom(const_cast<nfd::pit::Entry&>(entry), *face, interest);
+            }
+        }
+    }
+}
+
+JNIEXPORT void JNICALL jniDestroyFace(JNIEnv* env, jobject, jlong faceId) {
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             NFD_LOG_INFO("DestroyFace: " << faceId);
             g_nfd->destroyFace(faceId);
         }
-    );
+    //);
 }
 
-static jobject jniGetForwardingInformationBase(JNIEnv* env, jobject) {
+JNIEXPORT jobject JNICALL jniGetForwardingInformationBase(JNIEnv* env, jobject) {
 	jobject fib = env->NewObject(list, newList);
 
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             for(auto&& entry : g_nfd->getForwardingInformationBase()) {
                 jobject jfibEntry = env->NewObject(fibEntry, newFibEntry, env->NewStringUTF(entry.getPrefix().toUri().c_str()));
@@ -373,7 +442,7 @@ static jobject jniGetForwardingInformationBase(JNIEnv* env, jobject) {
                 env->CallBooleanMethod(fib, listAdd, jfibEntry);
             }
         }
-    );
+    //);
 
 	return fib;
 }
@@ -388,8 +457,8 @@ void onRibUpdateFailure(const nfd::rib::RibUpdate& update, uint32_t code, const 
     g_nrd->m_ribManager->onRibUpdateFailure(update, code, error);
 }
 
-static void jniAddRoute(JNIEnv* env, jobject, jstring prefix, jlong faceId, jlong origin, jlong cost, jlong flags) {
-    COFFEE_TRY_JNI(env,
+JNIEXPORT void JNICALL jniAddRoute(JNIEnv* env, jobject, jstring prefix, jlong faceId, jlong origin, jlong cost, jlong flags) {
+    //COFFEE_TRY_JNI(env,
         if(g_nrd.get() != nullptr) {
             nfd::rib::Route route;
             route.faceId = faceId; route.origin = origin; route.cost = cost; route.flags = flags;
@@ -411,13 +480,13 @@ static void jniAddRoute(JNIEnv* env, jobject, jstring prefix, jlong faceId, jlon
             // @TODO: this causes SIGBUS (code 1: addr. algn.) on Android. [ = std::set::insert(..)]
             //g_nrd->m_ribManager->m_registeredFaces.insert(faceId);
         }
-    );
+    //);
 }
 
-static jobject jniGetPendingInterestTable(JNIEnv* env, jobject) {
+JNIEXPORT jobject JNICALL jniGetPendingInterestTable(JNIEnv* env, jobject) {
 	jobject pit = env->NewObject(list, newList);
 
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             for(auto&& entry : g_nfd->getPendingInterestTable()) {
                 jobject jpitEntry = env->NewObject(pitEntry, newPitEntry, env->NewStringUTF(entry.getName().toUri().c_str()));
@@ -430,15 +499,15 @@ static jobject jniGetPendingInterestTable(JNIEnv* env, jobject) {
                 env->CallBooleanMethod(pit, listAdd, jpitEntry);
             }
         }
-    );
+    //);
 
 	return pit;
 }
 
-static jobject jniGetContentStore(JNIEnv* env, jobject) {
+JNIEXPORT jobject JNICALL jniGetContentStore(JNIEnv* env, jobject) {
 	jobject cs = env->NewObject(list, newList);
 
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             for(auto&& entry : g_nfd->getContentStore()) {
                 std::string sName = entry.getName().toUri();
@@ -449,15 +518,15 @@ static jobject jniGetContentStore(JNIEnv* env, jobject) {
                 env->CallBooleanMethod(cs, listAdd, jCsEntry);
             }
         }
-    );
+    //);
 
 	return cs;
 }
 
-static jobject jniGetStrategyChoiceTable(JNIEnv* env, jobject) {
+JNIEXPORT jobject JNICALL jniGetStrategyChoiceTable(JNIEnv* env, jobject) {
 	jobject sct = env->NewObject(list, newList);
 
-    COFFEE_TRY_JNI(env,
+    //COFFEE_TRY_JNI(env,
         if(g_nfd.get() != nullptr) {
             for(auto&& entry : g_nfd->getStrategyChoiceTable()) {
                 jobject jstrategy = env->NewObject(sctEntry, newSctEntry,
@@ -466,9 +535,34 @@ static jobject jniGetStrategyChoiceTable(JNIEnv* env, jobject) {
                 env->CallBooleanMethod(sct, listAdd, jstrategy);
             }
         }
-    );
+    //);
 
 	return sct;
+}
+
+JNIEXPORT jboolean JNICALL jniIsFaceUp(JNIEnv* env, jobject, jlong faceId) {
+    if(g_nfd.get() != nullptr) {
+        nfd::Face* current = g_nfd->getFaceTable().get(faceId);
+        if(current != nullptr) {
+            nfd::face::OppTransport* oppT = (nfd::face::OppTransport*) current->getTransport();
+            return oppT->getState() == nfd::face::TransportState::UP;
+        }
+    }
+    return (bool) false;
+}
+
+JNIEXPORT jlong JNICALL jniGetFaceId(JNIEnv* env, jobject, jstring uri) {
+    std::string faceUri = convertString(env, uri);
+    if(g_nfd.get() != nullptr) {
+        for(const nfd::Face& face : g_nfd->getFaceTable()) {
+            NFD_LOG_INFO("Trying with " << face.getRemoteUri().toString());
+            if(face.getRemoteUri().toString().find(":6363") != std::string::npos) {
+                NFD_LOG_INFO("Found " << face.getRemoteUri() << " with face " << face.getId());
+                return face.getId();
+            }
+        }
+    }
+    return -1;
 }
 
 static JNINativeMethod nativeMethods[] = {
@@ -476,20 +570,24 @@ static JNINativeMethod nativeMethods[] = {
 	{ "jniStop", "()V", (void*) jniStop },
 
 	{ "jniGetVersion", "()Ljava/lang/String;", (void*) jniGetVersion },
-	{ "jniGetNameTree"                  , "()Ljava/util/List;" , (void*) jniGetNameTree },
-	{ "jniGetFaceTable"                 , "()Ljava/util/List;" , (void*) jniGetFaceTable },
-	{ "jniGetPendingInterestTable"      , "()Ljava/util/List;" , (void*) jniGetPendingInterestTable },
-	{ "jniGetForwardingInformationBase" , "()Ljava/util/List;" , (void*) jniGetForwardingInformationBase },
-	{ "jniGetStrategyChoiceTable"       , "()Ljava/util/List;" , (void*) jniGetStrategyChoiceTable },
-	{ "jniGetContentStore"              , "()Ljava/util/List;" , (void*) jniGetContentStore },
+	{ "jniGetNameTree"                  , "()Ljava/util/List;"      , (void*) jniGetNameTree },
+	{ "jniGetFaceTable"                 , "()Ljava/util/List;"      , (void*) jniGetFaceTable },
+	{ "jniGetPendingInterestTable"      , "()Ljava/util/List;"      , (void*) jniGetPendingInterestTable },
+	{ "jniGetForwardingInformationBase" , "()Ljava/util/List;"      , (void*) jniGetForwardingInformationBase },
+	{ "jniGetStrategyChoiceTable"       , "()Ljava/util/List;"      , (void*) jniGetStrategyChoiceTable },
+	{ "jniGetContentStore"              , "()Ljava/util/List;"      , (void*) jniGetContentStore },
+	{ "jniIsFaceUp"                     , "(J)Z"                    , (void*) jniIsFaceUp },
+	{ "jniGetFaceId"                    , "(Ljava/lang/String;)J"   , (void*) jniGetFaceId },
 
 	{ "jniCreateFace", "(Ljava/lang/String;IZ)V", (void*) jniCreateFace },
-	{ "jniBringUpFace", "(JLpt/ulusofona/copelabs/ndn/android/umobile/OpportunisticChannel;)V", (void*) jniBringUpFace },
+	{ "jniBringUpFace", "(J)V", (void*) jniBringUpFace },
 	{ "jniBringDownFace", "(J)V", (void*) jniBringDownFace },
 	{ "jniDestroyFace", "(J)V", (void*) jniDestroyFace },
 	{ "jniReceiveOnFace", "(JI[B)V", (void*) jniReceiveOnFace },
 	{ "jniPushData", "(JLjava/lang/String;)V", (void*) jniPushData },
-    { "jniSendComplete", "(JZ)V", (void*) jniSendComplete },
+	{ "jniPassInterests", "(JLjava/lang/String;)V", (void*) jniPassInterests },
+    { "jniOnInterestTransferred", "(JI)V", (void*) jniOnInterestTransferred },
+    { "jniOnDataTransferred", "(JLjava/lang/String;)V", (void*) jniOnDataTransferred },
 
 	{ "jniAddRoute", "(Ljava/lang/String;JJJJ)V", (void*) jniAddRoute }
 };
@@ -502,7 +600,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 		return JNI_ERR;
 	} else {
 		NFD_LOG_DEBUG("Registering Native methods.");
-		forwardingDaemon = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/umobile/OpportunisticDaemon")));
+		forwardingDaemon    = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/umobile/common/OpportunisticDaemon")));
 		env->RegisterNatives(forwardingDaemon, nativeMethods, sizeof(nativeMethods) / sizeof(JNINativeMethod));
 
 		NFD_LOG_DEBUG("Caching JNI classes.");
@@ -515,8 +613,6 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 		sctEntry = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/models/SctEntry")));
 		csEntry  = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/models/CsEntry")));
 
-        cls_opp_channel = static_cast<jclass>(env->NewGlobalRef(env->FindClass("pt/ulusofona/copelabs/ndn/android/umobile/OpportunisticChannel")));
-
 		newList = env->GetMethodID(list, "<init>", "()V");
 		newName = env->GetMethodID(name, "<init>", "(Ljava/lang/String;)V");
 		newFace = env->GetMethodID(face, "<init>", "(JLjava/lang/String;IIIII)V");
@@ -526,13 +622,16 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 		newCsEntry  = env->GetMethodID(csEntry, "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
 
         afterFaceAdded = env->GetMethodID(forwardingDaemon, "afterFaceAdded", "(Lpt/ulusofona/copelabs/ndn/android/models/Face;)V");
+        beforeFaceRemoved = env->GetMethodID(forwardingDaemon, "beforeFaceRemoved", "(Lpt/ulusofona/copelabs/ndn/android/models/Face;)V");
+        mth_transfer_intr = env->GetMethodID(forwardingDaemon, "transferInterest", "(JI[B)V");
+        mth_cancel_intr = env->GetMethodID(forwardingDaemon, "cancelInterest", "(JI)V");
+        mth_transfer_data = env->GetMethodID(forwardingDaemon, "transferData", "(JLjava/lang/String;[B)V");
 
 		listAdd      = env->GetMethodID(list    , "add"         , "(Ljava/lang/Object;)Z");
 		addNextHop   = env->GetMethodID(fibEntry, "addNextHop"  , "(JI)V");
 		addInRecord  = env->GetMethodID(pitEntry, "addInRecord" , "(JI)V");
 		addOutRecord = env->GetMethodID(pitEntry, "addOutRecord", "(JI)V");
 
-		mth_send = env->GetMethodID(cls_opp_channel, "send", "([B)V");
 	}
 	return JNI_VERSION_1_6;
 }
@@ -551,7 +650,6 @@ void JNI_OnUnload(JavaVM* vm, void *reserved) {
 			env->DeleteGlobalRef(pitEntry);
 			env->DeleteGlobalRef(sctEntry);
 			env->DeleteGlobalRef(csEntry);
-			env->DeleteGlobalRef(cls_opp_channel);
 		}
 	}
 }

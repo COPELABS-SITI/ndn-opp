@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:app="http://schemas.android.com/apk/res-auto"
+		xmlns:android="http://schemas.android.com/apk/res/android">
+
+	<data>
+		<variable name="entry" type="pt.ulusofona.copelabs.ndn.android.models.FibEntry"/>
+	</data>
+
+	<android.support.constraint.ConstraintLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="vertical"
+		android:padding="2dp"
+		android:fontFamily="sans-serif"
+		android:layout_margin="1dp"
+		android:background="@color/lightgray">
+
+		<TextView android:id="@+id/prefix"
+			android:text="@{entry.prefix}"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:gravity="start"
+			android:maxLines="1"
+			app:layout_constraintTop_toTopOf="parent"
+			app:layout_constraintBottom_toTopOf="@+id/next_hops"
+			app:layout_constraintLeft_toLeftOf="parent"
+			app:layout_constraintRight_toRightOf="parent"/>
+
+		<TextView android:id="@+id/next_hops"
+			android:text="@{entry.nextHops}"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:gravity="end"
+			android:maxLines="1"
+			app:layout_constraintTop_toBottomOf="@+id/prefix"
+			app:layout_constraintRight_toRightOf="parent"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintLeft_toLeftOf="parent"/>
+
+	</android.support.constraint.ConstraintLayout>
+</layout>

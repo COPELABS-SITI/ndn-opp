@@ -9,10 +9,11 @@
 
 	<string name="notAvailable">n/a</string>
     
-    <string name="status">Status</string>
+    <string name="mStatus">Status</string>
     <string name="version">Version</string>
     <string name="uptime">Uptime</string>
 
+    <string name="startPeerDiscovery">Start Peer Discovery</string>
     <string name="nametree">Name Tree</string>
     <string name="facetable">Face Table</string>
     <string name="fib">Forwarding Information Base</string>
@@ -53,17 +54,33 @@
     <string name="groupClient">Cl</string>
     <string name="missingGroup">--</string>
     <string name="groupFormation">Join/Form Group</string>
-    <string name="wifiP2pPeers">WiFi P2P Peers</string>
-    <string name="missingUuid">------------</string>
+    <string name="ndnOppPeers">NDN-Opp Peers</string>
+    <string name="missingUuid">********-****-****-****-************</string>
     <string name="missingStatus">--</string>
     <string name="missingMac">--:--:--:--:--:--</string>
     <string name="peerTracking">UMobile Peer Tracking</string>
     <string name="uuid">UUID</string>
     <string name="wfdSwitch">Wi-Fi Direct</string>
-    <string name="connectNdn">Connect to NDN Testbed</string>
+    <string name="selectNdnNode">Select NDN Node</string>
     <string name="ndn_node">NDN Node</string>
     <string name="connect">Connect</string>
     <string name="groupLeave">Leave Group</string>
     <string name="in">IN</string>
     <string name="out">OUT</string>
+    <string name="respond_to_interest">Respond to Interest</string>
+    <string name="response">Response</string>
+    <string name="lifetime">Lifetime</string>
+    <string name="content">Content</string>
+    <string name="long_lived">Long-Lived</string>
+    <string name="long_lived_interest">Long-Lived Interest</string>
+    <string name="interest_name">Name:</string>
+    <string name="express_interest">Express Interest</string>
+    <string name="express">Express</string>
+    <string name="ndn_opp_prefix">/ndn/multipcast/opp</string>
+    <string name="pushed_data">Pushed Data</string>
+    <string name="send_pushed_data">Send Pushed Data</string>
+    <string name="backup_option">Backup Option</string>
+    <string name="wipe_p2p_cache">Wipe Wi-Fi Direct Cache</string>
+    <string name="received_interests">Received Interests</string>
+    <string name="send">Send</string>
 </resources>

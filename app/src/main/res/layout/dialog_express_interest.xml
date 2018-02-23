@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <android.support.constraint.ConstraintLayout
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:orientation="vertical">
+
+        <TextView android:text="@string/interest_name"
+            android:textAllCaps="true"
+            android:textColor="@color/black"
+            android:id="@+id/interest_name_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toTopOf="@+id/interest_name"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+        <EditText
+            android:id="@+id/interest_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/ndn_opp_prefix"
+            app:layout_constraintBottom_toTopOf="@+id/is_long_lived"
+            app:layout_constraintTop_toBottomOf="@+id/interest_name_title"/>
+
+        <CheckBox
+            android:id="@+id/is_long_lived"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/long_lived_interest"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/interest_name"/>
+
+    </android.support.constraint.ConstraintLayout>
+</layout>
