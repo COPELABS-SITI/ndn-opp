@@ -164,11 +164,13 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
         String data = Base64.encodeToString(packet.getPayload(), Base64.NO_PADDING);
 
         // Add the new packet to those intended for the recipient.
-        pendingPacketsForRecipient.put(packet.getId(), data);
-        mPendingPackets.put(packet.getRecipient(), pendingPacketsForRecipient);
+        if(!pendingPacketsForRecipient.containsKey(packet.getId())) {
+            pendingPacketsForRecipient.put(packet.getId(), data);
+            mPendingPackets.put(packet.getRecipient(), pendingPacketsForRecipient);
 
-        // Perform an update to the descriptor for that recipient.
-        updateRegisteredDescriptor(packet.getRecipient());
+            // Perform an update to the descriptor for that recipient.
+            updateRegisteredDescriptor(packet.getRecipient());
+        }
     }
 
     /** Cancel a sending of a packet to an intended recipient.

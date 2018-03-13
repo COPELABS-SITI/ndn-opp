@@ -5,7 +5,7 @@
 	<item
 		android:id="@+id/connectNdn"
 		android:orderInCategory="0"
-		android:title="@string/connectNdn"/>
+		android:title="@string/selectNdnNode"/>
 
 	<item
         android:id="@+id/createFace"

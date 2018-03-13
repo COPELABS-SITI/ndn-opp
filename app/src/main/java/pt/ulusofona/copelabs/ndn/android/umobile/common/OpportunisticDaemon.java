@@ -9,7 +9,6 @@
 package pt.ulusofona.copelabs.ndn.android.umobile.common;
 
 import android.app.Notification;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -33,7 +32,6 @@ import pt.ulusofona.copelabs.ndn.android.models.FibEntry;
 import pt.ulusofona.copelabs.ndn.android.models.Name;
 import pt.ulusofona.copelabs.ndn.android.models.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.models.SctEntry;
-import pt.ulusofona.copelabs.ndn.android.ui.MainActivity;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.Identity;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.OpportunisticConnectionLessTransferManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticConnectivityManager;
@@ -42,6 +40,8 @@ import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.channels.Opp
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.NsdManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.multihoming.WifiFaceManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.multihoming.WifiFaceManagerImpl;
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.manager.RoutingManager;
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.manager.RoutingManagerImpl;
 import pt.ulusofona.copelabs.ndn.android.utilities.Utilities;
 import pt.ulusofona.copelabs.ndn.android.wifi.Wifi;
 
@@ -70,6 +70,7 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
         public String getVersion() { return jniGetVersion(); }
         public boolean isFaceUp(long faceId) { return jniIsFaceUp(faceId); }
         public long getFaceId(String uri) { return jniGetFaceId(uri); }
+        public String getFaceUri(long faceId) { return jniGetFaceUri(faceId); }
         public List<Name> getNameTree() { return jniGetNameTree(); }
         public List<Face> getFaceTable() { return jniGetFaceTable(); }
         public void createFace(String faceUri, int persistency, boolean localFields) { jniCreateFace(faceUri, persistency, localFields); }
@@ -80,6 +81,7 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
         public void passInterests(long faceId, String name) { jniPassInterests(faceId, name); }
         public List<FibEntry> getForwardingInformationBase() { return jniGetForwardingInformationBase(); }
         public void addRoute(String prefix, long faceId, long origin, long cost, long flags) { jniAddRoute(prefix, faceId, origin, cost, flags);}
+        public void removeRoute(String prefix, long faceId, long origin) { jniRemoveRoute(prefix, faceId, origin);}
         public List<PitEntry> getPendingInterestTable() { return jniGetPendingInterestTable(); }
         public List<CsEntry> getContentStore() { return jniGetContentStore(); }
         public List<SctEntry> getStrategyChoiceTable() { return jniGetStrategyChoiceTable(); }
@@ -105,6 +107,7 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
     private OpportunisticConnectivityManager mConnectivityManager = new OpportunisticConnectivityManager();
     private OpportunisticConnectionLessTransferManager mConnectionLessManager = new OpportunisticConnectionLessTransferManager();
 
+    private RoutingManager mRoutingManager = new RoutingManagerImpl();
     private WifiFaceManager mWifiFaceManager = new WifiFaceManagerImpl();
     private PacketManager.Manager mPacketManager = new PacketManagerImpl();
     private NsdManager mNsdManager = new NsdManager();
@@ -180,6 +183,7 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
 
 			startTime = System.currentTimeMillis();
 
+            mRoutingManager.start(local, this);
             mPeerTracker.addObserver(mOppFaceManager);
             mPeerTracker.addObserver(mConnectionLessManager);
 
@@ -218,6 +222,7 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
 
 			jniStop();
 
+			mRoutingManager.stop();
             mOppChannelIn.disable();
             mConnectivityManager.disable();
             mConnectionLessManager.disable();
@@ -260,7 +265,7 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
 
     // Called from JNI
     private synchronized void transferData(long faceId, String name, byte[] payload) {
-        Log.d(TAG, "Transfer WifiP2pCache : " + faceId + " " + name + " length (" + payload.length + ") [" + Base64.encodeToString(payload, Base64.NO_PADDING) + "]");
+        Log.d(TAG, "Transfer Data : " + faceId + " " + name + " length (" + payload.length + ") [" + Base64.encodeToString(payload, Base64.NO_PADDING) + "]");
         String recipient = mOppFaceManager.getUuid(faceId);
         mPacketManager.onTransferData(mAssignedUuid, recipient, payload, name);
     }
@@ -331,6 +336,7 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
 	private native void jniStop();
 
     private native long jniGetFaceId(String uri);
+    private native String jniGetFaceUri(long faceId);
     private native boolean jniIsFaceUp(long faceId);
 
     /** [JNI] Retrieve the version of the underlying NDN Opportunistic Daemon.
@@ -416,6 +422,13 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
      * @param flags the route inheritance flags
      */
     private native void jniAddRoute(String prefix, long faceId, long origin, long cost, long flags);
+
+    /** [JNI] Request the removal of a route from the RoutingInformationBase (see https://redmine.named-data.net/projects/nfd/wiki/RibMgmt)
+     * @param prefix the Name prefix to which the route is associated
+     * @param faceId the FaceId to be included as one of the next-hops
+     * @param origin the origin of this new route (e.g. app, static, nlsr)
+     */
+    private native void jniRemoveRoute(String prefix, long faceId, long origin);
 
     /** [JNI] Retrieve the PendingInterestTable of the running NDN Opportunistic Daemon.
      * @return the list of all PIT entries of the running NOD

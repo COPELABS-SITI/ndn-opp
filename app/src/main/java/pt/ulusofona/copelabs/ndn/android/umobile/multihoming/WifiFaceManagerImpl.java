@@ -54,7 +54,7 @@ public class WifiFaceManagerImpl implements WifiFaceManager, Runnable, WifiRegul
     }
 
     /**
-     * This method is used to disable the multihoming feature
+     * This method is used to stop the multihoming feature
      */
     @Override
     public void disable() {

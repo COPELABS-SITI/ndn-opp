@@ -483,6 +483,26 @@ JNIEXPORT void JNICALL jniAddRoute(JNIEnv* env, jobject, jstring prefix, jlong f
     //);
 }
 
+JNIEXPORT void JNICALL jniRemoveRoute(JNIEnv* env, jobject, jstring prefix, jlong faceId, jlong origin) {
+    if(g_nrd.get() != nullptr) {
+        nfd::rib::Route route;
+          route.faceId = faceId; route.origin = origin;
+          ndn::Name routePrefix = ndn::Name(convertString(env, prefix));
+
+          NFD_LOG_INFO("Removing route " << routePrefix.toUri() << " nexthop=" << route.faceId);
+
+          nfd::rib::RibUpdate update;
+          update.setAction(nfd::rib::RibUpdate::UNREGISTER)
+                .setName(routePrefix)
+                .setRoute(route);
+
+            g_nrd->m_ribManager->m_rib.beginApplyUpdate(update,
+                std::bind(&onRibUpdateSuccess, update),
+                std::bind(&onRibUpdateFailure, update, _1, _2));
+
+    }
+}
+
 JNIEXPORT jobject JNICALL jniGetPendingInterestTable(JNIEnv* env, jobject) {
 	jobject pit = env->NewObject(list, newList);
 
@@ -565,6 +585,30 @@ JNIEXPORT jlong JNICALL jniGetFaceId(JNIEnv* env, jobject, jstring uri) {
     return -1;
 }
 
+JNIEXPORT jstring JNICALL jniGetFaceUri(JNIEnv* env, jobject, jlong faceId) {
+    //std::string faceUri = convertString(env, uri);
+    if(g_nfd.get() != nullptr) {
+        for(const nfd::Face& face : g_nfd->getFaceTable()) {
+            NFD_LOG_INFO("Trying with " << face.getId());
+            if(face.getId() == faceId) {
+                NFD_LOG_INFO("Found " << face.getRemoteUri() << " with face " << face.getId());
+                return env->NewStringUTF(face.getRemoteUri().toString().c_str());
+
+
+            }
+
+            /*
+            NFD_LOG_INFO("Trying with " << face.getRemoteUri().toString());
+            if(face.getRemoteUri().toString().find(":6363") != std::string::npos) {
+                NFD_LOG_INFO("Found " << face.getRemoteUri() << " with face " << face.getId());
+                return face.getId();
+            }
+            */
+        }
+    }
+    return NULL;
+}
+
 static JNINativeMethod nativeMethods[] = {
 	{ "jniStart", "(Ljava/lang/String;Ljava/lang/String;)V", (void*) jniStart },
 	{ "jniStop", "()V", (void*) jniStop },
@@ -578,6 +622,7 @@ static JNINativeMethod nativeMethods[] = {
 	{ "jniGetContentStore"              , "()Ljava/util/List;"      , (void*) jniGetContentStore },
 	{ "jniIsFaceUp"                     , "(J)Z"                    , (void*) jniIsFaceUp },
 	{ "jniGetFaceId"                    , "(Ljava/lang/String;)J"   , (void*) jniGetFaceId },
+	{ "jniGetFaceUri"                   , "(J)Ljava/lang/String;"   , (void*) jniGetFaceUri },
 
 	{ "jniCreateFace", "(Ljava/lang/String;IZ)V", (void*) jniCreateFace },
 	{ "jniBringUpFace", "(J)V", (void*) jniBringUpFace },
@@ -589,7 +634,8 @@ static JNINativeMethod nativeMethods[] = {
     { "jniOnInterestTransferred", "(JI)V", (void*) jniOnInterestTransferred },
     { "jniOnDataTransferred", "(JLjava/lang/String;)V", (void*) jniOnDataTransferred },
 
-	{ "jniAddRoute", "(Ljava/lang/String;JJJJ)V", (void*) jniAddRoute }
+	{ "jniAddRoute", "(Ljava/lang/String;JJJJ)V", (void*) jniAddRoute },
+	{ "jniRemoveRoute", "(Ljava/lang/String;JJ)V", (void*) jniRemoveRoute }
 };
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {

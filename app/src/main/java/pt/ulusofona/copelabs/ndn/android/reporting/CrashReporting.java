@@ -1,7 +1,7 @@
 /**
  *  @version 1.0
  * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2018-02-07
- * This class is used to enable crash reporting
+ * This class is used to start crash reporting
  * @author Miguel Tavares (COPELABS/ULHT)
  */
 

@@ -11,6 +11,9 @@ package pt.ulusofona.copelabs.ndn.android.preferences;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import static android.content.Context.MODE_PRIVATE;
 
 public abstract class Configuration {
@@ -68,6 +71,15 @@ public abstract class Configuration {
     public static String getNdnNode(Context context) {
         SharedPreferences sharedPreferences = context.getSharedPreferences(NDN_NODE, MODE_PRIVATE);
         return sharedPreferences.getString(NDN_NODE, COPELABS_NDN_NODE);
+    }
+
+    public static String getNdnNodeIp(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(NDN_NODE, MODE_PRIVATE);
+        String ndnNode = sharedPreferences.getString(NDN_NODE, COPELABS_NDN_NODE);
+        Pattern pattern = Pattern.compile("(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})");
+        Matcher matcher = pattern.matcher(ndnNode);
+        matcher.find();
+        return matcher.group();
     }
 
 }

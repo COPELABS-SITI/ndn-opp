@@ -18,6 +18,7 @@ import android.util.Log;
 
 import java.util.Map;
 
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.Identity;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.WifiDevice;
 import pt.ulusofona.copelabs.ndn.android.utilities.Utilities;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.cache.WifiP2pCache;
@@ -152,14 +153,18 @@ class WifiP2pSearcher implements DnsSdServiceResponseListener, DnsSdTxtRecordLis
     @Override
     public void onDnsSdServiceAvailable(String instanceName, String registrationType, WifiP2pDevice srcDevice) {
         Log.i(TAG, "onDnsSdServiceAvailable " + instanceName + " " + registrationType);
-        WifiP2pCache.addDevice(mContext, instanceName, srcDevice.deviceAddress, Utilities.getTimestamp());
-        WifiP2pListenerManager.notifyServiceAvailable(instanceName, registrationType, srcDevice);
+        if(registrationType.contains(Identity.SVC_INSTANCE_TYPE)) {
+            WifiP2pCache.addDevice(mContext, instanceName, srcDevice.deviceAddress, Utilities.getTimestamp());
+            WifiP2pListenerManager.notifyServiceAvailable(instanceName, registrationType, srcDevice);
+        }
     }
 
     @Override
     public void onDnsSdTxtRecordAvailable(String fullDomainName, Map<String, String> txtRecordMap, WifiP2pDevice srcDevice) {
         Log.i(TAG, "onDnsSdTxtRecordAvailable " + fullDomainName);
-        WifiP2pListenerManager.notifyTxtRecordAvailable(fullDomainName, txtRecordMap, srcDevice);
+        if(fullDomainName.contains(Identity.SVC_INSTANCE_TYPE)) {
+            WifiP2pListenerManager.notifyTxtRecordAvailable(fullDomainName, txtRecordMap, srcDevice);
+        }
     }
 
     @Override

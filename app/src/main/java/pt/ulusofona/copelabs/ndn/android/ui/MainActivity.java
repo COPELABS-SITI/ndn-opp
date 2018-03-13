@@ -160,8 +160,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        ConnectivityManager connMgr = (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        menu.getItem(0).setEnabled(mDaemonBound && connMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isConnected());
+        menu.getItem(0).setEnabled(true);
         for(int i = 1; i < menu.size(); i++) {
             menu.getItem(i).setEnabled(mDaemonBound);
             if(menu.getItem(i).isCheckable()) {

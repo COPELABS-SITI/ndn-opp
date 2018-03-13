@@ -10,7 +10,10 @@ import android.content.Context;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.util.Log;
+
+import java.util.Map;
 
 /**
  * This class is used to manage all features related with wifi p2p GO

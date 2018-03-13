@@ -83,7 +83,7 @@ public class NsdManager implements WifiP2pListener.WifiP2pConnectionStatus, Wifi
 
 
     /**
-     * This method enable some features related with NSD service
+     * This method start some features related with NSD service
      */
     private synchronized void enableService() {
         if(!mRunning) {

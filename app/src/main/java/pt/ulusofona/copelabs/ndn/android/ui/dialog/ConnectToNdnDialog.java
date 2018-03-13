@@ -46,11 +46,19 @@ public class ConnectToNdnDialog extends DialogFragment {
 		final DialogConnectNdnBinding dialogBinding = DialogConnectNdnBinding.inflate(getActivity().getLayoutInflater());
 
 		// Select the COPELABS NDN Node by default (entry 33 of arrays.xml)
-		dialogBinding.ndnNodeSelector.setSelection(33);
+		String selectedNdnNodeIp = Configuration.getNdnNodeIp(getContext());
+		String[] ndnNodesIps = getContext().getResources().getStringArray(R.array.ndn_nodes_addrs);
+
+		for(int i = 0; i < ndnNodesIps.length; i++) {
+			if(ndnNodesIps[i].equals(selectedNdnNodeIp)) {
+				dialogBinding.ndnNodeSelector.setSelection(i);
+				break;
+			}
+		}
 
 		return new AlertDialog.Builder(getActivity())
 			.setView(dialogBinding.getRoot())
-			.setTitle(R.string.connectNdn)
+			.setTitle(R.string.selectNdnNode)
 			.setPositiveButton(R.string.connect, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface di, int id) {
@@ -60,7 +68,7 @@ public class ConnectToNdnDialog extends DialogFragment {
                     String faceUri = "tcp://" + ndnAddr + ":6363";
 					Configuration.setNdnNode(getContext(), faceUri);
 
-					fwdDaemon.createFace(faceUri, dialogBinding.isPermanent.isChecked() ? 2 : 0,false);
+					//fwdDaemon.createFace(faceUri, dialogBinding.isPermanent.isChecked() ? 2 : 0,false);
 				}
 			})
 			.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {

@@ -4,6 +4,8 @@
 #include "daemon/face/face.hpp"
 #include "daemon/face/protocol-factory.hpp"
 
+#include <atomic>
+
 #include "ndn-cxx/util/face-uri.hpp"
 
 namespace nfd {

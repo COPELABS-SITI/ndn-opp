@@ -5,6 +5,7 @@
         <item>udp</item>
     </string-array>
     <string-array name="ndn_nodes_names">
+        <item>TEKEVER</item>
         <item>UFPA</item>
         <item>BASEL</item>
         <item>BERN</item>
@@ -44,6 +45,7 @@
         <item>SRRU</item>
     </string-array>
     <string-array name="ndn_nodes_addrs">
+        <item>192.168.55.1</item>
         <item>200.239.93.10</item>
         <item>192.43.193.111</item>
         <item>130.92.70.172</item>

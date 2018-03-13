@@ -7,25 +7,47 @@
 package pt.ulusofona.copelabs.ndn.android.umobile.common;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
 import android.util.LongSparseArray;
 
+import com.intel.jndn.management.ManagementException;
+import com.intel.jndn.management.Nfdc;
+
+import net.named_data.jndn.ControlParameters;
+import net.named_data.jndn.ForwardingFlags;
+import net.named_data.jndn.Interest;
+import net.named_data.jndn.Name;
+import net.named_data.jndn.encoding.EncodingException;
+import net.named_data.jndn.security.KeyChain;
+import net.named_data.jndn.security.SecurityException;
+import net.named_data.jndn.security.identity.IdentityManager;
+import net.named_data.jndn.security.identity.MemoryIdentityStorage;
+import net.named_data.jndn.security.identity.MemoryPrivateKeyStorage;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 
 import pt.ulusofona.copelabs.ndn.android.models.Face;
+import pt.ulusofona.copelabs.ndn.android.models.FibEntry;
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.channels.OpportunisticChannelOut;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.NsdInfo;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.services.ServiceDiscoverer;
+
+import static pt.ulusofona.copelabs.ndn.BR.face;
+import static pt.ulusofona.copelabs.ndn.BR.name;
 
 // @TODO: if phone goes to sleep, all the open connections will close.
 
@@ -49,11 +71,9 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
     // Associates a FaceId to a UUID
     private Map<String, Long> mUuidToFaceId = new HashMap<>();
     // Associates a UUID to a FaceId
-    //private Map<Long, String> mFaceIdToUuid = new HashMap<>();
     private LongSparseArray<String> mFaceIdToUuid = new LongSparseArray<>();
     // Associates a OpportunisticChannel to a UUID
     private ConcurrentHashMap<String, OpportunisticChannelOut> mOppOutChannels = new ConcurrentHashMap<>();
-
 
     /** Enable the OppFaceManager. When enabled, it reacts to changes in the connection status to a Wi-Fi Direct Group.
      * As the Group Formation results in the device being assigned an IP address, a listening socket will be opened and
@@ -64,7 +84,7 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
         mDaemonBinder = binder;
         mContext = context;
         ServiceDiscoverer.registerListener(this);
-     }
+    }
 
     /** Disable the Routing engine. Changes in the connection status of Wi-Fi Direct Groups will be ignored. */
     public void disable() {
@@ -76,8 +96,9 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
     public void afterFaceAdded(Face face) {
         /* If the created face is an opportunistic one, it must be configured at the RIB/FIB level */
         if(face.getRemoteUri().startsWith("opp://")) {
-            final long faceId = face.getFaceId();
+            final Long faceId = face.getFaceId();
             String peerUuid = face.getRemoteUri().substring(6);
+
             mUuidToFaceId.put(peerUuid, faceId);
             mFaceIdToUuid.put(faceId, peerUuid);
 

@@ -14,8 +14,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import pt.ulusofona.copelabs.ndn.android.preferences.Configuration;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
@@ -154,13 +156,15 @@ public class PacketManagerImpl implements PacketManager.Manager, WifiP2pListener
      */
     @Override
     public synchronized void onCancelInterest(long faceId, int nonce) {
+        /*
         String pktId = mPendingInterestIdsFromNonces.get(nonce);
-        Log.i(TAG, "Cancelling interest packet id " + pktId);
-        Packet packet = mPendingPackets.remove(pktId);
-        if(pktId != null && packet != null) {
-            mRequester.onCancelPacketSentOverConnectionLess(packet);
+        if(pktId != null) {
+            Log.i(TAG, "Cancelling interest packet id " + pktId);
             removeInterestPacket(pktId);
+            Packet packet = mPendingPackets.get(pktId);
+            sendPacket(packet);
         }
+        */
     }
 
     /**
@@ -171,6 +175,13 @@ public class PacketManagerImpl implements PacketManager.Manager, WifiP2pListener
     public void onConnected(Intent intent) {
         Log.i(TAG, "Wi-Fi or Wi-Fi P2P connection detected");
         mConnectionEstablished = true;
+        sendPendingPackets();
+    }
+
+    private void sendPendingPackets() {
+        for (Map.Entry packetEntry : mPendingPackets.entrySet()) {
+            sendPacket(mPendingPackets.get(packetEntry.getKey()));
+        }
     }
 
     /**
@@ -210,12 +221,15 @@ public class PacketManagerImpl implements PacketManager.Manager, WifiP2pListener
      * @param packet packet to be sent
      */
     private void packetSizeOption(Packet packet) {
+        Log.i(TAG, "Sending packet with id " + packet.getId() + " and size " + packet.getPayloadSize());
         if(packet.getPayloadSize() > MAX_PAYLOAD_SIZE_CL) {
             if(mOppFaceManager.isSocketAvailable(packet.getRecipient())) {
                 mRequester.onSendOverConnectionOriented(packet);
+                Log.i(TAG, "Packet with id " + packet.getId() + " sent over connection oriented");
             }
-        } else {
+        } else if(packet.getPayloadSize() < 200) {
             mRequester.onSendOverConnectionLess(packet);
+            Log.i(TAG, "Packet with id " + packet.getId() + " sent over connection less");
         }
     }
 
@@ -226,10 +240,13 @@ public class PacketManagerImpl implements PacketManager.Manager, WifiP2pListener
      * @param packet packet to be sent
      */
     private void backupOption(Packet packet) {
+        Log.i(TAG, "Sending packet with id " + packet.getId() + " and size " + packet.getPayloadSize());
         if(mConnectionEstablished && mOppFaceManager.isSocketAvailable(packet.getRecipient())) {
             mRequester.onSendOverConnectionOriented(packet);
-        } else {
+            Log.i(TAG, "Packet with id " + packet.getId() + " sent over connection oriented");
+        } else if(packet.getPayloadSize() < 200) {
             mRequester.onSendOverConnectionLess(packet);
+            Log.i(TAG, "Packet with id " + packet.getId() + " sent over connection less");
         }
     }
 

@@ -14,7 +14,7 @@
 
         <ListView android:id="@+id/contents1"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="200dp"
             android:layout_margin="4dp"/>
 
         <TextView android:id="@+id/title2"
@@ -26,7 +26,7 @@
 
         <ListView android:id="@+id/contents2"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="200dp"
             android:layout_margin="4dp"/>
 
     </LinearLayout>

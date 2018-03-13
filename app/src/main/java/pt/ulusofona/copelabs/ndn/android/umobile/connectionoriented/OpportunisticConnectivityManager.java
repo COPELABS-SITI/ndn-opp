@@ -46,8 +46,6 @@ public class OpportunisticConnectivityManager implements WifiP2pManager.ChannelL
             mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
             mWifiP2pChannel = mWifiP2pManager.initialize(context, context.getMainLooper(), this);
             mAssignedUuid = Identity.getUuid();
-
-
             mEnabled = true;
         }
     }
