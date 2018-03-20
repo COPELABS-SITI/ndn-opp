@@ -52,7 +52,7 @@ public class WifiP2p {
         mWifiP2pSearcher = new WifiP2pSearcher(context);
         mWifiP2pCacheRefresher = new WifiP2pCacheRefresher(context);
         mWifiP2pReceiver = new WifiP2pReceiver(mWifiP2pSearcher, mWifiP2pGo);
-        mWifiP2pScheduler = new WifiP2pScheduler(mWifiP2pSearcher);
+        mWifiP2pScheduler = new WifiP2pScheduler(mWifiP2pSearcher, mWifiP2pGo);
     }
 
     /**

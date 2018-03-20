@@ -38,7 +38,8 @@ public class AidlManagerImpl implements AidlManager.Manager, ServiceConnection {
 
     @Override
     public void stop() {
-        mContext.unbindService(this);
+        if(isBound())
+            mContext.unbindService(this);
     }
 
     @Override

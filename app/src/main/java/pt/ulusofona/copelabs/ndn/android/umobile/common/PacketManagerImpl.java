@@ -12,6 +12,7 @@ package pt.ulusofona.copelabs.ndn.android.umobile.common;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 
-public class PacketManagerImpl implements PacketManager.Manager, WifiP2pListener.WifiP2pConnectionStatus {
+public class PacketManagerImpl implements Runnable, PacketManager.Manager, WifiP2pListener.WifiP2pConnectionStatus {
 
     /** This variable is used as a label for packets */
     public static final String PACKET_KEY_PREFIX = "PKT:";
@@ -32,8 +33,14 @@ public class PacketManagerImpl implements PacketManager.Manager, WifiP2pListener
     /** This variable is used to debug PacketManagerImpl class */
     private static final String TAG = PacketManagerImpl.class.getSimpleName();
 
+    /** This variable is used to delay the pending packets sending in order to create its sockets */
+    private static final int WAIT_TIME_FOR_SOCKETS_CREATION = 5000;
+
     /** This variable stores the max number of bytes allowed to send over connection less */
-    private static final int MAX_PAYLOAD_SIZE_CL = 80;
+    private static final int MAX_PAYLOAD_CL = 200;
+
+    /** This variable stores the max number of bytes allowed to send over connection less by KITKAT */
+    private static final int MAX_PAYLOAD_CL_KITKAT = 80;
 
     /** Maps Packet ID -> Name (WifiP2pCache) */
     private Map<String, Packet> mPendingPackets = new HashMap<>();
@@ -59,6 +66,8 @@ public class PacketManagerImpl implements PacketManager.Manager, WifiP2pListener
     /** This interface is used to communicate with the binder */
     private PacketManager.Requester mRequester;
 
+    private Handler mHandler = new Handler();
+
     /** This variable is used to generate packet ids */
     private int mPacketId = 0;
 
@@ -81,6 +90,7 @@ public class PacketManagerImpl implements PacketManager.Manager, WifiP2pListener
             mRequester = requester;
             mOppFaceManager = oppFaceManager;
             WifiP2pListenerManager.registerListener(this);
+            Log.i(TAG, "Max connection-less packet size supported by this api is " + getMaxPayloadByAndroidApi() + " bytes");
             mEnable = true;
         }
     }
@@ -175,6 +185,11 @@ public class PacketManagerImpl implements PacketManager.Manager, WifiP2pListener
     public void onConnected(Intent intent) {
         Log.i(TAG, "Wi-Fi or Wi-Fi P2P connection detected");
         mConnectionEstablished = true;
+        mHandler.postDelayed(this, WAIT_TIME_FOR_SOCKETS_CREATION);
+    }
+
+    @Override
+    public void run() {
         sendPendingPackets();
     }
 
@@ -221,15 +236,18 @@ public class PacketManagerImpl implements PacketManager.Manager, WifiP2pListener
      * @param packet packet to be sent
      */
     private void packetSizeOption(Packet packet) {
+        Log.i(TAG, "Using packet size option");
         Log.i(TAG, "Sending packet with id " + packet.getId() + " and size " + packet.getPayloadSize());
-        if(packet.getPayloadSize() > MAX_PAYLOAD_SIZE_CL) {
+        if(packet.getPayloadSize() > getMaxPayloadByAndroidApi()) {
             if(mOppFaceManager.isSocketAvailable(packet.getRecipient())) {
                 mRequester.onSendOverConnectionOriented(packet);
                 Log.i(TAG, "Packet with id " + packet.getId() + " sent over connection oriented");
             }
-        } else if(packet.getPayloadSize() < 200) {
+        } else if(packet.getPayloadSize() <= getMaxPayloadByAndroidApi()) {
             mRequester.onSendOverConnectionLess(packet);
             Log.i(TAG, "Packet with id " + packet.getId() + " sent over connection less");
+        } else {
+            Log.e(TAG, "Packet not sent with id " + packet.getId() + " and size " + packet.getPayloadSize());
         }
     }
 
@@ -240,14 +258,21 @@ public class PacketManagerImpl implements PacketManager.Manager, WifiP2pListener
      * @param packet packet to be sent
      */
     private void backupOption(Packet packet) {
+        Log.i(TAG, "Using backup option");
         Log.i(TAG, "Sending packet with id " + packet.getId() + " and size " + packet.getPayloadSize());
         if(mConnectionEstablished && mOppFaceManager.isSocketAvailable(packet.getRecipient())) {
             mRequester.onSendOverConnectionOriented(packet);
             Log.i(TAG, "Packet with id " + packet.getId() + " sent over connection oriented");
-        } else if(packet.getPayloadSize() < 200) {
+        } else if(packet.getPayloadSize() < getMaxPayloadByAndroidApi()) {
             mRequester.onSendOverConnectionLess(packet);
             Log.i(TAG, "Packet with id " + packet.getId() + " sent over connection less");
+        } else {
+            Log.e(TAG, "Packet not sent with id " + packet.getId() + " and size " + packet.getPayloadSize());
         }
+    }
+
+    private int getMaxPayloadByAndroidApi() {
+        return android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP ? MAX_PAYLOAD_CL : MAX_PAYLOAD_CL_KITKAT;
     }
 
     /**

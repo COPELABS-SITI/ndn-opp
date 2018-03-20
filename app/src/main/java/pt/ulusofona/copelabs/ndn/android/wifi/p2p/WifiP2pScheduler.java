@@ -27,14 +27,19 @@ class WifiP2pScheduler implements Runnable {
     /** This object is a reference to manage WifiP2pSearcher features */
     private WifiP2pSearcher mWifiP2pSearcher;
 
-    WifiP2pScheduler(WifiP2pSearcher wifiP2pSearcher) {
+    /** This object enables the wifi p2p GO features */
+    private WifiP2pGo mWifiP2pGo;
+
+    WifiP2pScheduler(WifiP2pSearcher wifiP2pSearcher, WifiP2pGo wifiP2pGo) {
         mWifiP2pSearcher = wifiP2pSearcher;
+        mWifiP2pGo = wifiP2pGo;
     }
 
     @Override
     public void run() {
         Log.i(TAG, "Preparing to discover again.");
         mWifiP2pSearcher.startDiscovery();
+        //mWifiP2pGo.startLocalService();
         mHandler.postDelayed(this, ((new Random().nextInt(6 - 1) + 15) * 1000));
     }
 

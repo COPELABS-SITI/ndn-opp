@@ -61,8 +61,7 @@ import static pt.ulusofona.copelabs.ndn.android.utilities.Utilities.digest;
  *     Using TXT records larger than 1300 bytes is NOT RECOMMENDED at this
  *     time.
  */
-public class OpportunisticConnectionLessTransferManager implements Observer, WifiP2pManager.ChannelListener,
-        WifiP2pListener.TxtRecordAvailable {
+public class OpportunisticConnectionLessTransferManager implements Observer, WifiP2pListener.TxtRecordAvailable {
 
     /** This variable is used to debug OpportunisticConnectionLessTransferManager class */
     private static final String TAG = OpportunisticConnectionLessTransferManager.class.getSimpleName();
@@ -123,7 +122,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
             mAssignedUuid = Identity.getUuid();
             // Retrieve the instance of the WiFi P2P PacketManagerImpl, the CommOut and create the DNS-SD Service request.
             mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
-            mWifiP2pChannel = mWifiP2pManager.initialize(context, context.getMainLooper(), this);
+            mWifiP2pChannel = mWifiP2pManager.initialize(context, context.getMainLooper(), null);
             // Retrieve the this device descriptor
             mDescriptor = Identity.getDescriptor();
             // Registers a listener in order to be notified every time a Txt Record is received
@@ -230,15 +229,31 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
      * @param pendingPacketsForRecipient the packets to be sent (PKT:ID, <payload>)
      */
     private synchronized void registerTransferDescriptor(final String recipient, Map<String, String> pendingPacketsForRecipient) {
-        final WifiP2pDnsSdServiceInfo descriptor = Identity.getTransferDescriptorWithTxtRecord(recipient, pendingPacketsForRecipient);
+    final WifiP2pDnsSdServiceInfo descriptor = Identity.getTransferDescriptorWithTxtRecord(recipient, pendingPacketsForRecipient);
         Log.v(TAG, "ServiceRegisterResult Descriptor : " + recipient + " = " + pendingPacketsForRecipient.toString());
-        mWifiP2pManager.addLocalService(mWifiP2pChannel, descriptor, new WifiP2pManager.ActionListener() {
-            @Override public void onSuccess() {
-                Log.v(TAG, "Local Service added");
-                mRegisteredDescriptors.put(recipient, descriptor);
+
+        mWifiP2pManager.clearLocalServices(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
+
+            @Override
+            public void onSuccess() {
+                Log.i(TAG, "Service announced with success");
+                mWifiP2pManager.addLocalService(mWifiP2pChannel, descriptor, new WifiP2pManager.ActionListener() {
+
+                    @Override
+                    public void onSuccess() {
+                        Log.i(TAG,"Added Local Service");
+                    }
+
+                    @Override
+                    public void onFailure(int error) {
+                        Log.i(TAG,"Failed to add a mWifiP2pDnsSdServiceInfo " + error);
+                    }
+                });
             }
-            @Override public void onFailure(int error) {
-                Log.e(TAG, "Error on start descriptor : " + error);
+
+            @Override
+            public void onFailure(int reason) {
+                Log.e(TAG, "Service was not announced with success. Error "  + reason);
             }
         });
     }
@@ -372,11 +387,6 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
                     updateRegisteredDescriptor(remoteUuid);
             }
         }
-    }
-
-    @Override
-    public void onChannelDisconnected() {
-        Log.e(TAG, "onChannelDisconnected");
     }
 
     private final BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {

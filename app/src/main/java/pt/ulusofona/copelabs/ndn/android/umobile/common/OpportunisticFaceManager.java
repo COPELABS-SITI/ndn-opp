@@ -7,6 +7,7 @@
 package pt.ulusofona.copelabs.ndn.android.umobile.common;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
@@ -45,6 +46,8 @@ import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.channels.OpportunisticChannelOut;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.NsdInfo;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.services.ServiceDiscoverer;
+import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
+import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 
 import static pt.ulusofona.copelabs.ndn.BR.face;
 import static pt.ulusofona.copelabs.ndn.BR.name;
@@ -59,7 +62,8 @@ import static pt.ulusofona.copelabs.ndn.BR.name;
  * into bringing the corresponding Faces AVAILABLE and UNAVAILABLE and establishing the connection that those Faces
  * ought to use for communication.
  */
-public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.PeerListDiscoverer {
+public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.PeerListDiscoverer,
+        WifiP2pListener.WifiP2pConnectionStatus {
 
     private static final String TAG = OpportunisticFaceManager.class.getSimpleName();
 
@@ -83,12 +87,12 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
 	public void enable(OpportunisticDaemon.Binder binder, Context context) {
         mDaemonBinder = binder;
         mContext = context;
-        ServiceDiscoverer.registerListener(this);
+        WifiP2pListenerManager.registerListener(this);
     }
 
     /** Disable the Routing engine. Changes in the connection status of Wi-Fi Direct Groups will be ignored. */
     public void disable() {
-        ServiceDiscoverer.unregisterListener(this);
+        WifiP2pListenerManager.unregisterListener(this);
     }
 
     /** Callback method invoked by the ForwardingDaemon when the creation of a Face has been successful.
@@ -142,6 +146,20 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
         }
     }
 
+    @Override
+    public void onConnected(Intent intent) {
+        Log.i(TAG, "Wi-Fi or Wi-Fi P2P connection detected");
+        ServiceDiscoverer.registerListener(this);
+    }
+
+    @Override
+    public void onDisconnected(Intent intent) {
+        Log.i(TAG, "Wi-Fi or Wi-Fi P2P connection dropped");
+        Log.i(TAG, "Deleting opportunistic channels");
+        ServiceDiscoverer.unregisterListener(this);
+        mOppOutChannels.clear();
+    }
+
     /** Update the state of the Routing engine based on what the NSD Service DiscovererResult reports
      * @param observable observable notifying of changes
      * @param obj optional parameter passed by the observable
@@ -183,6 +201,7 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
      */
     @Override
     public synchronized void onReceivePeerList(ArrayList<NsdInfo> nsdInfoList) {
+        Log.i(TAG, "Received NSD List");
         checkChannelsToCreate(nsdInfoList);
         checkChannelsToDelete(nsdInfoList);
     }
@@ -195,6 +214,7 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
         for(NsdInfo nsdInfo : nsdInfoList) {
             NsdService svc = new NsdService(nsdInfo.getUuid(), nsdInfo.getIpAddress());
             if (!mOppOutChannels.containsKey(svc.getUuid()) && svc.isHostValid()) {
+                Log.i(TAG, "Creating opportunistic channel to " + svc.getUuid());
                 createChannelOut(svc);
             }
         }

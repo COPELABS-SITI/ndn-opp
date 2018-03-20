@@ -21,7 +21,7 @@ public class RoutingManagerImpl implements RoutingManager {
     public synchronized void start(OpportunisticDaemon.Binder binder, Context context) {
         if(!mStarted) {
             mNeighborTableManager = new NeighborTableManagerImpl(context);
-            mRibUpdater = new RibUpdaterImpl(mNeighborTableManager, binder);
+            mRibUpdater = new RibUpdaterImpl(context, mNeighborTableManager, binder);
             mNeighborTableManager.start();
             mRibUpdater.start();
             mStarted = true;

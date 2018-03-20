@@ -49,7 +49,7 @@ abstract class BufferData {
      * @return next packet stored
      */
     static Packet pop() {
-        Log.i(TAG, "There is " + mData.size() + " packets remaining");
+        //Log.i(TAG, "There is " + mData.size() + " packets remaining");
         return mData.poll();
     }
 
