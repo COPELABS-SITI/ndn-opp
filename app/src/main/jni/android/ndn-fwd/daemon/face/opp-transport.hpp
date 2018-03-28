@@ -7,7 +7,7 @@
 
 // From nfd-jni.cpp
 void performSend(long, ndn::Block);
-void transferInterest(long, uint32_t, ndn::Block);
+void transferInterest(long, uint32_t, std::string, ndn::Block);
 void transferData(long, std::string, ndn::Block);
 
 namespace nfd {

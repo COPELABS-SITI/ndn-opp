@@ -25,6 +25,10 @@ public abstract class Configuration {
      * true for backup, false for size mechanism */
     private static final String SEND_OPTION = "send_option";
 
+    /** This variable is used to store in shared preferences if NDN will use or not
+     * the routing feature */
+    private static final String ROUTING_OPTION = "routing_option";
+
     /** This variable is used to store in shared preferences the ndn node to connect */
     private static final String NDN_NODE = "ndn_node";
 
@@ -42,6 +46,18 @@ public abstract class Configuration {
     }
 
     /**
+     * This method stores in shared preferences if NDN-OPP will use routing or not.
+     * @param context Application context
+     * @param status true for use it, false don't
+     */
+    public static void setRoutingOption(Context context, boolean status) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(ROUTING_OPTION, MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean(ROUTING_OPTION, status);
+        editor.apply();
+    }
+
+    /**
      * This method is used to check which Wi-Fi Direct mechanism is selected
      * @param context application context
      * @return true for backup, false for size
@@ -49,6 +65,16 @@ public abstract class Configuration {
     public static boolean isBackupOptionEnabled(Context context) {
         SharedPreferences sharedPreferences = context.getSharedPreferences(SEND_OPTION, MODE_PRIVATE);
         return sharedPreferences.getBoolean(SEND_OPTION, true);
+    }
+
+    /**
+     * This method is used to check if the routing protocol is enabled or not
+     * @param context application context
+     * @return true for enabled, false for disabled
+     */
+    public static boolean isRoutingEnabled(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(ROUTING_OPTION, MODE_PRIVATE);
+        return sharedPreferences.getBoolean(ROUTING_OPTION, true);
     }
 
     /**

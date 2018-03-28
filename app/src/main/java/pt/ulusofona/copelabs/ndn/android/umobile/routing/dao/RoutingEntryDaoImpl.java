@@ -82,4 +82,9 @@ public class RoutingEntryDaoImpl implements RoutingEntryDao {
         String where = RoutingEntryTable.getWhereByPrimaryKey(routingEntry.getPrefix(), routingEntry.getFace());
         mDabberDatabase.delete(RoutingEntryTable.TABLE_NAME, where, null);
     }
+
+    @Override
+    public boolean isRoutingEntryExists(RoutingEntry routingEntry) {
+        return getRoutingEntry(routingEntry.getPrefix(), routingEntry.getFace()) != null;
+    }
 }

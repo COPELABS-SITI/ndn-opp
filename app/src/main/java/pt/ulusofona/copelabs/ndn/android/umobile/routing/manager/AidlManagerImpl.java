@@ -23,6 +23,7 @@ public class AidlManagerImpl implements AidlManager.Manager, ServiceConnection {
     private CManagerInterface mRemoteContextualManager;
     private AidlManager.Listener mListener;
     private Context mContext;
+    private boolean mBound;
 
 
     AidlManagerImpl(Context context, AidlManager.Listener listener) {
@@ -31,20 +32,24 @@ public class AidlManagerImpl implements AidlManager.Manager, ServiceConnection {
     }
 
     @Override
-    public void start() {
-        Intent intent = new Intent().setPackage(CM_PKG_NAME);
-        mContext.getApplicationContext().bindService(intent, this, Context.BIND_AUTO_CREATE);
+    public synchronized void start() {
+        if(!mBound) {
+            Intent intent = new Intent().setPackage(CM_PKG_NAME);
+            mBound = mContext.bindService(intent, this, Context.BIND_AUTO_CREATE);
+        }
     }
 
     @Override
-    public void stop() {
-        if(isBound())
+    public synchronized void stop() {
+        if(isBound()) {
             mContext.unbindService(this);
+            mBound = false;
+        }
     }
 
     @Override
     public boolean isBound() {
-        return mRemoteContextualManager != null;
+        return mBound;
     }
 
     @Override

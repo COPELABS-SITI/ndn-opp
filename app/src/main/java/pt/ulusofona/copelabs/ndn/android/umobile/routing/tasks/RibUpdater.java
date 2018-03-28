@@ -8,5 +8,5 @@ public interface RibUpdater {
 
     void start();
     void stop();
-    void updateRoutingTable(String name, long cost);
+    void updateRoutingTable(String name, String neighbor, long cost);
 }

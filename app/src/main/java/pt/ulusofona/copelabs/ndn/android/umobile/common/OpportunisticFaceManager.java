@@ -8,38 +8,19 @@ package pt.ulusofona.copelabs.ndn.android.umobile.common;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
 import android.util.LongSparseArray;
 
-import com.intel.jndn.management.ManagementException;
-import com.intel.jndn.management.Nfdc;
-
-import net.named_data.jndn.ControlParameters;
-import net.named_data.jndn.ForwardingFlags;
-import net.named_data.jndn.Interest;
-import net.named_data.jndn.Name;
-import net.named_data.jndn.encoding.EncodingException;
-import net.named_data.jndn.security.KeyChain;
-import net.named_data.jndn.security.SecurityException;
-import net.named_data.jndn.security.identity.IdentityManager;
-import net.named_data.jndn.security.identity.MemoryIdentityStorage;
-import net.named_data.jndn.security.identity.MemoryPrivateKeyStorage;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 
 import pt.ulusofona.copelabs.ndn.android.models.Face;
-import pt.ulusofona.copelabs.ndn.android.models.FibEntry;
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
@@ -48,9 +29,6 @@ import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.N
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.services.ServiceDiscoverer;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
-
-import static pt.ulusofona.copelabs.ndn.BR.face;
-import static pt.ulusofona.copelabs.ndn.BR.name;
 
 // @TODO: if phone goes to sleep, all the open connections will close.
 

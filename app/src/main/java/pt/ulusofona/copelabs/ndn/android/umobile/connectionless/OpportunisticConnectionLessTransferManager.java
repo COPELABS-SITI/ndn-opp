@@ -37,7 +37,7 @@ import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 
 import static pt.ulusofona.copelabs.ndn.android.umobile.common.PacketManagerImpl.PACKET_KEY_PREFIX;
-import static pt.ulusofona.copelabs.ndn.android.utilities.Utilities.digest;
+import static pt.ulusofona.copelabs.ndn.android.utilities.Utilities.calcSha1;
 
 /** Manages the transfer of small payload packets through the TXT record of WifiRegular P2P Services.
  *  note that per http://www.drjukka.com/blog/wordpress/?p=127 (), this is not a sensible transfer
@@ -151,7 +151,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
      * @param packet the bytes of the packet to be sent
      */
     public synchronized void sendPacket(Packet packet) {
-        Log.i(TAG, "sendPacket [sha1sum=" + packet.getPayloadSize() + "] <" + digest(packet.getPayload()) + ">");
+        Log.i(TAG, "sendPacket [sha1sum=" + packet.getPayloadSize() + "] <" + calcSha1(packet.getPayload()) + ">");
 
         // Retrieve the packets pending for the recipient.
         Map<String, String> pendingPacketsForRecipient = mPendingPackets.get(packet.getRecipient());
@@ -345,7 +345,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
                         if(!pendingAcknowledgements.contains(pktKey)) {
                             acknowledgmentChanges |= pendingAcknowledgements.add(pktKey);
                             final byte[] payload = Base64.decode(txt.get(pktKey), Base64.NO_PADDING);
-                            Log.i(TAG, "receivedPacket [" + payload.length + "] <" + digest(payload) + ">");
+                            Log.i(TAG, "receivedPacket [" + payload.length + "] <" + calcSha1(payload) + ">");
                             mObservingContext.onPacketReceived(remoteUuid, payload);
                         }
                         /* In the case the packet key equals "ACKs", this is a list of acknowledgements for some of the packets

@@ -271,8 +271,8 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
             } else if (OpportunisticDaemon.STARTED.equals(action)) {
                 mPeerTracker.enable(context);
                 mFace = new Face("127.0.0.1", 6363);
-                new RegisterPrefixTask(mFace, PREFIX, OpportunisticPeerTracking.this, OpportunisticPeerTracking.this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-                new RegisterPrefixForPushedDataTask(mFace, EMERGENCY, OpportunisticPeerTracking.this, OpportunisticPeerTracking.this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                //new RegisterPrefixTask(mFace, PREFIX, OpportunisticPeerTracking.this, OpportunisticPeerTracking.this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                //new RegisterPrefixForPushedDataTask(mFace, EMERGENCY, OpportunisticPeerTracking.this, OpportunisticPeerTracking.this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                 mHandler.postDelayed(mJndnProcessor, PROCESS_INTERVAL);
             } else if (OpportunisticDaemon.STOPPING.equals(action)) {
                 mPeerTracker.disable();

@@ -31,4 +31,10 @@ public interface PacketManager {
         void onSendOverConnectionOriented(Packet packet);
         void onSendOverConnectionLess(Packet packet);
     }
+
+    interface Notifier {
+        void onInterestTransferred(String name);
+        void onDataReceived(String name);
+    }
+    
 }

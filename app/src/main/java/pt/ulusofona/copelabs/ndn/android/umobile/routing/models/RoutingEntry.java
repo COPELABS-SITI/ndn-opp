@@ -1,11 +1,13 @@
 package pt.ulusofona.copelabs.ndn.android.umobile.routing.models;
 
+import android.support.annotation.NonNull;
+
 /**
  * Created by miguel on 13-03-2018.
  */
 
 
-public class RoutingEntry {
+public class RoutingEntry implements Comparable<RoutingEntry> {
 
     private static final long DEFAULT_ORIGIN = 128L;
     private static final long DEFAULT_FLAG = 1L;
@@ -62,5 +64,10 @@ public class RoutingEntry {
 
     public void setFlag(long mFlag) {
         this.mFlag = mFlag;
+    }
+
+    @Override
+    public int compareTo(@NonNull RoutingEntry routingEntry) {
+        return Double.compare(routingEntry.getCost(), mCost);
     }
 }

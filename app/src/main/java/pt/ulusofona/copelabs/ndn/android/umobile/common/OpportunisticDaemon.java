@@ -271,7 +271,7 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
     }
 
     // Called from JNI
-    private synchronized void transferInterest(long faceId, int nonce, byte[] payload) {
+    private synchronized void transferInterest(long faceId, int nonce, String name, byte[] payload) {
         Log.d(TAG, "Transfer Interest : " + faceId + " " + nonce + " length (" + ((payload != null) ? payload.length : "NULL") + ")");
         String recipient = mOppFaceManager.getUuid(faceId);
         mPacketManager.onTransferInterest(mAssignedUuid, recipient, payload, nonce);

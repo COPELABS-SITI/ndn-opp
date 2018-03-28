@@ -80,6 +80,7 @@
     <string name="pushed_data">Pushed Data</string>
     <string name="send_pushed_data">Send Pushed Data</string>
     <string name="backup_option">Backup Option</string>
+    <string name="routing">Routing</string>
     <string name="wipe_p2p_cache">Wipe Wi-Fi Direct Cache</string>
     <string name="received_interests">Received Interests</string>
     <string name="send">Send</string>

@@ -13,6 +13,7 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.util.Log;
 
+import java.math.BigInteger;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
@@ -116,7 +117,7 @@ public abstract class Utilities {
      * @param payload data to be hashed
      * @return SHA generated
      */
-    public static String digest(byte[] payload) {
+    public static String calcSha1(byte[] payload) {
         String sha1 = "FAIL";
         try {
             byte[] sha1sum = MessageDigest.getInstance("SHA-1").digest(payload);
@@ -128,6 +129,12 @@ public abstract class Utilities {
             e.printStackTrace();
         }
         return sha1;
+    }
+
+    public static String calcMd5(String str) throws NoSuchAlgorithmException {
+        MessageDigest msg = MessageDigest.getInstance("MD5");
+        msg.update(str.getBytes(),0,str.length());
+        return new BigInteger(1, msg.digest()).toString(16);
     }
 
 }

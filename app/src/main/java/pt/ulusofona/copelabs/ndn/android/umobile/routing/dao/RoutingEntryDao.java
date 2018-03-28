@@ -14,6 +14,7 @@ public interface RoutingEntryDao {
     void createRoutingEntry(RoutingEntry routingEntry);
     void updateRoutingEntry(RoutingEntry routingEntry);
     void deleteRoutingEntry(RoutingEntry routingEntry);
+    boolean isRoutingEntryExists(RoutingEntry routingEntry);
     RoutingEntry getRoutingEntry(String prefix, long faceid);
 
 }

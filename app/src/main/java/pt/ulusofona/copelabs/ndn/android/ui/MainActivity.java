@@ -160,11 +160,17 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        menu.getItem(0).setEnabled(true);
+        menu.getItem(0).setEnabled(!mDaemonBound);
         for(int i = 1; i < menu.size(); i++) {
             menu.getItem(i).setEnabled(mDaemonBound);
-            if(menu.getItem(i).isCheckable()) {
+            if(menu.getItem(i).getItemId() == R.id.sendPacketsConfiguration) {
+                menu.getItem(i).setEnabled(!mDaemonBound);
                 menu.getItem(i).setChecked(Configuration.isBackupOptionEnabled(this));
+            } else if(menu.getItem(i).getItemId() == R.id.routing) {
+                menu.getItem(i).setEnabled(!mDaemonBound);
+                menu.getItem(i).setChecked(Configuration.isRoutingEnabled(this));
+            }  else if(menu.getItem(i).getItemId() == R.id.wipe_wifi_p2p_cache) {
+                menu.getItem(i).setEnabled(!mDaemonBound);
             }
         }
         return true;
@@ -193,6 +199,10 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
             case R.id.sendPacketsConfiguration:
                 item.setChecked(!item.isChecked());
                 Configuration.setSendOption(this, item.isChecked());
+                break;
+            case R.id.routing:
+                item.setChecked(!item.isChecked());
+                Configuration.setRoutingOption(this, item.isChecked());
                 break;
             case R.id.wipe_wifi_p2p_cache:
                 WifiP2pCache.wipeCache(this);

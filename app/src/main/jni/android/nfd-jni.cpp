@@ -279,7 +279,7 @@ JNIEXPORT void JNICALL jniCreateFace(JNIEnv* env, jobject, jstring uri, jint per
     //);
 }
 
-void transferInterest(long faceId, uint32_t nonce, ndn::Block bl) {
+void transferInterest(long faceId, uint32_t nonce, std::string name, ndn::Block bl) {
     PERFORM_ATTACHED(
         NFD_LOG_INFO("Transfer Interest on Face : " << faceId << " #" << nonce);
         nfd::Face *current = g_nfd->getFaceTable().get(faceId);
@@ -289,7 +289,7 @@ void transferInterest(long faceId, uint32_t nonce, ndn::Block bl) {
                 NFD_LOG_INFO("Attempting to map ByteArray region.");
                 env->SetByteArrayRegion(payload, 0, bl.size(), (const jbyte*) bl.wire());
                 NFD_LOG_INFO("Mapping succeeded. Issueing send request.");
-                env->CallVoidMethod(forwardingDaemonInstance, mth_transfer_intr, (jlong) faceId, (jint) nonce, payload);
+                env->CallVoidMethod(forwardingDaemonInstance, mth_transfer_intr, (jlong) faceId, (jint) nonce,env->NewStringUTF(name.c_str()), payload);
             } else
                 NFD_LOG_WARN("Cannot allocate buffer for sending Block.");
         }
@@ -669,7 +669,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 
         afterFaceAdded = env->GetMethodID(forwardingDaemon, "afterFaceAdded", "(Lpt/ulusofona/copelabs/ndn/android/models/Face;)V");
         beforeFaceRemoved = env->GetMethodID(forwardingDaemon, "beforeFaceRemoved", "(Lpt/ulusofona/copelabs/ndn/android/models/Face;)V");
-        mth_transfer_intr = env->GetMethodID(forwardingDaemon, "transferInterest", "(JI[B)V");
+        mth_transfer_intr = env->GetMethodID(forwardingDaemon, "transferInterest", "(JILjava/lang/String;[B)V");
         mth_cancel_intr = env->GetMethodID(forwardingDaemon, "cancelInterest", "(JI)V");
         mth_transfer_data = env->GetMethodID(forwardingDaemon, "transferData", "(JLjava/lang/String;[B)V");
 

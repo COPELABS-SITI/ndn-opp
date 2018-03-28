@@ -62,7 +62,7 @@ void OppTransport::sendNextPacket() {
         NFD_LOG_DEBUG("!m_intrQueue.empty()");
         Packet current = m_intrQueue.front();
         m_intrQueue.pop_front();
-        transferInterest(this->getFace()->getId(), extractNonce(current), current.packet);
+        transferInterest(this->getFace()->getId(), extractNonce(current), extractName(current), current.packet);
         sendNextPacket();
     } else if(!m_dataQueue.empty()) {
         NFD_LOG_DEBUG("!m_dataQueue.empty()");
