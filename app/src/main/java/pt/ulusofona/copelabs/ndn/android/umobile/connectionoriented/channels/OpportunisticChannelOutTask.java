@@ -17,7 +17,7 @@ import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
-import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketObserver;
+import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.HostInfo;
 
@@ -27,7 +27,7 @@ public class OpportunisticChannelOutTask extends AsyncTask<Void, Void, Boolean> 
     private static final String TAG = OpportunisticChannelOutTask.class.getSimpleName();
 
     /** This interface is used to notify the transfer status */
-    private PacketObserver mObservingContext;
+    private PacketManager.Observer mPacketManagerObserver;
 
     /** This object is used to hold host info. IP Address and Port */
     private HostInfo mHost;
@@ -35,10 +35,10 @@ public class OpportunisticChannelOutTask extends AsyncTask<Void, Void, Boolean> 
     /** This object is used to encapsulate a packet */
     private Packet mPacket;
 
-    OpportunisticChannelOutTask(PacketObserver observingContext, HostInfo host, Packet packet) {
+    OpportunisticChannelOutTask(PacketManager.Observer observingContext, HostInfo host, Packet packet) {
         mHost = host;
         mPacket = packet;
-        mObservingContext = observingContext;
+        mPacketManagerObserver = observingContext;
     }
 
     /**
@@ -77,7 +77,7 @@ public class OpportunisticChannelOutTask extends AsyncTask<Void, Void, Boolean> 
     @Override
     protected void onPostExecute(Boolean transferSucceeded) {
         if (transferSucceeded)
-            mObservingContext.onPacketTransferred(mPacket.getSender(), mPacket.getId());
+            mPacketManagerObserver.onPacketTransferred(mPacket.getRecipient(), mPacket.getId());
     }
 
 }

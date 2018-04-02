@@ -18,21 +18,24 @@ import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
  */
 
 public class NeighborTableManagerImpl implements NeighborTableManager, AidlManager.Listener,
-         WifiP2pListener.ServiceAvailable, Runnable {
+         WifiP2pListener.ServiceAvailable, TManager.Listener, Runnable {
 
     private static final String TAG = NeighborTableManagerImpl.class.getSimpleName();
     private static final int SCHEDULING_TIME = 30 * 1000;
     private NeighborTable mNeighborTable = new NeighborTable();
     private Handler mHandler = new Handler();
     private AidlManager.Manager mAidlManager;
+    private TManager.Manager mTManager;
     private boolean mIsConnected = false;
 
     NeighborTableManagerImpl(Context context) {
         mAidlManager = new AidlManagerImpl(context, this);
+        mTManager = new TManagerImpl(this);
     }
 
     @Override
     public void start() {
+        mTManager.start();
         mAidlManager.start();
         WifiP2pListenerManager.registerListener(this);
         Log.i(TAG, "NeighborTableManagerImpl started");
@@ -40,6 +43,7 @@ public class NeighborTableManagerImpl implements NeighborTableManager, AidlManag
 
     @Override
     public void stop() {
+        mTManager.stop();
         mAidlManager.stop();
         WifiP2pListenerManager.unregisterListener(this);
         mNeighborTable.clear();
@@ -54,6 +58,16 @@ public class NeighborTableManagerImpl implements NeighborTableManager, AidlManag
                 // TODO update A, C, I
             }
             mHandler.postDelayed(this, SCHEDULING_TIME);
+        }
+    }
+
+    @Override
+    public void onReceiveT(String sender, String name, double t) {
+        try {
+            Neighbor neighbor = mNeighborTable.getNeighbor(sender);
+            //neighbor.
+        } catch (NeighborNotFoundException e) {
+            e.printStackTrace();
         }
     }
 
@@ -81,4 +95,5 @@ public class NeighborTableManagerImpl implements NeighborTableManager, AidlManag
         String neighborUuid = instanceName.split("\\.")[0];
         mNeighborTable.addNeighborIfDoesntExist(new Neighbor(srcDevice.deviceAddress, neighborUuid));
     }
+
 }

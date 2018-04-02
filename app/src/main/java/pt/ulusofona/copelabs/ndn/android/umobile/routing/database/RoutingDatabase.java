@@ -1,7 +1,6 @@
 package pt.ulusofona.copelabs.ndn.android.umobile.routing.database;
 
 import android.content.Context;
-import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -9,7 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper;
  * Created by miguel on 20-03-2018.
  */
 
-public class DabberDatabase extends SQLiteOpenHelper {
+public class RoutingDatabase extends SQLiteOpenHelper {
 
     // Database Version
     private static final int DATABASE_VERSION = 1;
@@ -17,17 +16,17 @@ public class DabberDatabase extends SQLiteOpenHelper {
     // Database Name
     private static final String DATABASE_NAME = "dabber_db";
 
-    private static DabberDatabase mInstance;
+    private static RoutingDatabase mInstance;
     private static SQLiteDatabase mDatabase;
 
 
-    private DabberDatabase(Context context) {
+    private RoutingDatabase(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
-    public static DabberDatabase getInstance(Context context) {
+    public static RoutingDatabase getInstance(Context context) {
         if(mInstance == null) {
-            mInstance = new DabberDatabase(context);
+            mInstance = new RoutingDatabase(context);
             mDatabase = mInstance.getWritableDatabase();
         }
         return mInstance;

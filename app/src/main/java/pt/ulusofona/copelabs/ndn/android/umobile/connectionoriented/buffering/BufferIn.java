@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 
-import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketObserver;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 
 

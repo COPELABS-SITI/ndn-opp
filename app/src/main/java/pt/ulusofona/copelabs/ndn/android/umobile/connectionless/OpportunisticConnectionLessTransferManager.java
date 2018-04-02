@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticPeerTracker;
-import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketObserver;
+import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
@@ -90,7 +90,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
     private Map<String, Set<String>> mPendingAcknowledgements = new HashMap<>();
 
     /** The Context to which this PacketManagerImpl is attached. */
-    private PacketObserver mObservingContext;
+    private PacketManager.Observer mPacketManagerObserver;
 
     /** This object holds all known peers */
     private Set<String> mKnownPeers = new HashSet<>();
@@ -117,7 +117,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
         if (!mRunning) {
             mContext = context;
             // Store the reference to the context observing us for calling back when packets are received or transfers acknowledged.
-            mObservingContext = (PacketObserver) context;
+            mPacketManagerObserver = (PacketManager.Observer) context;
             // Retrieve the UUID this application should use.
             mAssignedUuid = Identity.getUuid();
             // Retrieve the instance of the WiFi P2P PacketManagerImpl, the CommOut and create the DNS-SD Service request.
@@ -346,7 +346,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
                             acknowledgmentChanges |= pendingAcknowledgements.add(pktKey);
                             final byte[] payload = Base64.decode(txt.get(pktKey), Base64.NO_PADDING);
                             Log.i(TAG, "receivedPacket [" + payload.length + "] <" + calcSha1(payload) + ">");
-                            mObservingContext.onPacketReceived(remoteUuid, payload);
+                            mPacketManagerObserver.onPacketReceived(remoteUuid, payload);
                         }
                         /* In the case the packet key equals "ACKs", this is a list of acknowledgements for some of the packets
                          * that we sent to the remote. In response, we remove all the packets that are acknowledged and notify
@@ -364,7 +364,7 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
                                 if(pendingPackets.containsKey(ackId)) {
                                     pendingPackets.remove(ackId);
                                     packetsRemoved |= true;
-                                    mObservingContext.onPacketTransferred(remoteUuid, ackId);
+                                    mPacketManagerObserver.onPacketTransferred(remoteUuid, ackId);
                                 }
                             }
                         } else

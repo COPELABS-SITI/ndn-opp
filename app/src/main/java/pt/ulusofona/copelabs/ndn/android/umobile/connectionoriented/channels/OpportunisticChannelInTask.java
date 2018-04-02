@@ -14,7 +14,6 @@ import android.util.Log;
 import java.io.IOException;
 import java.net.ServerSocket;
 
-import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketObserver;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.buffering.BufferIn;
 
 public class OpportunisticChannelInTask extends Thread {

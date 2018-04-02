@@ -4,7 +4,6 @@ import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -13,10 +12,9 @@ import pt.ulusofona.copelabs.ndn.android.umobile.routing.dao.RoutingEntryDao;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.dao.RoutingEntryDaoImpl;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.exceptions.NeighborNotFoundException;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.manager.NeighborTableManager;
-import pt.ulusofona.copelabs.ndn.android.umobile.routing.manager.NeighborTableManagerImpl;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.Neighbor;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.RoutingEntry;
-import pt.ulusofona.copelabs.ndn.android.umobile.routing.utils.CostModels;
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.utilities.CostModels;
 
 /**
  * Created by miguel on 07-03-2018.

@@ -20,9 +20,15 @@ import android.util.Log;
 import android.util.LongSparseArray;
 import android.view.View;
 
+import net.named_data.jndn.Data;
+import net.named_data.jndn.encoding.EncodingException;
+import net.named_data.jndn.encoding.TlvWireFormat;
+import net.named_data.jndn.util.Blob;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import pt.ulusofona.copelabs.ndn.R;
@@ -49,9 +55,9 @@ import pt.ulusofona.copelabs.ndn.android.wifi.Wifi;
  * and PUSH communications. This class provides an interface entirely through JNI to manage the configuration of the running
  * NOD including face creation, destruction and addition of routes to the RIB.
  */
-public class OpportunisticDaemon extends Service implements PacketObserver, PacketManager.Requester {
-    private static final String TAG = OpportunisticDaemon.class.getSimpleName();
+public class OpportunisticDaemon extends Service implements PacketManager.Observer, PacketManager.Requester {
 
+    private static final String TAG = OpportunisticDaemon.class.getSimpleName();
 	public static final String STARTED = "pt.ulusofona.copelabs.ndn.android.service.STARTED";
 	public static final String STOPPING = "pt.ulusofona.copelabs.ndn.android.service.STOPPING";
 
@@ -265,16 +271,16 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
 
     // Called from JNI
     private synchronized void transferData(long faceId, String name, byte[] payload) {
-        Log.d(TAG, "Transfer Data : " + faceId + " " + name + " length (" + payload.length + ") [" + Base64.encodeToString(payload, Base64.NO_PADDING) + "]");
+        Log.d(TAG, "Transfer Data : " + faceId + " " + name + " length (" + ((payload != null) ? payload.length : "NULL") + ")");
         String recipient = mOppFaceManager.getUuid(faceId);
-        mPacketManager.onTransferData(mAssignedUuid, recipient, payload, name);
+        mPacketManager.onTransferData(mAssignedUuid, recipient, name, payload);
     }
 
     // Called from JNI
     private synchronized void transferInterest(long faceId, int nonce, String name, byte[] payload) {
         Log.d(TAG, "Transfer Interest : " + faceId + " " + nonce + " length (" + ((payload != null) ? payload.length : "NULL") + ")");
         String recipient = mOppFaceManager.getUuid(faceId);
-        mPacketManager.onTransferInterest(mAssignedUuid, recipient, payload, nonce);
+        mPacketManager.onTransferInterest(mAssignedUuid, recipient, nonce, name, payload);
     }
 
     // Called from JNI
@@ -289,6 +295,16 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
         Long faceId = mOppFaceManager.getFaceId(recipient);
         if(faceId != null) {
             mPacketManager.onPacketTransferred(pktId);
+        }
+    }
+
+    @Override
+    public synchronized void onPacketReceived(String sender, byte[] payload) {
+        Log.i(TAG, "Packet received from : " + sender + " with length : [" + payload.length + "]");
+        Long faceId = mOppFaceManager.getFaceId(sender);
+        if(faceId != null) {
+            mPacketManager.onPacketReceived(sender, payload);
+            jniReceiveOnFace(faceId, payload.length, payload);
         }
     }
 
@@ -317,13 +333,6 @@ public class OpportunisticDaemon extends Service implements PacketObserver, Pack
         mConnectionLessManager.sendPacket(packet);
     }
 
-    @Override
-    public synchronized void onPacketReceived(String sender, byte[] payload) {
-        Log.i(TAG, "Packet received from : " + sender + " with length : [" + payload.length + "]");
-        Long faceId = mOppFaceManager.getFaceId(sender);
-        if(faceId != null)
-            jniReceiveOnFace(faceId, payload.length, payload);
-    }
 
     static {
         System.loadLibrary("gnustl_shared");

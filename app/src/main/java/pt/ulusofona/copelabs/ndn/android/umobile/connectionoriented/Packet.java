@@ -9,7 +9,15 @@
 package pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented;
 
 
+import net.named_data.jndn.Data;
+import net.named_data.jndn.Interest;
+import net.named_data.jndn.encoding.EncodingException;
+import net.named_data.jndn.encoding.TlvWireFormat;
+import net.named_data.jndn.encoding.tlv.Tlv;
+import net.named_data.jndn.encoding.tlv.TlvDecoder;
+
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 
 public class Packet implements Serializable {
 
@@ -29,12 +37,52 @@ public class Packet implements Serializable {
         mRecipient = recipient;
     }
 
+    public static String getName(byte[] payload) {
+        return new Packet(null, null, null, payload).getName();
+    }
+
+    private Object unmarshalPacket() {
+        ByteBuffer byteBuffer = ByteBuffer.wrap(mPayload);
+        TlvDecoder tlvDecoder = new TlvDecoder(byteBuffer);
+        try {
+            if(tlvDecoder.peekType(Tlv.Interest, byteBuffer.remaining())) {
+                Interest interest = new Interest();
+                interest.wireDecode(byteBuffer, TlvWireFormat.get());
+                interest.getInterestLifetimeMilliseconds();
+                return interest.getName().toString();
+            } else {
+                Data data = new Data();
+                data.wireDecode(byteBuffer, TlvWireFormat.get());
+                return data.getName().toString();
+            }
+        } catch (EncodingException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     /**
      * This method is a getter of the attribute mId
      * @return mId
      */
     public String getId() {
         return mId;
+    }
+
+    /**
+     * This method is a getter of the attribute mName
+     * @return mName
+     */
+    public String getName() {
+        Object object = unmarshalPacket();
+        if(object != null) {
+            if(object instanceof Interest) {
+                return ((Interest) object).getName().toString();
+            } else {
+                return ((Data) object).getName().toString();
+            }
+        }
+        return null;
     }
 
     /**

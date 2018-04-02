@@ -8,7 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import java.util.ArrayList;
 import java.util.List;
 
-import pt.ulusofona.copelabs.ndn.android.umobile.routing.database.DabberDatabase;
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.database.RoutingDatabase;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.database.RoutingEntryTable;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.RoutingEntry;
 
@@ -21,7 +21,7 @@ public class RoutingEntryDaoImpl implements RoutingEntryDao {
     private SQLiteDatabase mDabberDatabase;
 
     public RoutingEntryDaoImpl(Context context) {
-        mDabberDatabase = DabberDatabase.getInstance(context).getDbAccess();
+        mDabberDatabase = RoutingDatabase.getInstance(context).getDbAccess();
     }
 
     @Override

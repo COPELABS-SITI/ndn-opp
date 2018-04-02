@@ -1,4 +1,4 @@
-package pt.ulusofona.copelabs.ndn.android.umobile.routing.utils;
+package pt.ulusofona.copelabs.ndn.android.umobile.routing.utilities;
 
 import java.util.ArrayList;
 

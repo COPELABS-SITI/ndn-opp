@@ -18,9 +18,10 @@ public interface PacketManager {
     interface Manager {
         void enable(Context context, PacketManager.Requester requester, OpportunisticFaceManager oppFaceManager);
         void disable();
-        void onTransferInterest(String sender, String recipient, byte[] payload, int nonce);
-        void onTransferData(String sender, String recipient, byte[] payload, String name);
+        void onTransferInterest(String sender, String recipient, int nonce, String name, byte[] payload);
+        void onTransferData(String sender, String recipient, String name, byte[] payload);
         void onPacketTransferred(String pktId);
+        void onPacketReceived(String sender, byte[] payload);
         void onCancelInterest(long faceId, int nonce);
     }
 
@@ -32,9 +33,14 @@ public interface PacketManager {
         void onSendOverConnectionLess(Packet packet);
     }
 
-    interface Notifier {
-        void onInterestTransferred(String name);
-        void onDataReceived(String name);
+    interface Observer {
+        void onPacketTransferred(String recipient, String pktId);
+        void onPacketReceived(String sender, byte[] payload);
     }
-    
+
+    interface Listener {
+        void onInterestTransferred(String sender, String name);
+        void onDataReceived(String sender, String name);
+    }
+
 }

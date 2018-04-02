@@ -19,7 +19,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 
-import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketObserver;
+
+import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.buffering.BufferOut;
 import pt.ulusofona.copelabs.ndn.android.utilities.Utilities;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
@@ -36,7 +37,7 @@ public class OpportunisticChannelIn extends Thread implements WifiP2pListener.Wi
     private OpportunisticChannelInTask mTask;
 
     /** This interface is used to notify the packet reception */
-    private PacketObserver mObservingContext;
+    private PacketManager.Observer mPacketManagerObserver;
 
     /** This object is used to deliver the messages to NDN-OPP */
     private BufferOut mBufferOut;
@@ -49,7 +50,7 @@ public class OpportunisticChannelIn extends Thread implements WifiP2pListener.Wi
      * @param context application context
      */
     public synchronized void enable(Context context) {
-        mObservingContext = (PacketObserver) context;
+        mPacketManagerObserver = (PacketManager.Observer) context;
         WifiP2pListenerManager.registerListener(this);
     }
 
@@ -69,7 +70,7 @@ public class OpportunisticChannelIn extends Thread implements WifiP2pListener.Wi
         if(!mEnabled) {
             try {
                 Log.v(TAG, "Enabling ServerSocket on " + assignedIp + ":" + DEFAULT_PORT);
-                mBufferOut = new BufferOut(mObservingContext);
+                mBufferOut = new BufferOut(mPacketManagerObserver);
                 ServerSocket socket = new ServerSocket();
                 socket.bind(new InetSocketAddress(assignedIp, DEFAULT_PORT));
                 mTask = new OpportunisticChannelInTask(socket);

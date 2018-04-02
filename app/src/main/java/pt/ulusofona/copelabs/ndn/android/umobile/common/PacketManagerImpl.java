@@ -18,7 +18,6 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import pt.ulusofona.copelabs.ndn.android.preferences.Configuration;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
@@ -41,6 +40,8 @@ public class PacketManagerImpl implements Runnable, PacketManager.Manager, WifiP
 
     /** This variable stores the max number of bytes allowed to send over connection less by KITKAT */
     private static final int MAX_PAYLOAD_CL_KITKAT = 80;
+
+    private static ArrayList<PacketManager.Listener> sListeners = new ArrayList<>();
 
     /** Maps Packet ID -> Name (WifiP2pCache) */
     private Map<String, Packet> mPendingPackets = new HashMap<>();
@@ -76,6 +77,45 @@ public class PacketManagerImpl implements Runnable, PacketManager.Manager, WifiP
 
     /** This variable holds the state of this class, if is running or not */
     private boolean mEnable;
+
+
+    /**
+     * This method registers a listener
+     * @param listener listener to be registered
+     */
+    public static void registerListener(PacketManager.Listener listener) {
+        sListeners.add(listener);
+    }
+
+    /**
+     * This method unregisters a listener
+     * @param listener listener to be unregistered
+     */
+    public static void unregisterListener(PacketManager.Listener listener) {
+        sListeners.remove(listener);
+    }
+
+    /**
+     * This method notifies its listeners about an interest that was transferred
+     * @param name interest name
+     */
+    private static void notifyInterestTransferred(String sender, String name){
+        Log.i(TAG, "notifyInterestTransferred");
+        for(PacketManager.Listener listener : sListeners) {
+            listener.onInterestTransferred(sender, name);
+        }
+    }
+
+    /**
+     * This method notifies its listeners about a data packet that was transferred
+     * @param name data name
+     */
+    private static void notifyDataReceived(String sender, String name){
+        Log.i(TAG, "notifyDataReceived");
+        for(PacketManager.Listener listener : sListeners) {
+            listener.onDataReceived(sender, name);
+        }
+    }
 
     /**
      * This method starts the packet manager
@@ -115,13 +155,14 @@ public class PacketManagerImpl implements Runnable, PacketManager.Manager, WifiP
      * @param nonce interest's nonce
      */
     @Override
-    public synchronized void onTransferInterest(String sender, String recipient, byte[] payload, int nonce) {
+    public synchronized void onTransferInterest(String sender, String recipient, int nonce, String name, byte[] payload) {
         Log.i(TAG, "Transferring interest from " + sender + " to " + recipient);
         String pktId = generatePacketId();
         Log.i(TAG, "It's packet id is " + pktId);
         Packet packet = new Packet(pktId, sender, recipient, payload);
         mPendingPackets.put(pktId, packet);
         pushInterestPacket(pktId, nonce);
+        notifyInterestTransferred(sender, packet.getName());
         sendPacket(packet);
     }
 
@@ -133,7 +174,7 @@ public class PacketManagerImpl implements Runnable, PacketManager.Manager, WifiP
      * @param name data's name
      */
     @Override
-    public synchronized void onTransferData(String sender, String recipient, byte[] payload, String name) {
+    public synchronized void onTransferData(String sender, String recipient, String name, byte[] payload) {
         Log.i(TAG, "Transferring interest from " + sender + " to " + recipient);
         String pktId = generatePacketId();
         Log.i(TAG, "It's packet id is " + pktId);
@@ -151,12 +192,17 @@ public class PacketManagerImpl implements Runnable, PacketManager.Manager, WifiP
     public synchronized void onPacketTransferred(String pktId) {
         Packet packet = mPendingPackets.remove(pktId);
         if(isDataPacket(pktId)) {
-            Log.i(TAG, "WifiP2pCache packet with id " + pktId + " was transferred");
+            Log.i(TAG, "Data packet with id " + pktId + " was transferred");
             mRequester.onDataPacketTransferred(packet.getRecipient(), removeDataPacket(pktId));
         } else {
             Log.i(TAG, "Interest packet with id " + pktId + " was transferred");
             mRequester.onInterestPacketTransferred(packet.getRecipient(), removeInterestPacket(pktId));
         }
+    }
+
+    @Override
+    public void onPacketReceived(String sender, byte[] payload) {
+        notifyDataReceived(sender, Packet.getName(payload));
     }
 
     /**

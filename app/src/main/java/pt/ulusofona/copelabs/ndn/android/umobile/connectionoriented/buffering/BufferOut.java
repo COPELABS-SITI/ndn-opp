@@ -11,7 +11,7 @@ package pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.buffering;
 import android.os.Handler;
 import android.util.Log;
 
-import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketObserver;
+import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 
 public class BufferOut implements Runnable {
@@ -26,11 +26,11 @@ public class BufferOut implements Runnable {
     private Handler mHandler = new Handler();
 
     /** This interface is used to deliver the packets */
-    private PacketObserver mNotifier;
+    private PacketManager.Observer mPacketManagerObserver;
 
 
-    public BufferOut(PacketObserver notifier) {
-        mNotifier = notifier;
+    public BufferOut(PacketManager.Observer notifier) {
+        mPacketManagerObserver = notifier;
         mHandler.post(this);
     }
 
@@ -39,7 +39,7 @@ public class BufferOut implements Runnable {
         Packet packet = BufferData.pop();
         if(packet != null) {
             Log.i(TAG, "Buffering out one request");
-            mNotifier.onPacketReceived(packet.getSender(), packet.getPayload());
+            mPacketManagerObserver.onPacketReceived(packet.getSender(), packet.getPayload());
         }
         mHandler.postDelayed(this, INTERVAL_BETWEEN_POP);
     }
