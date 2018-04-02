@@ -1,3 +1,11 @@
+/**
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2018-03-07
+ * This class implements the methods needed to communicate
+ * with contextual manager.
+ * @author Miguel Tavares (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.umobile.routing.manager;
 
 import android.content.ComponentName;
@@ -12,25 +20,41 @@ import com.senception.contextualmanager.aidl.CManagerInterface;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.exceptions.ContextualManagerNotConnectedException;
 
-/**
- * Created by miguel on 07-03-2018.
- */
 
 public class AidlManagerImpl implements AidlManager.Manager, ServiceConnection {
 
+    /** This variable is used to debug AidlManagerImpl class */
     private static final String TAG = AidlManagerImpl.class.getSimpleName();
+
+    /** This variable holds the contextual manager package name in order to establish the communication */
     private static final String CM_PKG_NAME = "com.senception.contextualmanager";
+
+    /** This object is used to communicate with contextual manager */
     private CManagerInterface mRemoteContextualManager;
+
+    /** This listener is used as a callback in order to notify occurred events */
     private AidlManager.Listener mListener;
+
+    /** This variable holds the application context */
     private Context mContext;
+
+    /** This variable holds the contextual manager connection status */
     private boolean mBound;
 
 
+    /**
+     * This method is the constructor of AidlManagerImpl class
+     * @param context Application context
+     * @param listener callback listener
+     */
     AidlManagerImpl(Context context, AidlManager.Listener listener) {
         mContext = context;
         mListener = listener;
     }
 
+    /**
+     * This method binds the communications with contextual manager
+     */
     @Override
     public synchronized void start() {
         if(!mBound) {
@@ -39,6 +63,9 @@ public class AidlManagerImpl implements AidlManager.Manager, ServiceConnection {
         }
     }
 
+    /**
+     * This method unbinds the communications with contextual manager
+     */
     @Override
     public synchronized void stop() {
         if(isBound()) {
@@ -47,11 +74,21 @@ public class AidlManagerImpl implements AidlManager.Manager, ServiceConnection {
         }
     }
 
+    /**
+     * This method checks if the connection with contextual manager is bound
+     * @return if bound returns true, if not returns false
+     */
     @Override
     public boolean isBound() {
         return mBound;
     }
 
+    /**
+     * This method returns the device's availability
+     * @return device's availability
+     * @throws RemoteException
+     * @throws ContextualManagerNotConnectedException
+     */
     @Override
     public int getAvailability() throws RemoteException, ContextualManagerNotConnectedException {
         if(isBound()) {
@@ -60,6 +97,12 @@ public class AidlManagerImpl implements AidlManager.Manager, ServiceConnection {
         throw new ContextualManagerNotConnectedException();
     }
 
+    /**
+     * This method returns the device's centrality
+     * @return device's centrality
+     * @throws RemoteException
+     * @throws ContextualManagerNotConnectedException
+     */
     @Override
     public int[] getCentrality() throws RemoteException, ContextualManagerNotConnectedException {
         if(isBound()) {
@@ -68,6 +111,11 @@ public class AidlManagerImpl implements AidlManager.Manager, ServiceConnection {
         throw new ContextualManagerNotConnectedException();
     }
 
+    /**
+     * This method is invoked once the contextual manager connects
+     * @param componentName
+     * @param iBinder
+     */
     @Override
     public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
         mRemoteContextualManager = CManagerInterface.Stub.asInterface(iBinder);
@@ -75,6 +123,10 @@ public class AidlManagerImpl implements AidlManager.Manager, ServiceConnection {
         Log.i(TAG, "Connected to Contextual Manager");
     }
 
+    /**
+     * This method is invoked once the contextual manager disconnects
+     * @param componentName
+     */
     @Override
     public void onServiceDisconnected(ComponentName componentName) {
         mRemoteContextualManager = null;

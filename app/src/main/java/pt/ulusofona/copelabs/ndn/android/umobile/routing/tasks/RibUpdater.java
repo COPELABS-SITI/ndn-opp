@@ -1,8 +1,12 @@
+/**
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2018-03-13
+ * This interface sets all the methods used by RibUpdater
+ * @author Miguel Tavares (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.umobile.routing.tasks;
 
-/**
- * Created by miguel on 13-03-2018.
- */
 
 public interface RibUpdater {
 

@@ -15,20 +15,13 @@ import android.content.IntentFilter;
 import android.graphics.BitmapFactory;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
-import android.util.Base64;
 import android.util.Log;
 import android.util.LongSparseArray;
 import android.view.View;
 
-import net.named_data.jndn.Data;
-import net.named_data.jndn.encoding.EncodingException;
-import net.named_data.jndn.encoding.TlvWireFormat;
-import net.named_data.jndn.util.Blob;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.ByteBuffer;
 import java.util.List;
 
 import pt.ulusofona.copelabs.ndn.R;

@@ -1,3 +1,12 @@
+/**
+ * @version 1.1
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2018-03-07
+ * This class instantiates and manages all components
+ * required to keep RIB updated.
+ * @author Miguel Tavares (COPELABS/ULHT)
+ */
+
+
 package pt.ulusofona.copelabs.ndn.android.umobile.routing.tasks;
 
 import android.content.Context;
@@ -16,20 +25,38 @@ import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.Neighbor;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.RoutingEntry;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.utilities.CostModels;
 
-/**
- * Created by miguel on 07-03-2018.
- */
+
 
 public class RibUpdaterImpl implements Runnable, RibUpdater {
 
+    /** This variable is used to debug RibUpdaterImpl class */
     private static final String TAG = RibUpdaterImpl.class.getSimpleName();
+
+    /** This variable is used to set the time between RIB updates */
     private static final int SCHEDULING_TIME = 60 * 1000;
     //private List<RoutingEntry> mRoutingTable = new ArrayList<>();
+
+    /** This object references an instance of NeighborTableManager */
     private NeighborTableManager mNeighborTableManager;
+
+    /** This object references an instance of OpportunisticDaemon */
     private OpportunisticDaemon.Binder mBinder;
+
+    /** This object is used to communicate with Routing database */
     private RoutingEntryDao mRoutingEntryDao;
+
+    /** This object is used to schedule RIB updates */
     private Handler mHandler = new Handler();
 
+    /** This variable holds the state of this class */
+    private boolean mStarted;
+
+    /**
+     * This method is the constructor of RibUpdaterImpl class
+     * @param context Application context
+     * @param neighborTableManager NeighborTableManager reference
+     * @param binder OpportunisticDaemon reference
+     */
     public RibUpdaterImpl(Context context, NeighborTableManager neighborTableManager, OpportunisticDaemon.Binder binder) {
         mRoutingEntryDao = new RoutingEntryDaoImpl(context);
         //mRoutingTable = mRoutingEntryDao.getAllEntries();
@@ -37,19 +64,37 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
         mBinder = binder;
     }
 
+    /**
+     * This method starts the RibUpdater
+     */
     @Override
     public void start() {
-        mHandler.postDelayed(this, SCHEDULING_TIME);
-        Log.i(TAG, "RibUpdater started");
+        if(!mStarted) {
+            mHandler.postDelayed(this, SCHEDULING_TIME);
+            Log.i(TAG, "RibUpdater started");
+            mStarted = true;
+        }
     }
 
+    /**
+     * This method stops the RibUpdater
+     */
     @Override
     public void stop() {
-        mHandler.removeCallbacks(this);
-        mNeighborTableManager.stop();
-        Log.i(TAG, "RibUpdater stopped");
+        if(mStarted) {
+            mHandler.removeCallbacks(this);
+            mNeighborTableManager.stop();
+            Log.i(TAG, "RibUpdater stopped");
+            mStarted = false;
+        }
     }
 
+    /**
+     * This method updates the nested routing table
+     * @param name name prefix
+     * @param neighborUuid neighbor uuid
+     * @param cost cost
+     */
     @Override
     public void updateRoutingTable(String name, String neighborUuid, long cost) {
         Log.i(TAG, "Updating RIB");
@@ -72,6 +117,10 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
 
     }
 
+    /**
+     * This method stores routing entries in database
+     * @param routingEntry RoutingEntry to be stored
+     */
     private void storeInDatabase(RoutingEntry routingEntry) {
         if(mRoutingEntryDao.isRoutingEntryExists(routingEntry)) {
             mRoutingEntryDao.updateRoutingEntry(routingEntry);

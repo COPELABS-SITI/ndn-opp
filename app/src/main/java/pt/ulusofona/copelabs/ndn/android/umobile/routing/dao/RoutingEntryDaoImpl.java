@@ -1,3 +1,11 @@
+/**
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2018-03-20
+ * This class contains all methods related with RoutingEntry table
+ * that are used to communicate with db
+ * @author Miguel Tavares (COPELABS/ULHT)
+ */
+
 package pt.ulusofona.copelabs.ndn.android.umobile.routing.dao;
 
 import android.content.ContentValues;
@@ -12,18 +20,24 @@ import pt.ulusofona.copelabs.ndn.android.umobile.routing.database.RoutingDatabas
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.database.RoutingEntryTable;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.RoutingEntry;
 
-/**
- * Created by miguel on 20-03-2018.
- */
 
 public class RoutingEntryDaoImpl implements RoutingEntryDao {
 
+    /** This object is used to communicate with dabber's database */
     private SQLiteDatabase mDabberDatabase;
 
+    /**
+     * This method is the constructor of RoutingEntryDaoImpl class
+     * @param context Application context
+     */
     public RoutingEntryDaoImpl(Context context) {
         mDabberDatabase = RoutingDatabase.getInstance(context).getDbAccess();
     }
 
+    /**
+     * This method returns all entries from RoutingEntry table
+     * @return all entries on RoutingEntry table
+     */
     @Override
     public List<RoutingEntry> getAllEntries() {
         List<RoutingEntry> routingEntries = new ArrayList<>();
@@ -41,6 +55,12 @@ public class RoutingEntryDaoImpl implements RoutingEntryDao {
         return routingEntries;
     }
 
+    /**
+     * This method returns a specific entry from RoutingEntry table
+     * @param prefix name prefix
+     * @param faceId face id associated to name prefix
+     * @return asked RoutingEntry
+     */
     @Override
     public RoutingEntry getRoutingEntry(String prefix, long faceId) {
         RoutingEntry routingEntry = null;
@@ -58,6 +78,10 @@ public class RoutingEntryDaoImpl implements RoutingEntryDao {
         return routingEntry;
     }
 
+    /**
+     * This method inserts a new entry on RoutingEntry table
+     * @param routingEntry entry to be inserted
+     */
     @Override
     public void createRoutingEntry(RoutingEntry routingEntry) {
         ContentValues values = new ContentValues();
@@ -67,6 +91,10 @@ public class RoutingEntryDaoImpl implements RoutingEntryDao {
         mDabberDatabase.insert(RoutingEntryTable.TABLE_NAME, null, values);
     }
 
+    /**
+     * This method updates an entry on RoutingEntry table
+     * @param routingEntry entry to be updated
+     */
     @Override
     public void updateRoutingEntry(RoutingEntry routingEntry) {
         String where = RoutingEntryTable.getWhereByPrimaryKey(routingEntry.getPrefix(), routingEntry.getFace());
@@ -77,12 +105,21 @@ public class RoutingEntryDaoImpl implements RoutingEntryDao {
         mDabberDatabase.update(RoutingEntryTable.TABLE_NAME, values, where, null);
     }
 
+    /**
+     * This method deletes an entry that exists on RoutingEntry table
+     * @param routingEntry entry to be updated
+     */
     @Override
     public void deleteRoutingEntry(RoutingEntry routingEntry) {
         String where = RoutingEntryTable.getWhereByPrimaryKey(routingEntry.getPrefix(), routingEntry.getFace());
         mDabberDatabase.delete(RoutingEntryTable.TABLE_NAME, where, null);
     }
 
+    /**
+     * This method checks if an entry exists on RoutingEntry table
+     * @param routingEntry entry to be checked
+     * @return true if exists, false if not
+     */
     @Override
     public boolean isRoutingEntryExists(RoutingEntry routingEntry) {
         return getRoutingEntry(routingEntry.getPrefix(), routingEntry.getFace()) != null;

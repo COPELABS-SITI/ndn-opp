@@ -5,6 +5,7 @@
  * @author Seweryn Dynerowicz (COPELABS/ULHT)
  * @author Miguel Tavares (COPELABS/ULHT)
  */
+
 package pt.ulusofona.copelabs.ndn.android.utilities;
 
 import android.content.Context;
@@ -131,6 +132,12 @@ public abstract class Utilities {
         return sha1;
     }
 
+    /**
+     * This method retrieves the MD5 of a string
+     * @param str input string
+     * @return MD5 of input string (str)
+     * @throws NoSuchAlgorithmException
+     */
     public static String calcMd5(String str) throws NoSuchAlgorithmException {
         MessageDigest msg = MessageDigest.getInstance("MD5");
         msg.update(str.getBytes(),0,str.length());
