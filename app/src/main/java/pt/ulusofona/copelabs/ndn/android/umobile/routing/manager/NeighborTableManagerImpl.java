@@ -39,7 +39,7 @@ public class NeighborTableManagerImpl implements NeighborTableManager, AidlManag
     private AidlManager.Manager mAidlManager;
 
     /** This object is used to fetch Ts */
-    private TManager.Manager mTManager;
+    private TManager.Manager mTManager = new TManagerImpl();
 
     /** This variable holds the state of this class */
     private boolean mEnable = false;
@@ -50,7 +50,6 @@ public class NeighborTableManagerImpl implements NeighborTableManager, AidlManag
      */
     NeighborTableManagerImpl(Context context) {
         mAidlManager = new AidlManagerImpl(context, this);
-        mTManager = new TManagerImpl(this);
     }
 
     /**
@@ -62,6 +61,7 @@ public class NeighborTableManagerImpl implements NeighborTableManager, AidlManag
             mTManager.start();
             mAidlManager.start();
             WifiP2pListenerManager.registerListener(this);
+            TManagerImpl.registerListener(this);
             mEnable = true;
             Log.i(TAG, "NeighborTableManagerImpl started");
         }
@@ -76,6 +76,7 @@ public class NeighborTableManagerImpl implements NeighborTableManager, AidlManag
             mTManager.stop();
             mAidlManager.stop();
             WifiP2pListenerManager.unregisterListener(this);
+            TManagerImpl.unregisterListener(this);
             mNeighborTable.clear();
             mEnable = false;
             Log.i(TAG, "NeighborTableManagerImpl stopped");
@@ -123,7 +124,7 @@ public class NeighborTableManagerImpl implements NeighborTableManager, AidlManag
     public void onReceiveT(String sender, String name, double t) {
         try {
             Neighbor neighbor = mNeighborTable.getNeighbor(sender);
-            //neighbor.
+            neighbor.setT(name, t);
         } catch (NeighborNotFoundException e) {
             e.printStackTrace();
         }

@@ -53,7 +53,7 @@ public class TManagerImpl implements TManager.Manager, PacketManager.Listener {
      * This method stars the TManager
      */
     @Override
-    public void start() {
+    public synchronized void start() {
         if(!mStarted) {
             PacketManagerImpl.registerListener(this);
             mStarted = true;
@@ -65,7 +65,7 @@ public class TManagerImpl implements TManager.Manager, PacketManager.Listener {
      * This method stops the TManager
      */
     @Override
-    public void stop() {
+    public synchronized void stop() {
         if(mStarted) {
             PacketManagerImpl.unregisterListener(this);
             sListeners.clear();
@@ -81,9 +81,10 @@ public class TManagerImpl implements TManager.Manager, PacketManager.Listener {
      */
     @Override
     public void onInterestTransferred(String sender, String name) {
-        Log.i(TAG, "Adding " + name);
-        if(!mInterestsSent.contains(name))
-            mInterestsSent.put(name, Utilities.getTimestampInSeconds());
+        String id = sender + name;
+        Log.i(TAG, "Adding " + id);
+        if(!mInterestsSent.contains(id))
+            mInterestsSent.put(id, Utilities.getTimestampInSeconds());
     }
 
     /**
@@ -93,9 +94,10 @@ public class TManagerImpl implements TManager.Manager, PacketManager.Listener {
      */
     @Override
     public void onDataReceived(String sender, String name) {
-        if(mInterestsSent.get(name) != null) {
+        String id = sender + name;
+        if(mInterestsSent.get(id) != null) {
             long currentTime = Utilities.getTimestampInSeconds();
-            long t = currentTime - mInterestsSent.get(name);
+            long t = currentTime - mInterestsSent.remove(id);
             Log.i(TAG, "For " + name + " its T is " + t + " seconds");
             notify(sender, name, t);
         }

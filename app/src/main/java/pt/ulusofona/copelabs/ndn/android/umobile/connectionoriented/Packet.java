@@ -41,7 +41,7 @@ public class Packet implements Serializable {
         return new Packet(null, null, null, payload).getName();
     }
 
-    private Object unmarshalPacket() {
+    private String unmarshalPacket() {
         ByteBuffer byteBuffer = ByteBuffer.wrap(mPayload);
         TlvDecoder tlvDecoder = new TlvDecoder(byteBuffer);
         try {
@@ -58,7 +58,7 @@ public class Packet implements Serializable {
         } catch (EncodingException e) {
             e.printStackTrace();
         }
-        return null;
+        return "";
     }
 
     /**
@@ -74,15 +74,7 @@ public class Packet implements Serializable {
      * @return mName
      */
     public String getName() {
-        Object object = unmarshalPacket();
-        if(object != null) {
-            if(object instanceof Interest) {
-                return ((Interest) object).getName().toString();
-            } else {
-                return ((Data) object).getName().toString();
-            }
-        }
-        return null;
+        return unmarshalPacket();
     }
 
     /**

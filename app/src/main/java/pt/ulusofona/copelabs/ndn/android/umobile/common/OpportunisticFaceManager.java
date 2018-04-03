@@ -85,9 +85,13 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
             mFaceIdToUuid.put(faceId, peerUuid);
 
             Log.d(TAG, "Registering Opportunistic Face " + faceId + " in RIB for prefix /ndn/multicast and /ndn/opp/emergency.");
+            mDaemonBinder.addRoute("/", faceId, 0L, 0L, 1L);
+
+            /*
             mDaemonBinder.addRoute("/ndn/multicast", faceId, 0L, 0L, 1L);
             mDaemonBinder.addRoute("/ndn/opp/emergency", faceId, 0L, 0L, 1L);
             mDaemonBinder.addRoute("/ndn", faceId, 0L, 0L, 1L);
+            */
 
             new Handler().postDelayed(new Runnable() {
                 @Override

@@ -13,7 +13,7 @@ log {
 tables { 
     cs_max_packets 100
     strategy_choice {
-        /               /localhost/nfd/strategy/best-route
+        /               /localhost/nfd/strategy/multicast
         /ndn/opp        /localhost/nfd/strategy/best-route
         /localhost      /localhost/nfd/strategy/multicast
         /localhost/nfd  /localhost/nfd/strategy/best-route

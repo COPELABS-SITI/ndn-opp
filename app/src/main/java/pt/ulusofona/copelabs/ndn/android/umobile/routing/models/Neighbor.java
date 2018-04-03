@@ -10,6 +10,8 @@ package pt.ulusofona.copelabs.ndn.android.umobile.routing.models;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import pt.ulusofona.copelabs.ndn.android.utilities.Utilities;
 
@@ -23,7 +25,10 @@ public class Neighbor {
     private String mUuid;
 
     /** These attributes are metrics which is described on dabber's draft */
-    private double mC, mA, mT;
+    private double mC, mA;
+
+    /** This attribute is a metric which is described on dabber's draft */
+    private ConcurrentHashMap<String, Double> mTs = new ConcurrentHashMap<>();
 
     /** This attribute is a metric which is described on dabber's draft */
     private ArrayList<Double> mI = new ArrayList<>();
@@ -108,19 +113,21 @@ public class Neighbor {
     }
 
     /**
-     * This method is a getter to mT
-     * @return mT
+     * This method returns the T value for a certain name
+     * @param name name
+     * @return T
      */
-    public double getT() {
-        return mT;
+    public double getT(String name) {
+        return mTs.contains(name) ? mTs.get(name) : 0;
     }
 
     /**
-     * This method is a setter to mT
-     * @param t new mT
+     * This method sets a T value to a certain name
+     * @param name name
+     * @param t T
      */
-    public void setT(double t) {
-        mT = t;
+    public void setT(String name, double t) {
+        mTs.put(name, t);
     }
 
     /**

@@ -102,7 +102,7 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
             Neighbor neighbor = mNeighborTableManager.getNeighbor(neighborUuid);
             // guardar a face do neighbor com este uuid recebido em argumento
             long k1 = CostModels.computeK1(cost, neighbor.getI());
-            long k2 = CostModels.computeK2(k1, neighbor.getC(), neighbor.getA(), neighbor.getT());
+            long k2 = CostModels.computeK2(k1, neighbor.getC(), neighbor.getA(), neighbor.getT(name));
 
 
             // insert on routing table?

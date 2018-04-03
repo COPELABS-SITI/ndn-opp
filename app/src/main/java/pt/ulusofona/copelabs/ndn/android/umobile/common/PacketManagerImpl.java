@@ -162,7 +162,7 @@ public class PacketManagerImpl implements Runnable, PacketManager.Manager, WifiP
         Packet packet = new Packet(pktId, sender, recipient, payload);
         mPendingPackets.put(pktId, packet);
         pushInterestPacket(pktId, nonce);
-        notifyInterestTransferred(sender, packet.getName());
+        notifyInterestTransferred(recipient, packet.getName());
         sendPacket(packet);
     }
 
