@@ -31,6 +31,7 @@ import pt.ulusofona.copelabs.ndn.android.models.FibEntry;
 import pt.ulusofona.copelabs.ndn.android.models.Name;
 import pt.ulusofona.copelabs.ndn.android.models.PitEntry;
 import pt.ulusofona.copelabs.ndn.android.models.SctEntry;
+import pt.ulusofona.copelabs.ndn.android.preferences.Configuration;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.Identity;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.OpportunisticConnectionLessTransferManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticConnectivityManager;
@@ -106,7 +107,7 @@ public class OpportunisticDaemon extends Service implements PacketManager.Observ
     private OpportunisticConnectivityManager mConnectivityManager = new OpportunisticConnectivityManager();
     private OpportunisticConnectionLessTransferManager mConnectionLessManager = new OpportunisticConnectionLessTransferManager();
 
-    private RoutingManager mRoutingManager = new RoutingManagerImpl();
+    private RoutingManager mRoutingManager;
     private WifiFaceManager mWifiFaceManager = new WifiFaceManagerImpl();
     private PacketManager.Manager mPacketManager = new PacketManagerImpl();
     private NsdManager mNsdManager = new NsdManager();
@@ -182,10 +183,13 @@ public class OpportunisticDaemon extends Service implements PacketManager.Observ
 
 			startTime = System.currentTimeMillis();
 
-            mRoutingManager.start(local, this);
+			if(Configuration.isBackupOptionEnabled(this)) {
+                mRoutingManager = new RoutingManagerImpl(local, this);
+                mRoutingManager.start();
+            }
+
             mPeerTracker.addObserver(mOppFaceManager);
             mPeerTracker.addObserver(mConnectionLessManager);
-
             mPeerTracker.enable(this);
             mOppFaceManager.enable(local, this);
             mConnectionLessManager.enable(this);
@@ -221,7 +225,8 @@ public class OpportunisticDaemon extends Service implements PacketManager.Observ
 
 			jniStop();
 
-			mRoutingManager.stop();
+			if(mRoutingManager != null)
+			    mRoutingManager.stop();
             mOppChannelIn.disable();
             mConnectivityManager.disable();
             mConnectionLessManager.disable();

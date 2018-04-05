@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 26
-    buildToolsVersion '26.0.2'
+    buildToolsVersion '27.0.3'
 
     defaultConfig {
         versionCode 3
@@ -55,13 +55,13 @@ allprojects {
 
 dependencies {
 
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'cat.ereza:customactivityoncrash:2.2.0'
-    compile 'com.balsikandar.android:crashreporter:1.0.9'
-    compile 'com.android.support:appcompat-v7:25.3.1'
-    compile 'com.android.support:design:25.3.1'
-    compile files('libs/copelabs-jndn.jar')
-    compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'cat.ereza:customactivityoncrash:2.2.0'
+    implementation 'com.balsikandar.android:crashreporter:1.0.9'
+    implementation 'com.android.support:appcompat-v7:25.3.1'
+    implementation 'com.android.support:design:25.3.1'
+    implementation files('libs/copelabs-jndn.jar')
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
 
 }
 

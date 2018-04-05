@@ -91,9 +91,11 @@ public class NeighborTableManagerImpl implements NeighborTableManager, AidlManag
         if(mAidlManager.isBound()) {
             List<Neighbor> neighbors = mNeighborTable.getNeighbors();
             for(Neighbor neighbor : neighbors) {
+                Log.i(TAG, "Updating " + neighbor.toString());
                 // TODO update A, C, I
             }
             mHandler.postDelayed(this, SCHEDULING_TIME);
+            Log.i(TAG, "A new update was scheduled in " + SCHEDULING_TIME + " milliseconds");
         }
     }
 
@@ -101,7 +103,7 @@ public class NeighborTableManagerImpl implements NeighborTableManager, AidlManag
      * This method search and returns a Neighbor with a certain uuid
      * @param neighborUuid neighbor's uuid
      * @return Neighbor found
-     * @throws NeighborNotFoundException
+     * @throws NeighborNotFoundException this exception is triggered if the neighbor is not found
      */
     @Override
     public Neighbor getNeighbor(String neighborUuid) throws NeighborNotFoundException {
@@ -110,6 +112,7 @@ public class NeighborTableManagerImpl implements NeighborTableManager, AidlManag
 
     @Override
     public void onServiceAvailable(String instanceName, String registrationType, WifiP2pDevice srcDevice) {
+        Log.i(TAG, "Service discovered with instance name: " + instanceName);
         String neighborUuid = instanceName.split("\\.")[0];
         mNeighborTable.addNeighborIfDoesntExist(new Neighbor(srcDevice.deviceAddress, neighborUuid));
     }
@@ -122,6 +125,7 @@ public class NeighborTableManagerImpl implements NeighborTableManager, AidlManag
      */
     @Override
     public void onReceiveT(String sender, String name, double t) {
+        Log.i(TAG, "Received T :" + t + " from: " + sender + " relative to: " + name);
         try {
             Neighbor neighbor = mNeighborTable.getNeighbor(sender);
             neighbor.setT(name, t);

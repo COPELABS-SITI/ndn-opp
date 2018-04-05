@@ -158,4 +158,10 @@ public class Neighbor {
         result = 31 * result + mUuid.hashCode();
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "Uuid: " + mUuid + " CMIdentifier: " + mCmIdentifier + " C: " + mC + " A: " + mA;
+    }
+
 }

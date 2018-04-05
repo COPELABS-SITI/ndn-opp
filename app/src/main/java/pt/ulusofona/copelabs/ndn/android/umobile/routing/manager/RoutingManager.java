@@ -8,14 +8,8 @@
 package pt.ulusofona.copelabs.ndn.android.umobile.routing.manager;
 
 
-
-import android.content.Context;
-
-import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticDaemon;
-
-
 public interface RoutingManager {
 
-    void start(OpportunisticDaemon.Binder binder, Context context);
+    void start();
     void stop();
 }

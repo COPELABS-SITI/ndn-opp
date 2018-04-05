@@ -14,6 +14,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * This class is responsible to manage the wifi p2p listeners.
@@ -27,7 +28,7 @@ public abstract class WifiP2pListenerManager {
     private static final String TAG = "WifiP2pListenerManager";
 
     /** This list contains all registered listeners */
-    private static List<WifiP2pListener> listeners = new ArrayList<>();
+    private static List<WifiP2pListener> listeners = new CopyOnWriteArrayList<>();
 
     /**
      * This method registers a listener
