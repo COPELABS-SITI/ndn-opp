@@ -576,7 +576,7 @@ JNIEXPORT jlong JNICALL jniGetFaceId(JNIEnv* env, jobject, jstring uri) {
     if(g_nfd.get() != nullptr) {
         for(const nfd::Face& face : g_nfd->getFaceTable()) {
             NFD_LOG_INFO("Trying with " << face.getRemoteUri().toString());
-            if(face.getRemoteUri().toString().find(":6363") != std::string::npos) {
+            if(face.getRemoteUri().toString().find(faceUri) != std::string::npos) {
                 NFD_LOG_INFO("Found " << face.getRemoteUri() << " with face " << face.getId());
                 return face.getId();
             }
@@ -586,24 +586,13 @@ JNIEXPORT jlong JNICALL jniGetFaceId(JNIEnv* env, jobject, jstring uri) {
 }
 
 JNIEXPORT jstring JNICALL jniGetFaceUri(JNIEnv* env, jobject, jlong faceId) {
-    //std::string faceUri = convertString(env, uri);
     if(g_nfd.get() != nullptr) {
         for(const nfd::Face& face : g_nfd->getFaceTable()) {
             NFD_LOG_INFO("Trying with " << face.getId());
             if(face.getId() == faceId) {
                 NFD_LOG_INFO("Found " << face.getRemoteUri() << " with face " << face.getId());
                 return env->NewStringUTF(face.getRemoteUri().toString().c_str());
-
-
             }
-
-            /*
-            NFD_LOG_INFO("Trying with " << face.getRemoteUri().toString());
-            if(face.getRemoteUri().toString().find(":6363") != std::string::npos) {
-                NFD_LOG_INFO("Found " << face.getRemoteUri() << " with face " << face.getId());
-                return face.getId();
-            }
-            */
         }
     }
     return NULL;

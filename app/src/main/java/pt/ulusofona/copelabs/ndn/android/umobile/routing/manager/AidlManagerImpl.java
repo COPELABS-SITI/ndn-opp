@@ -18,6 +18,9 @@ import android.util.Log;
 
 import com.senception.contextualmanager.aidl.CManagerInterface;
 
+import java.util.List;
+import java.util.Map;
+
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.exceptions.ContextualManagerNotConnectedException;
 
 
@@ -90,9 +93,9 @@ public class AidlManagerImpl implements AidlManager.Manager, ServiceConnection {
      * @throws ContextualManagerNotConnectedException
      */
     @Override
-    public int getAvailability() throws RemoteException, ContextualManagerNotConnectedException {
+    public Map getAvailability(List<String> cmIdentifiers) throws RemoteException, ContextualManagerNotConnectedException {
         if(isBound()) {
-            return mRemoteContextualManager.getAvailability();
+            return mRemoteContextualManager.getAvailability(cmIdentifiers);
         }
         throw new ContextualManagerNotConnectedException();
     }
@@ -104,9 +107,9 @@ public class AidlManagerImpl implements AidlManager.Manager, ServiceConnection {
      * @throws ContextualManagerNotConnectedException
      */
     @Override
-    public int[] getCentrality() throws RemoteException, ContextualManagerNotConnectedException {
+    public Map getCentrality(List<String> cmIdentifiers) throws RemoteException, ContextualManagerNotConnectedException {
         if(isBound()) {
-            return mRemoteContextualManager.getCentrality();
+            return mRemoteContextualManager.getCentrality(cmIdentifiers);
         }
         throw new ContextualManagerNotConnectedException();
     }

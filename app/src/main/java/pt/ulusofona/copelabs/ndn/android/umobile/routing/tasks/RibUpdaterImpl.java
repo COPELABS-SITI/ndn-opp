@@ -13,6 +13,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,7 +35,6 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
 
     /** This variable is used to set the time between RIB updates */
     private static final int SCHEDULING_TIME = 60 * 1000;
-    //private List<RoutingEntry> mRoutingTable = new ArrayList<>();
 
     /** This object references an instance of NeighborTableManager */
     private NeighborTableManager mNeighborTableManager;
@@ -59,7 +59,6 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
      */
     public RibUpdaterImpl(Context context, NeighborTableManager neighborTableManager, OpportunisticDaemon.Binder binder) {
         mRoutingEntryDao = new RoutingEntryDaoImpl(context);
-        //mRoutingTable = mRoutingEntryDao.getAllEntries();
         mNeighborTableManager = neighborTableManager;
         mBinder = binder;
     }
@@ -96,21 +95,18 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
      * @param cost cost
      */
     @Override
-    public void updateRoutingTable(String name, String neighborUuid, long cost) {
-        Log.i(TAG, "Updating RIB");
+    public void updateRoutingEntry(String name, String neighborUuid, long cost) {
+        Log.i(TAG, "Updating routing entry");
+        Log.i(TAG, "Uuid: " + neighborUuid + " name: " + name + " cost: " + cost);
         try {
             Neighbor neighbor = mNeighborTableManager.getNeighbor(neighborUuid);
-            // guardar a face do neighbor com este uuid recebido em argumento
+            long faceId = mBinder.getFaceId(neighborUuid);
             long k1 = CostModels.computeK1(cost, neighbor.getI());
             long k2 = CostModels.computeK2(k1, neighbor.getC(), neighbor.getA(), neighbor.getT(name));
-
-
-            // insert on routing table?
-
-            //Collections.sort(mRoutingTable);
-
-            updateRib();
-            Log.i(TAG, "RIB updated");
+            RoutingEntry entry = mRoutingEntryDao.getRoutingEntry(name, faceId);
+            entry.setCost(k2);
+            storeInDatabase(entry);
+            Log.i(TAG, "Routing entry has been updated");
         } catch (NeighborNotFoundException ex) {
             Log.e(TAG, "Neighbor " + neighborUuid + " not found");
         }
@@ -121,7 +117,7 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
      * This method stores routing entries in database
      * @param routingEntry RoutingEntry to be stored
      */
-    private void storeInDatabase(RoutingEntry routingEntry) {
+    private void storeInDatabase(RoutingEntry routingEntry) throws NeighborNotFoundException {
         if(mRoutingEntryDao.isRoutingEntryExists(routingEntry)) {
             mRoutingEntryDao.updateRoutingEntry(routingEntry);
         } else {
@@ -130,9 +126,11 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
     }
 
     private void updateRib() {
-        // TODO update rib on NFD
         List<RoutingEntry> mRoutingTable = mRoutingEntryDao.getAllEntries();
         Collections.sort(mRoutingTable);
+        for(RoutingEntry entry : mRoutingTable) {
+            mBinder.addRoute(entry.getPrefix(), entry.getFace(), entry.getOrigin(), entry.getCost(), entry.getFlag());
+        }
         // insert 5 best routes in rib
         // mBinder.addRoute
         // mBinder.removeRoute
@@ -140,7 +138,7 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
 
     @Override
     public void run() {
-
+        updateRib();
         mHandler.postDelayed(this, SCHEDULING_TIME);
     }
 

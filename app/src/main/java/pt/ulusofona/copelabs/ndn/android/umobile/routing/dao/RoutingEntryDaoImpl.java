@@ -18,6 +18,7 @@ import java.util.List;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.database.RoutingDatabase;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.database.RoutingEntryTable;
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.exceptions.NeighborNotFoundException;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.RoutingEntry;
 
 
@@ -62,7 +63,7 @@ public class RoutingEntryDaoImpl implements RoutingEntryDao {
      * @return asked RoutingEntry
      */
     @Override
-    public RoutingEntry getRoutingEntry(String prefix, long faceId) {
+    public RoutingEntry getRoutingEntry(String prefix, long faceId) throws NeighborNotFoundException {
         RoutingEntry routingEntry = null;
         String where = RoutingEntryTable.getWhereByPrimaryKey(prefix, faceId);
         Cursor cursor = mDabberDatabase.query(RoutingEntryTable.TABLE_NAME, null, where,
@@ -73,6 +74,8 @@ public class RoutingEntryDaoImpl implements RoutingEntryDao {
                     cursor.getLong(cursor.getColumnIndex(RoutingEntryTable.COLUMN_FACE)),
                     cursor.getLong(cursor.getColumnIndex(RoutingEntryTable.COLUMN_COST))
             );
+        } else {
+            throw new NeighborNotFoundException();
         }
         cursor.close();
         return routingEntry;
@@ -122,6 +125,10 @@ public class RoutingEntryDaoImpl implements RoutingEntryDao {
      */
     @Override
     public boolean isRoutingEntryExists(RoutingEntry routingEntry) {
-        return getRoutingEntry(routingEntry.getPrefix(), routingEntry.getFace()) != null;
+        try {
+            return getRoutingEntry(routingEntry.getPrefix(), routingEntry.getFace()) != null;
+        } catch (NeighborNotFoundException e) {
+            return false;
+        }
     }
 }

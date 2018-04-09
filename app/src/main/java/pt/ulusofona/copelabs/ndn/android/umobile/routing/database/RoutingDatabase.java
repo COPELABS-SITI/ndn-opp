@@ -81,6 +81,10 @@ public class RoutingDatabase extends SQLiteOpenHelper {
         onCreate(db);
     }
 
+    public void clearDatabase() {
+        mDatabase.delete(RoutingEntryTable.TABLE_NAME, null, null);
+    }
+
     /**
      * This method closes the database connection
      */

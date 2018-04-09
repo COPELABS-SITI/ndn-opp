@@ -5,6 +5,7 @@ package com.senception.contextualmanager.aidl;
 
 interface CManagerInterface {
 
-        int getAvailability();
-        int [] getCentrality();
+        Map getAvailability(in List<String> cmIdentifiers);
+        Map getCentrality(in List<String> cmIdentifiers);
+
 }

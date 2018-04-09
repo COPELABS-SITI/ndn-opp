@@ -42,6 +42,7 @@ import pt.ulusofona.copelabs.ndn.android.ui.fragment.OpportunisticPeerTracking;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.PendingInterestTable;
 import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticDaemon;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionless.Identity;
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.database.RoutingDatabase;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.cache.WifiP2pCache;
 import pt.ulusofona.copelabs.ndn.databinding.ActivityMainBinding;
 
@@ -170,6 +171,8 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
                 menu.getItem(i).setChecked(Configuration.isRoutingEnabled(this));
             }  else if(menu.getItem(i).getItemId() == R.id.wipe_wifi_p2p_cache) {
                 menu.getItem(i).setEnabled(!mDaemonBound);
+            }  else if(menu.getItem(i).getItemId() == R.id.wipe_routing_database) {
+                menu.getItem(i).setEnabled(!mDaemonBound);
             }
         }
         return true;
@@ -205,6 +208,9 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
                 break;
             case R.id.wipe_wifi_p2p_cache:
                 WifiP2pCache.wipeCache(this);
+                break;
+            case R.id.wipe_routing_database:
+                RoutingDatabase.getInstance(this).clearDatabase();
                 break;
         }
 

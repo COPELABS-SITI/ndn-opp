@@ -91,13 +91,14 @@ public class WifiFaceManagerImpl implements WifiFaceManager, Runnable, WifiRegul
     @Override
     public void run() {
         String faceUri = Configuration.getNdnNode(mContext);
-        if(mBinder.getFaceId(faceUri) == -1) {
+        String nodeIp = Configuration.getNdnNodeIp(mContext);
+        if(mBinder.getFaceId(nodeIp) == -1) {
             mBinder.createFace(faceUri, 0,false);
             mHandler.postDelayed(this, WAIT_TIME);
         } else {
             Log.i(TAG, "Face " + faceUri + " created");
-            mBinder.addRoute("/ndn", mBinder.getFaceId(faceUri), 0L, 0L, 1L);
-            Log.i(TAG, "Route for face " + mBinder.getFaceId(faceUri) + " created");
+            mBinder.addRoute("/", mBinder.getFaceId(nodeIp), 0L, 0L, 1L);
+            Log.i(TAG, "Route for face " + mBinder.getFaceId(nodeIp) + " created");
             mHandler.removeCallbacks(this);
         }
     }

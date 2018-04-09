@@ -10,6 +10,7 @@ package pt.ulusofona.copelabs.ndn.android.umobile.routing.dao;
 
 import java.util.List;
 
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.exceptions.NeighborNotFoundException;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.RoutingEntry;
 
 public interface RoutingEntryDao {
@@ -18,7 +19,7 @@ public interface RoutingEntryDao {
     void createRoutingEntry(RoutingEntry routingEntry);
     void updateRoutingEntry(RoutingEntry routingEntry);
     void deleteRoutingEntry(RoutingEntry routingEntry);
-    boolean isRoutingEntryExists(RoutingEntry routingEntry);
-    RoutingEntry getRoutingEntry(String prefix, long faceid);
+    boolean isRoutingEntryExists(RoutingEntry routingEntry) throws NeighborNotFoundException;
+    RoutingEntry getRoutingEntry(String prefix, long faceid) throws NeighborNotFoundException;
 
 }

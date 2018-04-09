@@ -33,17 +33,29 @@ public class NeighborTable {
 
     /**
      * This method returns a neighbor if exists in the neighbor table
-     * @param neighborUuid neighbor uuid to search
+     * @param neighborIdentifier neighbor uuid or cmIdentifier to search
      * @return Neighbor found
      * @throws NeighborNotFoundException
      */
-    public Neighbor getNeighbor(String neighborUuid) throws NeighborNotFoundException {
+    public Neighbor getNeighbor(String neighborIdentifier) throws NeighborNotFoundException {
         for(Neighbor neighbor : mNeighbors) {
-            if(neighbor.getUuid().equals(neighborUuid)) {
+            if(neighbor.getUuid().equals(neighborIdentifier) || neighbor.getCmIdentifier().equals(neighborIdentifier)) {
                 return neighbor;
             }
         }
-        throw new NeighborNotFoundException();
+        throw new NeighborNotFoundException(neighborIdentifier);
+    }
+
+    /**
+     * This method returns a list containing all cmIdentifiers
+     * @return a list containing all cmIdentifiers
+     */
+    public List<String> getAllCmIdentifiers() {
+        List<String> cmIdentifiers = new ArrayList<>();
+        for(Neighbor neighbor : mNeighbors) {
+            cmIdentifiers.add(neighbor.getCmIdentifier());
+        }
+        return cmIdentifiers;
     }
 
     /**

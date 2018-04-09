@@ -11,6 +11,9 @@ package pt.ulusofona.copelabs.ndn.android.umobile.routing.manager;
 
 import android.os.RemoteException;
 
+import java.util.List;
+import java.util.Map;
+
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.exceptions.ContextualManagerNotConnectedException;
 
 
@@ -20,8 +23,8 @@ public interface AidlManager {
         void start();
         void stop();
         boolean isBound();
-        int getAvailability() throws RemoteException, ContextualManagerNotConnectedException;
-        int[] getCentrality() throws RemoteException, ContextualManagerNotConnectedException;
+        Map getAvailability(List<String> cmIdentifiers) throws RemoteException, ContextualManagerNotConnectedException;
+        Map getCentrality(List<String> cmIdentifiers) throws RemoteException, ContextualManagerNotConnectedException;
     }
 
     interface Listener {

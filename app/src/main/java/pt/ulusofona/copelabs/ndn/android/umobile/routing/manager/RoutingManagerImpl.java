@@ -88,8 +88,7 @@ public class RoutingManagerImpl implements RoutingManager, WifiP2pListener.WifiP
         if(mRegistered && !mStarted) {
             mNeighborTableManager = new NeighborTableManagerImpl(mContext);
             mRibUpdater = new RibUpdaterImpl(mContext, mNeighborTableManager, mBinder);
-            mNeighborTableManager.start();
-            mRibUpdater.start();
+            mNeighborTableManager.start();mRibUpdater.start();
             mStarted = true;
             Log.i(TAG, "Routing Manager started");
         }
@@ -102,7 +101,7 @@ public class RoutingManagerImpl implements RoutingManager, WifiP2pListener.WifiP
     @Override
     public void onDisconnected(Intent intent) {
         Log.i(TAG, "Wi-Fi P2P disconnection detected");
-        //stopRouting();
+        stopRouting();
     }
 
     /**

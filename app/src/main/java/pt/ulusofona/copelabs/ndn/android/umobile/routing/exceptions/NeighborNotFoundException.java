@@ -15,4 +15,8 @@ public class NeighborNotFoundException extends Exception {
         super();
     }
 
+    public NeighborNotFoundException(String neighborIdentifier) {
+        super(neighborIdentifier);
+    }
+
 }

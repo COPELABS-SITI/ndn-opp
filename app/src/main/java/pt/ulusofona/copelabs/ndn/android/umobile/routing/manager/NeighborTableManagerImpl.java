@@ -10,10 +10,13 @@ package pt.ulusofona.copelabs.ndn.android.umobile.routing.manager;
 import android.content.Context;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.os.Handler;
+import android.os.RemoteException;
 import android.util.Log;
 
 import java.util.List;
+import java.util.Map;
 
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.exceptions.ContextualManagerNotConnectedException;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.exceptions.NeighborNotFoundException;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.Neighbor;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.NeighborTable;
@@ -89,10 +92,27 @@ public class NeighborTableManagerImpl implements NeighborTableManager, AidlManag
     @Override
     public void run() {
         if(mAidlManager.isBound()) {
-            List<Neighbor> neighbors = mNeighborTable.getNeighbors();
-            for(Neighbor neighbor : neighbors) {
-                Log.i(TAG, "Updating " + neighbor.toString());
-                // TODO update A, C, I
+            List<String> cmIdentifiers = mNeighborTable.getAllCmIdentifiers();
+            try {
+                Map<String, Double> availabilities = mAidlManager.getAvailability(cmIdentifiers);
+                Map<String, Double> centralities = mAidlManager.getAvailability(cmIdentifiers);
+                for(String cmIdentifier : cmIdentifiers) {
+                    Neighbor neighbor = mNeighborTable.getNeighbor(cmIdentifier);
+                    Log.i(TAG, "Updating " + neighbor.toString());
+                    if (availabilities.containsKey(cmIdentifier)) {
+                        neighbor.setA(availabilities.get(cmIdentifier));
+                    }
+                    if (centralities.containsKey(cmIdentifier)) {
+                        neighbor.setC(centralities.get(cmIdentifier));
+                    }
+                }
+            } catch (NeighborNotFoundException e) {
+                Log.e(TAG, "Neighbor with cmIdentifier: " + e.getMessage() + " not found");
+                e.printStackTrace();
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            } catch (ContextualManagerNotConnectedException e) {
+                e.printStackTrace();
             }
             mHandler.postDelayed(this, SCHEDULING_TIME);
             Log.i(TAG, "A new update was scheduled in " + SCHEDULING_TIME + " milliseconds");

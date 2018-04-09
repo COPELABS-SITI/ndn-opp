@@ -12,5 +12,5 @@ public interface RibUpdater {
 
     void start();
     void stop();
-    void updateRoutingTable(String name, String neighbor, long cost);
+    void updateRoutingEntry(String name, String neighbor, long cost);
 }

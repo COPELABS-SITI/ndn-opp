@@ -82,6 +82,7 @@
     <string name="backup_option">Backup Option</string>
     <string name="routing">Routing</string>
     <string name="wipe_p2p_cache">Wipe Wi-Fi Direct Cache</string>
+    <string name="wipe_routing_database">Wipe routing Database</string>
     <string name="received_interests">Received Interests</string>
     <string name="send">Send</string>
 </resources>

@@ -49,6 +49,7 @@ public class ConnectToNdnDialog extends DialogFragment {
 		String selectedNdnNodeIp = Configuration.getNdnNodeIp(getContext());
 		String[] ndnNodesIps = getContext().getResources().getStringArray(R.array.ndn_nodes_addrs);
 
+
 		for(int i = 0; i < ndnNodesIps.length; i++) {
 			if(ndnNodesIps[i].equals(selectedNdnNodeIp)) {
 				dialogBinding.ndnNodeSelector.setSelection(i);
@@ -60,6 +61,7 @@ public class ConnectToNdnDialog extends DialogFragment {
 			.setView(dialogBinding.getRoot())
 			.setTitle(R.string.selectNdnNode)
 			.setPositiveButton(R.string.connect, new DialogInterface.OnClickListener() {
+
 				@Override
 				public void onClick(DialogInterface di, int id) {
 					int ndnNodeIndex = dialogBinding.ndnNodeSelector.getSelectedItemPosition();

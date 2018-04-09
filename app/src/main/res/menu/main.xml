@@ -46,4 +46,9 @@
 		android:orderInCategory="7"
 		android:title="@string/wipe_p2p_cache" />
 
+	<item
+		android:id="@+id/wipe_routing_database"
+		android:orderInCategory="8"
+		android:title="@string/wipe_routing_database" />
+
 </menu>
