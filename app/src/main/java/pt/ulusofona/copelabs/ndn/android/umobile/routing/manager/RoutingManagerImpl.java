@@ -40,6 +40,7 @@ public class RoutingManagerImpl implements RoutingManager, WifiP2pListener.WifiP
     /** This variable holds the application context */
     private Context mContext;
 
+    private NamePrefixManager mPrefixMngr;
 
     /**
      * This method is the constructor of this class
@@ -49,6 +50,7 @@ public class RoutingManagerImpl implements RoutingManager, WifiP2pListener.WifiP
     public RoutingManagerImpl(OpportunisticDaemon.Binder binder, Context context) {
         mBinder = binder;
         mContext = context;
+
     }
 
     /**
@@ -89,6 +91,7 @@ public class RoutingManagerImpl implements RoutingManager, WifiP2pListener.WifiP
             mNeighborTableManager = new NeighborTableManagerImpl(mContext);
             mRibUpdater = new RibUpdaterImpl(mContext, mNeighborTableManager, mBinder);
             mNeighborTableManager.start();mRibUpdater.start();
+            mPrefixMngr = new NamePrefixManager(mBinder, mContext,mRibUpdater);
             mStarted = true;
             Log.i(TAG, "Routing Manager started");
         }

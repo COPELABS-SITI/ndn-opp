@@ -10,16 +10,16 @@ package pt.ulusofona.copelabs.ndn.android.ui.tasks;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import net.named_data.jndn.Face;
-import net.named_data.jndn.Name;
-import net.named_data.jndn.OnInterestCallback;
-import net.named_data.jndn.OnRegisterFailed;
-import net.named_data.jndn.OnRegisterSuccess;
-import net.named_data.jndn.security.KeyChain;
-import net.named_data.jndn.security.SecurityException;
-import net.named_data.jndn.security.identity.IdentityManager;
-import net.named_data.jndn.security.identity.MemoryIdentityStorage;
-import net.named_data.jndn.security.identity.MemoryPrivateKeyStorage;
+import net.named_data.jndn.security.identity1.IdentityManager;
+import net.named_data.jndn.security.identity1.MemoryIdentityStorage;
+import net.named_data.jndn.security.identity1.MemoryPrivateKeyStorage;
+import net.named_data.jndn1.Face;
+import net.named_data.jndn1.Name;
+import net.named_data.jndn1.OnInterestCallback;
+import net.named_data.jndn1.OnRegisterFailed;
+import net.named_data.jndn1.OnRegisterSuccess;
+import net.named_data.jndn.security1.KeyChain;
+import net.named_data.jndn.security1.SecurityException;
 
 import java.io.IOException;
 
@@ -79,14 +79,14 @@ public class RegisterPrefixTask extends AsyncTask<Void, Void, Integer> {
         }
     }
 
-    private static KeyChain buildTestKeyChain() throws net.named_data.jndn.security.SecurityException {
+    private static KeyChain buildTestKeyChain() throws net.named_data.jndn.security1.SecurityException {
         MemoryIdentityStorage identityStorage = new MemoryIdentityStorage();
         MemoryPrivateKeyStorage privateKeyStorage = new MemoryPrivateKeyStorage();
         IdentityManager identityManager = new IdentityManager(identityStorage, privateKeyStorage);
         KeyChain keyChain = new KeyChain(identityManager);
         try {
             keyChain.getDefaultCertificateName();
-        } catch (net.named_data.jndn.security.SecurityException e) {
+        } catch (net.named_data.jndn.security1.SecurityException e) {
             keyChain.createIdentity(new Name("/test/identity"));
             keyChain.getIdentityManager().setDefaultIdentity(new Name("/test/identity"));
         }

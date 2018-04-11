@@ -65,6 +65,7 @@ public class RoutingDatabase extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         // Creation of RoutingEntry table
         db.execSQL(RoutingEntryTable.CREATE_TABLE);
+        db.execSQL(LsTable.CREATE_PLSA_TABLE);
     }
 
     /**
@@ -77,6 +78,7 @@ public class RoutingDatabase extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // Drop older table if existed
         db.execSQL("DROP TABLE IF EXISTS " + RoutingEntryTable.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + LsTable.TABLE_NAME);
         // Create tables again
         onCreate(db);
     }

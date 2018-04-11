@@ -16,7 +16,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import net.named_data.jndn.Interest;
+import net.named_data.jndn1.Interest;
 
 import pt.ulusofona.copelabs.ndn.R;
 

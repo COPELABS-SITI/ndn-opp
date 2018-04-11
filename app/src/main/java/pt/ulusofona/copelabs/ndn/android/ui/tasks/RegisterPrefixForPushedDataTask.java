@@ -10,16 +10,17 @@ package pt.ulusofona.copelabs.ndn.android.ui.tasks;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import net.named_data.jndn.Face;
-import net.named_data.jndn.Name;
-import net.named_data.jndn.OnPushedDataCallback;
-import net.named_data.jndn.OnRegisterFailed;
-import net.named_data.jndn.OnRegisterSuccess;
-import net.named_data.jndn.security.KeyChain;
-import net.named_data.jndn.security.SecurityException;
-import net.named_data.jndn.security.identity.IdentityManager;
-import net.named_data.jndn.security.identity.MemoryIdentityStorage;
-import net.named_data.jndn.security.identity.MemoryPrivateKeyStorage;
+import net.named_data.jndn.security.identity1.IdentityManager;
+import net.named_data.jndn.security.identity1.MemoryIdentityStorage;
+import net.named_data.jndn.security.identity1.MemoryPrivateKeyStorage;
+import net.named_data.jndn.security1.KeyChain;
+import net.named_data.jndn.security1.SecurityException;
+import net.named_data.jndn1.Face;
+import net.named_data.jndn1.Name;
+import net.named_data.jndn1.OnPushedDataCallback;
+import net.named_data.jndn1.OnRegisterFailed;
+import net.named_data.jndn1.OnRegisterSuccess;
+
 
 import java.io.IOException;
 
@@ -81,7 +82,7 @@ public class RegisterPrefixForPushedDataTask extends AsyncTask<Void, Void, Integ
         }
     }
 
-    private static KeyChain buildTestKeyChain() throws SecurityException {
+    private static KeyChain buildTestKeyChain() throws  SecurityException {
         MemoryIdentityStorage identityStorage = new MemoryIdentityStorage();
         MemoryPrivateKeyStorage privateKeyStorage = new MemoryPrivateKeyStorage();
         IdentityManager identityManager = new IdentityManager(identityStorage, privateKeyStorage);

@@ -11,8 +11,8 @@ import android.os.AsyncTask;
 import android.util.Base64;
 import android.util.Log;
 
-import net.named_data.jndn.Data;
-import net.named_data.jndn.Face;
+import net.named_data.jndn1.Data;
+import net.named_data.jndn1.Face;
 
 import java.io.IOException;
 

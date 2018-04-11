@@ -14,10 +14,10 @@ import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 
-import net.named_data.jndn.Face;
-import net.named_data.jndn.Interest;
-import net.named_data.jndn.Name;
-import net.named_data.jndn.OnData;
+import net.named_data.jndn1.Face;
+import net.named_data.jndn1.Interest;
+import net.named_data.jndn1.Name;
+import net.named_data.jndn1.OnData;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.OpportunisticPeerTracking;

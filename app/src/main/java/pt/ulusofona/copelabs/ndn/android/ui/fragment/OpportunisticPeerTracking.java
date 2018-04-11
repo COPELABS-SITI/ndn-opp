@@ -27,15 +27,15 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 
-import net.named_data.jndn.Data;
-import net.named_data.jndn.Face;
-import net.named_data.jndn.Interest;
-import net.named_data.jndn.InterestFilter;
-import net.named_data.jndn.Name;
-import net.named_data.jndn.OnData;
-import net.named_data.jndn.OnInterestCallback;
-import net.named_data.jndn.OnPushedDataCallback;
-import net.named_data.jndn.OnRegisterSuccess;
+import net.named_data.jndn1.Data;
+import net.named_data.jndn1.Face;
+import net.named_data.jndn1.Interest;
+import net.named_data.jndn1.InterestFilter;
+import net.named_data.jndn1.Name;
+import net.named_data.jndn1.OnData;
+import net.named_data.jndn1.OnInterestCallback;
+import net.named_data.jndn1.OnPushedDataCallback;
+import net.named_data.jndn1.OnRegisterSuccess;
 
 import java.util.ArrayList;
 import java.util.HashMap;

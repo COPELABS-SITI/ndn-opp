@@ -9,12 +9,12 @@
 package pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented;
 
 
-import net.named_data.jndn.Data;
-import net.named_data.jndn.Interest;
-import net.named_data.jndn.encoding.EncodingException;
-import net.named_data.jndn.encoding.TlvWireFormat;
-import net.named_data.jndn.encoding.tlv.Tlv;
-import net.named_data.jndn.encoding.tlv.TlvDecoder;
+import net.named_data.jndn1.Data;
+import net.named_data.jndn1.Interest;
+import net.named_data.jndn.encoding1.EncodingException;
+import net.named_data.jndn.encoding1.TlvWireFormat;
+import net.named_data.jndn.encoding.tlv1.Tlv;
+import net.named_data.jndn.encoding.tlv1.TlvDecoder;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;

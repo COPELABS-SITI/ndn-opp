@@ -4,7 +4,7 @@
 		xmlns:android="http://schemas.android.com/apk/res/android">
 
 	<data>
-		<variable name="interest" type="net.named_data.jndn.Interest"/>
+		<variable name="interest" type="net.named_data.jndn1.Interest"/>
 	</data>
 
 	<android.support.constraint.ConstraintLayout

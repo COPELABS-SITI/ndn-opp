@@ -14,7 +14,7 @@ import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.widget.TextView;
 
-import net.named_data.jndn.Data;
+import net.named_data.jndn1.Data;
 
 import pt.ulusofona.copelabs.ndn.databinding.DialogDisplayDataBinding;
 
