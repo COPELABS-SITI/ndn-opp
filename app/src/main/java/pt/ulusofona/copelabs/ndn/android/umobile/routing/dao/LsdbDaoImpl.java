@@ -11,28 +11,28 @@ import net.named_data.jndn.util.Blob;
 
 import org.apache.commons.lang3.SerializationUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.database.LsTable;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.database.RoutingDatabase;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.database.RoutingEntryTable;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.exceptions.NeighborNotFoundException;
-import pt.ulusofona.copelabs.ndn.android.umobile.routing.manager.SyncManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.manager.SyncManagerImpl;
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.manager.SyncManagerListeners;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.Plsa;
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.RoutingEntry;
 
 /**
  * Created by copelabs on 09/04/2018.
  */
 
-public class LsdbImpl implements Lsdb {
+public class LsdbDaoImpl implements LsdbDao {
 
     private SQLiteDatabase mDabberDatabase;
 
-
-    private SyncManagerImpl mSyncMngr;
-
-    public LsdbImpl(Context context, String UUID) {
+    public LsdbDaoImpl(Context context) {
         mDabberDatabase = RoutingDatabase.getInstance(context).getDbAccess();
-        mSyncMngr= new SyncManagerImpl(UUID,context);
     }
 
     @Override
@@ -42,8 +42,6 @@ public class LsdbImpl implements Lsdb {
         values.put(LsTable.COLUMN_COST, plsa.getCost());
         values.put(LsTable.COLUMN_NEIGHBOR, plsa.getNeighbor());
         mDabberDatabase.insert(LsTable.TABLE_NAME, null, values);
-        sendData(plsa);
-
     }
 
     @Override
@@ -91,14 +89,24 @@ public class LsdbImpl implements Lsdb {
 
     }
 
-    private void sendData(Plsa plsa){
-        if(mSyncMngr!=null) {
-            if(mSyncMngr.isChronoSyncOn()) {
-                Data data = new Data(new Name(mSyncMngr.getmApplicationDataPrefix() + "/" + mSyncMngr.getSequence()));
-                Blob blob = new Blob(SerializationUtils.serialize(plsa));
-                data.setContent(blob);
-                mSyncMngr.senData(data);
-            }
+    /**
+     * This method returns all entries from RoutingEntry table
+     * @return all entries on RoutingEntry table
+     */
+    @Override
+    public List<Plsa> getAllEntries() {
+        List<Plsa> plsaEntries = new ArrayList<>();
+        Cursor cursor = mDabberDatabase.query(true, LsTable.TABLE_NAME, null,
+                null, null, null, null, null, null);
+        for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+            plsaEntries.add(new Plsa(
+                    cursor.getString(cursor.getColumnIndex(LsTable.COLUMN_NAME)),
+                    cursor.getLong(cursor.getColumnIndex(LsTable.COLUMN_COST)),
+                    cursor.getString(cursor.getColumnIndex(LsTable.COLUMN_NEIGHBOR))
+                )
+            );
         }
+        cursor.close();
+        return plsaEntries;
     }
 }

@@ -18,11 +18,14 @@ import java.util.Collections;
 import java.util.List;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticDaemon;
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.dao.LsdbDao;
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.dao.LsdbDaoImpl;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.dao.RoutingEntryDao;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.dao.RoutingEntryDaoImpl;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.exceptions.NeighborNotFoundException;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.manager.NeighborTableManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.Neighbor;
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.Plsa;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.RoutingEntry;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.utilities.CostModels;
 
@@ -45,6 +48,9 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
     /** This object is used to communicate with Routing database */
     private RoutingEntryDao mRoutingEntryDao;
 
+    /** This object is used to communicate with LSDB database */
+    private LsdbDao mLsdbDao;
+
     /** This object is used to schedule RIB updates */
     private Handler mHandler = new Handler();
 
@@ -58,9 +64,10 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
      * @param binder OpportunisticDaemon reference
      */
     public RibUpdaterImpl(Context context, NeighborTableManager neighborTableManager, OpportunisticDaemon.Binder binder) {
-        mRoutingEntryDao = new RoutingEntryDaoImpl(context);
         mNeighborTableManager = neighborTableManager;
         mBinder = binder;
+        mRoutingEntryDao = new RoutingEntryDaoImpl(context);
+        mLsdbDao = new LsdbDaoImpl(context);
     }
 
     /**
@@ -103,8 +110,9 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
             long faceId = mBinder.getFaceId(neighborUuid);
             long k1 = CostModels.computeK1(cost, neighbor.getI());
             long k2 = CostModels.computeK2(k1, neighbor.getC(), neighbor.getA(), neighbor.getT(name));
-            RoutingEntry entry = mRoutingEntryDao.getRoutingEntry(name, faceId);
-            entry.setCost(k2);
+            Log.i(TAG, "k1, " + k1 + " k2, " + k2);
+            RoutingEntry entry = new RoutingEntry(name, faceId, cost);
+            //entry.setCost(10);
             storeInDatabase(entry);
             Log.i(TAG, "Routing entry has been updated");
         } catch (NeighborNotFoundException ex) {
@@ -125,19 +133,30 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
         }
     }
 
+    private void updateDatabase() {
+        Log.i(TAG, "Updating Database");
+        List<Plsa> plsas = mLsdbDao.getAllEntries();
+        for(Plsa plsa : plsas) {
+            if(!mBinder.getUmobileUuid().equalsIgnoreCase(plsa.getNeighbor())) {
+                Log.i(TAG, "Neighbor, " + plsa.getNeighbor() + " cost, " + plsa.getCost());
+                updateRoutingEntry(plsa.getName(), plsa.getNeighbor(), plsa.getCost());
+            }
+        }
+    }
+
     private void updateRib() {
+        Log.i(TAG, "Updating NDN-OPP RIB");
         List<RoutingEntry> mRoutingTable = mRoutingEntryDao.getAllEntries();
         Collections.sort(mRoutingTable);
         for(RoutingEntry entry : mRoutingTable) {
+            Log.i(TAG, "Face: " + entry.getFace() + "name, " + entry.getPrefix() + " cost: " + entry.getCost());
             mBinder.addRoute(entry.getPrefix(), entry.getFace(), entry.getOrigin(), entry.getCost(), entry.getFlag());
         }
-        // insert 5 best routes in rib
-        // mBinder.addRoute
-        // mBinder.removeRoute
     }
 
     @Override
     public void run() {
+        updateDatabase();
         updateRib();
         mHandler.postDelayed(this, SCHEDULING_TIME);
     }

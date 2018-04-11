@@ -17,7 +17,7 @@ public abstract class CostModels {
      * @return K1
      */
     public static long computeK1(long cost, double i) {
-        return 0L;
+        return (long) (cost * i);
     }
 
     /**
@@ -28,7 +28,7 @@ public abstract class CostModels {
      * @param t t
      * @return K2
      */
-    public static long computeK2(long k1, double c, double a, double t) {
-        return 0L;
+    public static long computeK2(double k1, double c, double a, double t) {
+        return (long) (0.3 * (k1 * (c + a)) + 0.7 * (k1 * t));
     }
 }

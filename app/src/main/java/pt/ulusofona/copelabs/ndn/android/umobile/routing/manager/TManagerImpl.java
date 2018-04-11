@@ -97,7 +97,7 @@ public class TManagerImpl implements TManager.Manager, PacketManager.Listener {
         String id = sender + name;
         if(mInterestsSent.get(id) != null) {
             long currentTime = Utilities.getTimestampInSeconds();
-            long t = currentTime - mInterestsSent.remove(id);
+            long t = (currentTime - mInterestsSent.remove(id));
             Log.i(TAG, "For " + name + " its T is " + t + " seconds");
             notify(sender, name, t);
         }

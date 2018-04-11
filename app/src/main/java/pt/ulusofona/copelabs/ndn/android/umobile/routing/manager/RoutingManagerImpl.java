@@ -42,6 +42,8 @@ public class RoutingManagerImpl implements RoutingManager, WifiP2pListener.WifiP
 
     private NamePrefixManager mPrefixMngr;
 
+    private SyncManagerImpl mSyncMangr;
+
     /**
      * This method is the constructor of this class
      * @param binder daemon reference
@@ -91,7 +93,8 @@ public class RoutingManagerImpl implements RoutingManager, WifiP2pListener.WifiP
             mNeighborTableManager = new NeighborTableManagerImpl(mContext);
             mRibUpdater = new RibUpdaterImpl(mContext, mNeighborTableManager, mBinder);
             mNeighborTableManager.start();mRibUpdater.start();
-            mPrefixMngr = new NamePrefixManager(mBinder, mContext,mRibUpdater);
+            mSyncMangr = new SyncManagerImpl(mBinder.getUmobileUuid(),mContext);
+            mPrefixMngr = new NamePrefixManager(mBinder, mContext,mRibUpdater,mSyncMangr);
             mStarted = true;
             Log.i(TAG, "Routing Manager started");
         }
