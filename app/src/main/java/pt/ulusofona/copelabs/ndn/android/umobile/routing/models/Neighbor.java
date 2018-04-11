@@ -11,6 +11,7 @@ package pt.ulusofona.copelabs.ndn.android.umobile.routing.models;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import pt.ulusofona.copelabs.ndn.android.utilities.Utilities;
@@ -25,13 +26,10 @@ public class Neighbor {
     private String mUuid;
 
     /** These attributes are metrics which is described on dabber's draft */
-    private double mC, mA;
+    private double mC, mA, mI;
 
     /** This attribute is a metric which is described on dabber's draft */
     private ConcurrentHashMap<String, Double> mTs = new ConcurrentHashMap<>();
-
-    /** This attribute is a metric which is described on dabber's draft */
-    private ArrayList<Double> mI = new ArrayList<>();
 
 
     /**
@@ -134,22 +132,29 @@ public class Neighbor {
      * This method is a getter to mI
      * @return mI
      */
-    public ArrayList<Double> getI() {
+    public double getI() {
         return mI;
+    }
+
+    /**
+     * This method is a setter to mI
+     * @param i new mI value
+     */
+    public void setI(double i) {
+        mI = i;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Neighbor)) return false;
-
+        if (o == null || getClass() != o.getClass()) return false;
         Neighbor neighbor = (Neighbor) o;
-
-        if (Double.compare(neighbor.mC, mC) != 0) return false;
-        if (Double.compare(neighbor.mA, mA) != 0) return false;
-        if (!mCmIdentifier.equals(neighbor.mCmIdentifier)) return false;
-        if (!mUuid.equals(neighbor.mUuid)) return false;
-        return mI != null ? mI.equals(neighbor.mI) : neighbor.mI == null;
+        return Double.compare(neighbor.mC, mC) == 0 &&
+                Double.compare(neighbor.mA, mA) == 0 &&
+                Double.compare(neighbor.mI, mI) == 0 &&
+                Objects.equals(mCmIdentifier, neighbor.mCmIdentifier) &&
+                Objects.equals(mUuid, neighbor.mUuid) &&
+                Objects.equals(mTs, neighbor.mTs);
     }
 
     @Override
@@ -161,7 +166,7 @@ public class Neighbor {
 
     @Override
     public String toString() {
-        return "Uuid: " + mUuid + " CMIdentifier: " + mCmIdentifier + " C: " + mC + " A: " + mA;
+        return "Uuid: " + mUuid + ", C: " + mC + ", A: " + mA + ", I: " + mI;
     }
 
 }

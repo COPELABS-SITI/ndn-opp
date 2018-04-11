@@ -25,6 +25,8 @@ public interface AidlManager {
         boolean isBound();
         Map getAvailability(List<String> cmIdentifiers) throws RemoteException, ContextualManagerNotConnectedException;
         Map getCentrality(List<String> cmIdentifiers) throws RemoteException, ContextualManagerNotConnectedException;
+        Map getSimilarity(List<String> cmIdentifiers) throws RemoteException, ContextualManagerNotConnectedException;
+
     }
 
     interface Listener {

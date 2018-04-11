@@ -95,15 +95,33 @@ public class NeighborTableManagerImpl implements NeighborTableManager, AidlManag
             List<String> cmIdentifiers = mNeighborTable.getAllCmIdentifiers();
             try {
                 Map<String, Double> availabilities = mAidlManager.getAvailability(cmIdentifiers);
-                Map<String, Double> centralities = mAidlManager.getAvailability(cmIdentifiers);
-                for(String cmIdentifier : cmIdentifiers) {
-                    Neighbor neighbor = mNeighborTable.getNeighbor(cmIdentifier);
-                    Log.i(TAG, "Updating " + neighbor.toString());
-                    if (availabilities.containsKey(cmIdentifier)) {
-                        neighbor.setA(availabilities.get(cmIdentifier));
-                    }
-                    if (centralities.containsKey(cmIdentifier)) {
-                        neighbor.setC(centralities.get(cmIdentifier));
+                Map<String, Double> centralities = mAidlManager.getCentrality(cmIdentifiers);
+                Map<String, Double> similarities = mAidlManager.getSimilarity(cmIdentifiers);
+                if(availabilities != null && centralities != null && similarities != null) {
+                    for(String cmIdentifier : cmIdentifiers) {
+                        Neighbor neighbor = mNeighborTable.getNeighbor(cmIdentifier);
+                        Log.i(TAG, "Updating " + neighbor.toString());
+                        if (availabilities.containsKey(cmIdentifier)) {
+                            if(availabilities.get(cmIdentifier) != null) {
+                                double availability = availabilities.get(cmIdentifier);
+                                Log.i(TAG, "Availability value for: " + neighbor.getUuid() + " is: " + availability);
+                                neighbor.setA(availability);
+                            }
+                        }
+                        if (centralities.containsKey(cmIdentifier)) {
+                            if(centralities.get(cmIdentifier) != null) {
+                                double centrality = centralities.get(cmIdentifier);
+                                Log.i(TAG, "Centrality value for: " + neighbor.getUuid() + " is: " + centrality);
+                                neighbor.setC(centrality);
+                            }
+                        }
+                        if (similarities.containsKey(cmIdentifier)) {
+                            if(similarities.get(cmIdentifier) != null) {
+                                double similarity = similarities.get(cmIdentifier);
+                                Log.i(TAG, "Similarity value for: " + neighbor.getUuid() + " is: " + similarity);
+                                neighbor.setI(similarity);
+                            }
+                        }
                     }
                 }
             } catch (NeighborNotFoundException e) {

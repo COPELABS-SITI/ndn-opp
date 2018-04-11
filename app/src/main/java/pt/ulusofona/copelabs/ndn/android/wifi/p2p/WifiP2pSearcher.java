@@ -52,6 +52,7 @@ class WifiP2pSearcher implements DnsSdServiceResponseListener, DnsSdTxtRecordLis
         mWifiP2pManager = (android.net.wifi.p2p.WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
         mChannel = mWifiP2pManager.initialize(context, context.getMainLooper(), null);
         mWifiP2pManager.setDnsSdResponseListeners(mChannel, this, this);
+        mServiceRequest = WifiP2pDnsSdServiceRequest.newInstance();
     }
 
     /**
@@ -135,7 +136,6 @@ class WifiP2pSearcher implements DnsSdServiceResponseListener, DnsSdTxtRecordLis
 
     private void reallocateServices() {
         Log.i(TAG, "Reallocating services.");
-        mServiceRequest = WifiP2pDnsSdServiceRequest.newInstance();
         mWifiP2pManager.removeServiceRequest(mChannel, mServiceRequest, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {

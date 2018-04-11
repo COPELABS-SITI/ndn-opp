@@ -9,7 +9,7 @@ android {
         versionCode 3
         versionName "1.0"
         applicationId "pt.ulusofona.copelabs.ndn"
-        minSdkVersion 18
+        minSdkVersion 19
         targetSdkVersion 21
     }
 

@@ -8,9 +8,6 @@
 
 package pt.ulusofona.copelabs.ndn.android.umobile.routing.utilities;
 
-import java.util.ArrayList;
-
-
 public abstract class CostModels {
 
     /**
@@ -19,7 +16,7 @@ public abstract class CostModels {
      * @param i i
      * @return K1
      */
-    public static long computeK1(long cost, ArrayList<Double> i) {
+    public static long computeK1(long cost, double i) {
         return 0L;
     }
 

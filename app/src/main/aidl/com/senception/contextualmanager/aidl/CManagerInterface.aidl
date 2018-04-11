@@ -7,5 +7,6 @@ interface CManagerInterface {
 
         Map getAvailability(in List<String> cmIdentifiers);
         Map getCentrality(in List<String> cmIdentifiers);
+        Map getSimilarity(in List<String> cmIdentifiers);
 
 }

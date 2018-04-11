@@ -115,6 +115,20 @@ public class AidlManagerImpl implements AidlManager.Manager, ServiceConnection {
     }
 
     /**
+     * This method returns the device's similarity
+     * @return device's similarity
+     * @throws RemoteException
+     * @throws ContextualManagerNotConnectedException
+     */
+    @Override
+    public Map getSimilarity(List<String> cmIdentifiers) throws RemoteException, ContextualManagerNotConnectedException {
+        if(isBound()) {
+            return mRemoteContextualManager.getSimilarity(cmIdentifiers);
+        }
+        throw new ContextualManagerNotConnectedException();
+    }
+
+    /**
      * This method is invoked once the contextual manager connects
      * @param componentName
      * @param iBinder

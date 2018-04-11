@@ -71,7 +71,7 @@ class WifiP2pGo implements WifiP2pManager.ConnectionInfoListener, WifiP2pManager
                 Log.i(TAG, "I'm GO !!");
                 WifiP2pListenerManager.notifyIamGo();
                 WifiP2pListenerManager.notifyGoIpAddressAvailable(info.groupOwnerAddress.getHostAddress());
-                mWifiP2pManager.requestGroupInfo(mChannel, this);
+                //mWifiP2pManager.requestGroupInfo(mChannel, this);
             } else {
                 Log.i(TAG, "we are client !! group owner address is: " + info.groupOwnerAddress.getHostAddress());
                 WifiP2pListenerManager.notifyGoIpAddressAvailable(info.groupOwnerAddress.getHostAddress());
