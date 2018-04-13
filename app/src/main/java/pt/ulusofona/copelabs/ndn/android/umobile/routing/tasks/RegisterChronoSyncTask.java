@@ -47,7 +47,7 @@ public class RegisterChronoSyncTask extends AsyncTask<Void, Void, Integer> {
 
     private ChronoInterface mInterface;
 
-    private double mSyncLifeTime = 60 * 1000;
+    private double mSyncLifeTime = 120 * 1000;
 
     private ChronoSync2013 mChronoSync;
 

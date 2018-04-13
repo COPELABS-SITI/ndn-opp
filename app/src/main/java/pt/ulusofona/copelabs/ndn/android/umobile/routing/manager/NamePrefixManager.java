@@ -21,42 +21,57 @@ import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.Plsa;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.tasks.RibUpdaterImpl;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.utilities.Utilities;
 
-
 /**
- * Created by copelabs on 20/03/2018.
+ * This class is used to check when ther is a new plsa or when a new prefix was registered by
+ * an external application.
+ * @author Omar Aponte (COPELABS/ULHT)
+ * @version 1.0
+ *          COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 02/14/18
  */
 
 public class NamePrefixManager implements SyncManagerImpl.SyncManagerInterface{
 
-
+    /**
+     * Variable used for debug.
+     */
     private String TAG = NamePrefixManager.class.getSimpleName();
-
+    /**
+     * Binder to communicate with ndn.
+     */
     private OpportunisticDaemon.Binder mBinder;
 
-    private Context mContext;
-
+    /**
+     * This object contains the functions to communicate with database.
+     */
     private LsdbDaoImpl mLsdbImpl;
 
+    /**
+     * Rib updater, objedt used to know when a new prefix is registered.
+     */
     private RibUpdaterImpl mRibUpdater;
 
+    /**
+     * SyncManager used to send plsa using chronosync.
+     */
     private SyncManagerImpl mSyncMnger;
 
 
     @Override
     public void OnNewPlsa(Plsa plsa) {
+        Log.d(TAG,"OnNewPLSA");
         mLsdbImpl.insertPlsa(plsa);
         mRibUpdater.updateRoutingEntry(plsa.getName(),plsa.getNeighbor(),plsa.getCost());
     }
 
-    public interface NamePrefixManagerInterface{
-        void onNewNamePrefix(Plsa plsa);
-    }
-
-    private NamePrefixManagerInterface mInterface;
-
+    /**
+     * Constructor of NamePrefixManager class.
+     * @param binder binder to communicate with ndn.
+     * @param context context of the application.
+     * @param ribUpdater ribupdater.
+     * @param syncManager syncmanager.
+     */
     public NamePrefixManager(OpportunisticDaemon.Binder binder, Context context, RibUpdaterImpl ribUpdater, SyncManagerImpl syncManager){
         mBinder=binder;
-        mContext = context;
         mSyncMnger = syncManager;
         mLsdbImpl = new LsdbDaoImpl(context);
         mRibUpdater = ribUpdater;
@@ -66,6 +81,10 @@ public class NamePrefixManager implements SyncManagerImpl.SyncManagerInterface{
 
     }
 
+    /**
+     * This method starts a thread which takes care of send a plsa when an external application
+     * registers a prefix.
+     */
     public void start(){
         new Thread(new Runnable() {
             @Override
@@ -82,6 +101,7 @@ public class NamePrefixManager implements SyncManagerImpl.SyncManagerInterface{
                                         if(!mLsdbImpl.existsName(fibEntry.getPrefix(),mBinder.getUmobileUuid())) {
                                             Plsa plsa = new Plsa(fibEntry.getPrefix(), Utilities.getTimestampInSeconds(), mBinder.getUmobileUuid());
                                             mLsdbImpl.insertPlsa(plsa);
+                                            Log.i(TAG, "PACKET SENT");
                                             sendData(plsa);
                                         }
                                     }
@@ -96,6 +116,10 @@ public class NamePrefixManager implements SyncManagerImpl.SyncManagerInterface{
 
     }
 
+    /**
+     * This method is used to send a plsa using SyncManager functions.
+     * @param plsa plsa to be sent.
+     */
     private void sendData(Plsa plsa){
         if(mSyncMnger!=null) {
             if(mSyncMnger.isChronoSyncOn()) {

@@ -103,22 +103,26 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
      */
     @Override
     public void updateRoutingEntry(String name, String neighborUuid, long cost) {
-        Log.i(TAG, "Updating routing entry");
         Log.i(TAG, "Uuid: " + neighborUuid + " name: " + name + " cost: " + cost);
-        try {
-            Neighbor neighbor = mNeighborTableManager.getNeighbor(neighborUuid);
-            long faceId = mBinder.getFaceId(neighborUuid);
-            long k1 = CostModels.computeK1(cost, neighbor.getI());
-            long k2 = CostModels.computeK2(k1, neighbor.getC(), neighbor.getA(), neighbor.getT(name));
-            Log.i(TAG, "k1, " + k1 + " k2, " + k2);
-            RoutingEntry entry = new RoutingEntry(name, faceId, cost);
-            //entry.setCost(10);
-            storeInDatabase(entry);
-            Log.i(TAG, "Routing entry has been updated");
-        } catch (NeighborNotFoundException ex) {
-            Log.e(TAG, "Neighbor " + neighborUuid + " not found");
+        if(!name.contains("broadcast")) {
+            Log.i(TAG, "Updating routing entry");
+            try {
+                Neighbor neighbor = mNeighborTableManager.getNeighbor(neighborUuid);
+                long faceId = mBinder.getFaceId(neighborUuid);
+                if (faceId != -1) {
+                    long k1 = CostModels.computeK1(cost, neighbor.getI());
+                    double k2 = CostModels.computeK2(k1, neighbor.getC(), neighbor.getA(), neighbor.getT(name));
+                    Log.i(TAG, "neighbor, " + neighborUuid + " k1, " + k1 + " k2, " + k2);
+                    long computedCost = CostModels.computeCost(k2);
+                    Log.i(TAG, "neighbor, " + neighborUuid + " cost, " + computedCost);
+                    RoutingEntry entry = new RoutingEntry(name, faceId, computedCost);
+                    storeInDatabase(entry);
+                    Log.i(TAG, "Routing entry has been updated");
+                }
+            } catch (NeighborNotFoundException ex) {
+                Log.e(TAG, "Neighbor " + neighborUuid + " not found");
+            }
         }
-
     }
 
     /**
@@ -149,7 +153,7 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
         List<RoutingEntry> mRoutingTable = mRoutingEntryDao.getAllEntries();
         Collections.sort(mRoutingTable);
         for(RoutingEntry entry : mRoutingTable) {
-            Log.i(TAG, "Face: " + entry.getFace() + "name, " + entry.getPrefix() + " cost: " + entry.getCost());
+            Log.i(TAG, "Face, " + entry.getFace() + " name, " + entry.getPrefix() + " cost: " + entry.getCost());
             mBinder.addRoute(entry.getPrefix(), entry.getFace(), entry.getOrigin(), entry.getCost(), entry.getFlag());
         }
     }

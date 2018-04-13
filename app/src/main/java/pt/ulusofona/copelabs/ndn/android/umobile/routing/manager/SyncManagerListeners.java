@@ -1,13 +1,17 @@
 package pt.ulusofona.copelabs.ndn.android.umobile.routing.manager;
 
+/**
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2018-03-07
+ * This class implements the methods needed to send notifications
+ * from SyncManagerImpl class to the listeners.
+ * @author Omar Aponte(COPELABS/ULHT)
+ */
 import java.util.ArrayList;
 import java.util.List;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.Plsa;
 
-/**
- * Created by copelabs on 11/04/2018.
- */
 
 public abstract class SyncManagerListeners {
 

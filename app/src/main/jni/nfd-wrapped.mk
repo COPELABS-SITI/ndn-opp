@@ -36,13 +36,15 @@ EXCLUDED_FILES := \
 	$(NDNFWD)/daemon/face/unix-stream-transport.cpp \
 )
 
-LOCAL_SRC_FILES := $(filter-out $(EXCLUDED_FILES), $(SOURCE_FILES))
+COFFEE_FILES := $(addprefix android/coffeecatch/, coffeecatch.c coffeejni.c)
+LOCAL_SRC_FILES := $(filter-out $(EXCLUDED_FILES), $(COFFEE_FILES) $(SOURCE_FILES))
 
 LD_OPTFLAGS := -Wl,-gc-sections # -Wl,--icf=safe
 CPP_OPTFLAGS := -Os --visibility=hidden -ffunction-sections -fdata-sections
 
-INCLUDES := $(addprefix -Ijni/, android/ndn-cxx android/ndn-fwd include include/ndn-cxx $(NDNFWD) $(NDNFWD)/daemon $(NDNFWD)/rib $(NDNFWD)/websocketpp)
-LOCAL_CPPFLAGS := $(INCLUDES) $(CPP_OPTFLAGS)
+COFFEECATCH_FLAGS := -funwind-tables -Wl,--no-merge-exidx-entries
+INCLUDES := $(addprefix -Ijni/, android android/coffeecatch android/ndn-cxx android/ndn-fwd include include/ndn-cxx $(NDNFWD) $(NDNFWD)/daemon $(NDNFWD)/rib $(NDNFWD)/websocketpp)
+LOCAL_CPPFLAGS := $(INCLUDES) $(COFFEECATCH_FLAGS) $(CPP_OPTFLAGS)
 LOCAL_LDLIBS := -llog $(LD_OPTFLAGS)
 
 include $(BUILD_SHARED_LIBRARY)

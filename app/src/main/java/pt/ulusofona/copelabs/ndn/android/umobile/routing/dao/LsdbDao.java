@@ -6,7 +6,10 @@ import pt.ulusofona.copelabs.ndn.android.umobile.routing.exceptions.NeighborNotF
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.Plsa;
 
 /**
- * Created by copelabs on 09/04/2018.
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2018-03-07
+ * This class constains the interface of LsdbDaoImpl class.
+ * @author Omar Aponte(COPELABS/ULHT)
  */
 
 public interface LsdbDao {

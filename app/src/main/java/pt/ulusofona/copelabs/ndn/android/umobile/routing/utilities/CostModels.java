@@ -8,7 +8,12 @@
 
 package pt.ulusofona.copelabs.ndn.android.umobile.routing.utilities;
 
+import android.util.Log;
+
 public abstract class CostModels {
+
+    /** This variable is used to debug this class*/
+    private static final String TAG = CostModels.class.getSimpleName();
 
     /**
      * This method is used to compute K1
@@ -17,7 +22,9 @@ public abstract class CostModels {
      * @return K1
      */
     public static long computeK1(long cost, double i) {
-        return (long) (cost * i);
+        long k1 = (long) (cost * i);
+        Log.i(TAG, "K1, " + k1);
+        return k1;
     }
 
     /**
@@ -28,7 +35,14 @@ public abstract class CostModels {
      * @param t t
      * @return K2
      */
-    public static long computeK2(double k1, double c, double a, double t) {
-        return (long) (0.3 * (k1 * (c + a)) + 0.7 * (k1 * t));
+    public static double computeK2(double k1, double c, double a, double t) {
+        double k2 = (0.3 * (k1 * (c + a)) + 0.7 * (k1 * t));
+        Log.i(TAG, "K2, " + k2);
+        return k2;
+    }
+
+    public static long computeCost(double k2) {
+        long cost = (long) ((1/k2) * 100);
+        return cost > 0 ? cost : 0;
     }
 }

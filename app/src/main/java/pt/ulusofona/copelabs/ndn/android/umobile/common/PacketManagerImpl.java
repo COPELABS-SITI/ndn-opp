@@ -17,6 +17,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import pt.ulusofona.copelabs.ndn.android.preferences.Configuration;
@@ -77,6 +78,7 @@ public class PacketManagerImpl implements Runnable, PacketManager.Manager, WifiP
 
     /** This variable holds the state of this class, if is running or not */
     private boolean mEnable;
+
 
 
     /**
@@ -190,13 +192,15 @@ public class PacketManagerImpl implements Runnable, PacketManager.Manager, WifiP
      */
     @Override
     public synchronized void onPacketTransferred(String pktId) {
-        Packet packet = mPendingPackets.remove(pktId);
-        if(isDataPacket(pktId)) {
-            Log.i(TAG, "Data packet with id " + pktId + " was transferred");
-            mRequester.onDataPacketTransferred(packet.getRecipient(), removeDataPacket(pktId));
-        } else {
-            Log.i(TAG, "Interest packet with id " + pktId + " was transferred");
-            mRequester.onInterestPacketTransferred(packet.getRecipient(), removeInterestPacket(pktId));
+        if(mPendingPackets.containsKey(pktId)) {
+            Packet packet = mPendingPackets.remove(pktId);
+            if (isDataPacket(pktId)) {
+                Log.i(TAG, "Data packet with id " + pktId + " was transferred");
+                mRequester.onDataPacketTransferred(packet.getRecipient(), removeDataPacket(pktId));
+            } else {
+                Log.i(TAG, "Interest packet with id " + pktId + " was transferred");
+                mRequester.onInterestPacketTransferred(packet.getRecipient(), removeInterestPacket(pktId));
+            }
         }
     }
 

@@ -42,6 +42,7 @@ import pt.ulusofona.copelabs.ndn.android.umobile.multihoming.WifiFaceManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.multihoming.WifiFaceManagerImpl;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.manager.RoutingManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.manager.RoutingManagerImpl;
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.RoutingEntry;
 import pt.ulusofona.copelabs.ndn.android.utilities.Utilities;
 import pt.ulusofona.copelabs.ndn.android.wifi.Wifi;
 
@@ -80,7 +81,11 @@ public class OpportunisticDaemon extends Service implements PacketManager.Observ
         public void passData(long faceId, String name) { jniPushData(faceId, name); }
         public void passInterests(long faceId, String name) { jniPassInterests(faceId, name); }
         public List<FibEntry> getForwardingInformationBase() { return jniGetForwardingInformationBase(); }
-        public void addRoute(String prefix, long faceId, long origin, long cost, long flags) { jniAddRoute(prefix, faceId, origin, cost, flags);}
+
+        public void addRoute(String prefix, long faceId, long origin, long cost, long flags) {  mOppFaceManager.addRoute(new RoutingEntry(prefix, faceId, cost)); }
+        public void addRoute(RoutingEntry routingEntry) { mOppFaceManager.addRoute(routingEntry); }
+
+
         public void removeRoute(String prefix, long faceId, long origin) { jniRemoveRoute(prefix, faceId, origin);}
         public List<PitEntry> getPendingInterestTable() { return jniGetPendingInterestTable(); }
         public List<CsEntry> getContentStore() { return jniGetContentStore(); }
@@ -183,7 +188,7 @@ public class OpportunisticDaemon extends Service implements PacketManager.Observ
 
 			startTime = System.currentTimeMillis();
 
-			if(Configuration.isBackupOptionEnabled(this)) {
+			if(Configuration.isRoutingEnabled(this)) {
                 mRoutingManager = new RoutingManagerImpl(local, this);
                 mRoutingManager.start();
             }

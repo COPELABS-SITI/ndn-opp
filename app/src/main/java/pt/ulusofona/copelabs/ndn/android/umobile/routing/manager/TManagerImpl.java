@@ -33,6 +33,7 @@ public class TManagerImpl implements TManager.Manager, PacketManager.Listener {
     /** This variable holds the state of this class */
     private boolean mStarted;
 
+
     /**
      * This method registers a listener
      * @param listener listener to be registered
@@ -81,10 +82,12 @@ public class TManagerImpl implements TManager.Manager, PacketManager.Listener {
      */
     @Override
     public void onInterestTransferred(String sender, String name) {
-        String id = sender + name;
-        Log.i(TAG, "Adding " + id);
-        if(!mInterestsSent.contains(id))
-            mInterestsSent.put(id, Utilities.getTimestampInSeconds());
+        if(!name.contains("broadcast")) {
+            String id = sender + name;
+            Log.i(TAG, "Adding " + id);
+            if (!mInterestsSent.contains(id))
+                mInterestsSent.put(id, Utilities.getTimestampInSeconds());
+        }
     }
 
     /**
@@ -96,6 +99,7 @@ public class TManagerImpl implements TManager.Manager, PacketManager.Listener {
     public void onDataReceived(String sender, String name) {
         String id = sender + name;
         if(mInterestsSent.get(id) != null) {
+            Log.i(TAG, "Sender is, " + sender);
             long currentTime = Utilities.getTimestampInSeconds();
             long t = (currentTime - mInterestsSent.remove(id));
             Log.i(TAG, "For " + name + " its T is " + t + " seconds");

@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.concurrent.ConcurrentHashMap;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
@@ -85,9 +86,9 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
 
     private OpportunisticConnectivityManager mWifiP2pConnectivityManager = new OpportunisticConnectivityManager();
     private OpportunisticPeerTracker mPeerTracker = new OpportunisticPeerTracker();
-    private Map<String, OpportunisticPeer> mPeers = new HashMap<>();
+    private ConcurrentHashMap<String, OpportunisticPeer> mPeers = new ConcurrentHashMap<>();
     private List<Interest> mPendingInterests = new ArrayList<>();
-    private Map<String, NsdService> mServices = new HashMap<>();
+    private ConcurrentHashMap<String, NsdService> mServices = new ConcurrentHashMap<>();
     private FragmentOppPeerTrackingBinding mBinding;
     private Context mContext;
 

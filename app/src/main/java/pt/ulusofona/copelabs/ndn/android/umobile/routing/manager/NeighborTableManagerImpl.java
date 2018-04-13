@@ -13,6 +13,7 @@ import android.os.Handler;
 import android.os.RemoteException;
 import android.util.Log;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,8 +21,10 @@ import pt.ulusofona.copelabs.ndn.android.umobile.routing.exceptions.ContextualMa
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.exceptions.NeighborNotFoundException;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.Neighbor;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.NeighborTable;
+import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2p;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
+import pt.ulusofona.copelabs.ndn.android.wifi.p2p.cache.WifiP2pCache;
 
 public class NeighborTableManagerImpl implements NeighborTableManager, AidlManager.Listener,
          WifiP2pListener.ServiceAvailable, TManager.Listener, Runnable {
@@ -47,11 +50,15 @@ public class NeighborTableManagerImpl implements NeighborTableManager, AidlManag
     /** This variable holds the state of this class */
     private boolean mEnable = false;
 
+    /** This object holds the application context */
+    private Context mContext;
+
     /**
      * This method is the constructor of NeighborTableManagerImpl class
      * @param context Application context
      */
     NeighborTableManagerImpl(Context context) {
+        mContext = context;
         mAidlManager = new AidlManagerImpl(context, this);
     }
 
@@ -153,6 +160,17 @@ public class NeighborTableManagerImpl implements NeighborTableManager, AidlManag
         Log.i(TAG, "Service discovered with instance name: " + instanceName);
         String neighborUuid = instanceName.split("\\.")[0];
         mNeighborTable.addNeighborIfDoesntExist(new Neighbor(srcDevice.deviceAddress, neighborUuid));
+    }
+
+    private void fetchCache() {
+        HashMap<String, String> devicesInfo = WifiP2pCache.getData(mContext);
+        for(Map.Entry entry : devicesInfo.entrySet()) {
+            addNeighbor(entry.getKey().toString(), entry.getValue().toString());
+        }
+    }
+
+    private void addNeighbor(String uuid, String mac) {
+        mNeighborTable.addNeighborIfDoesntExist(new Neighbor(mac, uuid));
     }
 
     /**

@@ -24,7 +24,11 @@ import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.Plsa;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.RoutingEntry;
 
 /**
- * Created by copelabs on 09/04/2018.
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2018-03-07
+ * This class contains all methods related with LSDB table
+ * that are used to communicate with db.
+ * @author Omar Aponte(COPELABS/ULHT)
  */
 
 public class LsdbDaoImpl implements LsdbDao {
@@ -35,6 +39,10 @@ public class LsdbDaoImpl implements LsdbDao {
         mDabberDatabase = RoutingDatabase.getInstance(context).getDbAccess();
     }
 
+    /**
+     * THis method inserts a new PLSA in the database.
+     * @param plsa Plsa to be inserted.
+     */
     @Override
     public void insertPlsa(Plsa plsa) {
         ContentValues values = new ContentValues();
@@ -44,12 +52,20 @@ public class LsdbDaoImpl implements LsdbDao {
         mDabberDatabase.insert(LsTable.TABLE_NAME, null, values);
     }
 
+    /**
+     * This method deletes a PLSA object from the database.
+     * @param plsa Plsa to be delete.
+     */
     @Override
     public void deletePlsa(Plsa plsa) {
         String where = LsTable.getWhereByPrimaryKey(plsa.getName(), plsa.getNeighbor());
         mDabberDatabase.delete(RoutingEntryTable.TABLE_NAME, where, null);
     }
 
+    /**
+     * This method updates a PLSA in the database.
+     * @param plsa Plsa to e updated.
+     */
     @Override
     public void updatePlsa(Plsa plsa) {
         String where = LsTable.getWhereByPrimaryKey(plsa.getName(), plsa.getNeighbor());
@@ -60,6 +76,12 @@ public class LsdbDaoImpl implements LsdbDao {
         mDabberDatabase.update(LsTable.TABLE_NAME, values, where, null);
     }
 
+    /**
+     * This method is used to confirm that a PLSA exists.
+     * @param name name of the plsa.
+     * @param neighbor naighbor of the plsa.
+     * @return True value if exists the PLAS otherwise false.
+     */
     @Override
     public boolean existsName(String name, String neighbor) {
         try {
@@ -69,6 +91,13 @@ public class LsdbDaoImpl implements LsdbDao {
         }
     }
 
+    /**
+     * This method get a plsa based on name and neighbor identifier.
+     * @param name name of the plsa
+     * @param neighbor neighbor of the plsa
+     * @return Plsa object.
+     * @throws NeighborNotFoundException
+     */
     @Override
     public Plsa getPlsa(String name, String neighbor)  throws NeighborNotFoundException {
         Plsa plsa= null;
@@ -90,8 +119,8 @@ public class LsdbDaoImpl implements LsdbDao {
     }
 
     /**
-     * This method returns all entries from RoutingEntry table
-     * @return all entries on RoutingEntry table
+     * This method returns all entries from PLSA table
+     * @return all entries on PLSA table
      */
     @Override
     public List<Plsa> getAllEntries() {

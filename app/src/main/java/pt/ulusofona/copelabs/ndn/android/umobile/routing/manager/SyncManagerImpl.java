@@ -33,8 +33,11 @@ import pt.ulusofona.copelabs.ndn.android.umobile.routing.tasks.RibUpdater;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.tasks.SendDataTask;
 
 /**
- * This class has the functions to use ChronoSync 2013 to communicate with others devices.
- * Created by copelabs on 11/03/2018.
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2018-03-07
+ * This class implements the methods needed to use ChronoSync2013.
+ *
+ * @author Omar Aponte (COPELABS/ULHT)
  */
 
 public class SyncManagerImpl implements ChronoSync2013.OnInitialized,
@@ -95,10 +98,8 @@ public class SyncManagerImpl implements ChronoSync2013.OnInitialized,
     /** This array is used to save the interests expressed by the chronosync. */
     private ArrayList<String> mInterestExpresed = new ArrayList<>();
 
+    /** This variable is used to save the status on or off of ChronoSync */
     private boolean ChronoSyncOn = false;
-    private SyncManagerInterface mInterface;
-
-    private RibUpdater mRibUpdater;
 
     /**
      * Constructor of the SyncManagerImpl
@@ -113,6 +114,7 @@ public class SyncManagerImpl implements ChronoSync2013.OnInitialized,
 
     }
 
+    /** This method starts the task to check if there is a new change in the face */
     private void startProcessEventTask() {
         mJndnProcessor = new Runnable() {
             @Override
@@ -195,6 +197,7 @@ public class SyncManagerImpl implements ChronoSync2013.OnInitialized,
 
     }
 
+    /** This method is called when ChronoSync is successfully registered. */
     @Override
     public void onChronoSyncRegistered(ChronoSync2013 chronoSync2013) {
         mChronoSync = chronoSync2013;
@@ -220,17 +223,14 @@ public class SyncManagerImpl implements ChronoSync2013.OnInitialized,
             public void run() {
                 try {
                     if (mChronoSync != null) {
-
-                            mChronoSync.publishNextSequenceNo();
-
+                        try {
+                            Thread.sleep(5000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        mChronoSync.publishNextSequenceNo();
 
                         Log.d(TAG, "Published next seq number. Seq is now: " + mChronoSync.getSequenceNo());
-                        /*while (mChronoSync.getSequenceNo() < 1 && mChronoSync.getSequenceNo() != -1) {
-                            Log.d(TAG, "Seq is now: " + mChronoSync.getSequenceNo());
-                            Log.d(TAG, "DataHistoy size:" + 1);
-                            mChronoSync.publishNextSequenceNo();
-                            Log.d(TAG, "Published next seq number. Seq is now: " + mChronoSync.getSequenceNo());
-                        }*/
                     }
                 } catch (IOException | net.named_data.jndn.security.SecurityException e) {
                     e.printStackTrace();

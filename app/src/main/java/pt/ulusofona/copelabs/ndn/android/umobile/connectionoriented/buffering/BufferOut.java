@@ -20,7 +20,7 @@ public class BufferOut implements Runnable {
     private static final String TAG = BufferOut.class.getSimpleName();
 
     /** This variable holds the interval of time between pops */
-    private static final int INTERVAL_BETWEEN_POP = 250;
+    private static final int INTERVAL_BETWEEN_POP = 1;
 
     /** This object is used to schedule a new pop from the buffer */
     private Handler mHandler = new Handler();

@@ -12,6 +12,15 @@ import android.os.Handler;
 import android.util.Log;
 import android.util.LongSparseArray;
 
+import com.intel.jndn.management.ManagementException;
+
+import net.named_data.jndn.ControlParameters;
+import net.named_data.jndn.Name;
+import net.named_data.jndn.OnRegisterSuccess;
+import net.named_data.jndn.security.KeyChain;
+import net.named_data.jndn.security.SecurityException;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -20,13 +29,17 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.ConcurrentHashMap;
 
+import pt.ulusofona.copelabs.ndn.android.Nfdc;
 import pt.ulusofona.copelabs.ndn.android.models.Face;
+import pt.ulusofona.copelabs.ndn.android.models.FibEntry;
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.channels.OpportunisticChannelOut;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.NsdInfo;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.services.ServiceDiscoverer;
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.RoutingEntry;
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.utilities.Utilities;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 
@@ -47,6 +60,10 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
 
     private OpportunisticDaemon.Binder mDaemonBinder;
 
+    private net.named_data.jndn.Face mControlFace = new net.named_data.jndn.Face();
+
+    private boolean mControlFaceRegistered = false;
+
     private Context mContext;
     // Associates a UUID to an OpportunisticPeer
     private Map<String, OpportunisticPeer> mUmobilePeers = new HashMap<>();
@@ -63,13 +80,31 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
      * @param binder Binder to the ForwardingDaemon
      */
 	public void enable(OpportunisticDaemon.Binder binder, Context context) {
+        setupControlFace();
         mDaemonBinder = binder;
         mContext = context;
         WifiP2pListenerManager.registerListener(this);
     }
 
+    private void setupControlFace() {
+        new Thread() {
+            public void run() {
+                try {
+                    KeyChain keyChain = Utilities.buildTestKeyChain();
+                    keyChain.setFace(mControlFace);
+                    mControlFace.setCommandSigningInfo(keyChain, keyChain.getDefaultCertificateName());
+                    mControlFace.registerPrefix(new Name("/localhost/controlface"), null, null);
+                    mControlFaceRegistered = true;
+                } catch (SecurityException | IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+    }
+
     /** Disable the Routing engine. Changes in the connection status of Wi-Fi Direct Groups will be ignored. */
     public void disable() {
+        mControlFaceRegistered = false;
         WifiP2pListenerManager.unregisterListener(this);
     }
 
@@ -79,19 +114,11 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
         /* If the created face is an opportunistic one, it must be configured at the RIB/FIB level */
         if(face.getRemoteUri().startsWith("opp://")) {
             final Long faceId = face.getFaceId();
-            String peerUuid = face.getRemoteUri().substring(6);
+            final String peerUuid = face.getRemoteUri().substring(6);
 
             mUuidToFaceId.put(peerUuid, faceId);
             mFaceIdToUuid.put(faceId, peerUuid);
-
-            Log.d(TAG, "Registering Opportunistic Face " + faceId + " in RIB for prefix /ndn/multicast and /ndn/opp/emergency.");
-            mDaemonBinder.addRoute("/", faceId, 0L, 0L, 1L);
-
-            /*
-            mDaemonBinder.addRoute("/ndn/multicast", faceId, 0L, 0L, 1L);
-            mDaemonBinder.addRoute("/ndn/opp/emergency", faceId, 0L, 0L, 1L);
-            mDaemonBinder.addRoute("/ndn", faceId, 0L, 0L, 1L);
-            */
+            addRoute(new RoutingEntry("/", faceId, 0));
 
             new Handler().postDelayed(new Runnable() {
                 @Override
@@ -102,6 +129,22 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
 
             bringUpFace(peerUuid);
         }
+    }
+
+    public void addRoute(final RoutingEntry routingEntry) {
+        new Thread() {
+            public void run() {
+                try {
+                    ControlParameters controlParameters = new ControlParameters();
+                    controlParameters.setFaceId((int) routingEntry.getFace());
+                    controlParameters.setCost((int) routingEntry.getCost());
+                    controlParameters.setName(new Name(routingEntry.getPrefix()));
+                    Nfdc.register(mControlFace, controlParameters);
+                } catch (ManagementException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
     }
 
     /** Used to handle when a UMobile peer is detected to bring up its corresponding Face.
@@ -148,30 +191,32 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
      */
     @Override
     public void update(Observable observable, Object obj) {
-        if (observable instanceof OpportunisticPeerTracker) {
-            Map<String, OpportunisticPeer> peers = (Map<String, OpportunisticPeer>) obj;
-            /* If the peer is unknown (i.e. its UUID is not in the list of UMobile peers,
-             * we request the creation of a Face for it. Then, if the Face has an ID referenced
-             * in the existing Opportunistic faces, bring it up. */
-            if (peers != null) {
-                for (String uuid : peers.keySet()) {
-                    OpportunisticPeer peer = peers.get(uuid);
-                    if (!mUmobilePeers.containsKey(uuid)) {
-                        Log.d(TAG, "Requesting Face creation");
-                        mDaemonBinder.createFace("opp://" + uuid, 0, false);
-                    } else {
-                        Long faceId = mUuidToFaceId.get(uuid);
-                        if(faceId != null) {
-                            if (peer.isAvailable()) {
-                                if(!mDaemonBinder.isFaceUp(faceId))
-                                    bringUpFace(uuid);
-                            } else {
-                                if(mDaemonBinder.isFaceUp(faceId))
-                                    bringDownFace(uuid);
+        if(mControlFaceRegistered) {
+            if (observable instanceof OpportunisticPeerTracker) {
+                Map<String, OpportunisticPeer> peers = (Map<String, OpportunisticPeer>) obj;
+                /* If the peer is unknown (i.e. its UUID is not in the list of UMobile peers,
+                 * we request the creation of a Face for it. Then, if the Face has an ID referenced
+                 * in the existing Opportunistic faces, bring it up. */
+                if (peers != null) {
+                    for (final String uuid : peers.keySet()) {
+                        OpportunisticPeer peer = peers.get(uuid);
+                        if (!mUmobilePeers.containsKey(uuid)) {
+                            Log.d(TAG, "Requesting Face creation");
+                            mDaemonBinder.createFace("opp://" + uuid, 0, false);
+                        } else {
+                            Long faceId = mUuidToFaceId.get(uuid);
+                            if (faceId != null) {
+                                if (peer.isAvailable()) {
+                                    if (!mDaemonBinder.isFaceUp(faceId))
+                                        bringUpFace(uuid);
+                                } else {
+                                    if (mDaemonBinder.isFaceUp(faceId))
+                                        bringDownFace(uuid);
+                                }
                             }
                         }
+                        mUmobilePeers.put(uuid, peer);
                     }
-                    mUmobilePeers.put(uuid, peer);
                 }
             }
         }

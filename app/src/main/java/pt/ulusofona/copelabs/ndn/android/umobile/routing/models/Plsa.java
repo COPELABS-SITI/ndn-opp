@@ -4,7 +4,10 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * Created by copelabs on 14/03/2018.
+ * @version 1.0
+ * COPYRIGHTS COPELABS/ULHT, LGPLv3.0, 2018-03-07
+ * This class contains all information of a PLSA object.
+ * @author Omar Aponte(COPELABS/ULHT)
  */
 
 public class Plsa implements Serializable {
