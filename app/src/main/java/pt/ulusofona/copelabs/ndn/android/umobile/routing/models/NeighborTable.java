@@ -46,6 +46,15 @@ public class NeighborTable {
         throw new NeighborNotFoundException(neighborIdentifier);
     }
 
+    public Neighbor getNeighborByFaceUri(String faceUri) throws NeighborNotFoundException {
+        for(Neighbor neighbor : mNeighbors) {
+            if(faceUri.contains(neighbor.getUuid())) {
+                return neighbor;
+            }
+        }
+        throw new NeighborNotFoundException(faceUri);
+    }
+
     /**
      * This method returns a list containing all cmIdentifiers
      * @return a list containing all cmIdentifiers

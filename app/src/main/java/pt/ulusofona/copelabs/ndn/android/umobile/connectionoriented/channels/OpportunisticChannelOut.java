@@ -43,7 +43,8 @@ public class OpportunisticChannelOut {
     public void sendPacket(Packet packet) {
         Log.d(TAG, "Attempting to send " + packet.getPayloadSize() + " bytes through UUID " + packet.getSender() + " to " + mHost.toString());
         OpportunisticChannelOutTask task = new OpportunisticChannelOutTask(mPacketManagerObserver, mHost, packet);
-        task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        task.start();
+        //task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
 }

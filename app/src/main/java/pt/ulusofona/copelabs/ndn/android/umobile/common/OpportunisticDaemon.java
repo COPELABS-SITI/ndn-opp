@@ -281,7 +281,7 @@ public class OpportunisticDaemon extends Service implements PacketManager.Observ
 
     // Called from JNI
     private synchronized void transferInterest(long faceId, int nonce, String name, byte[] payload) {
-        Log.d(TAG, "Transfer Interest : " + faceId + " " + nonce + " length (" + ((payload != null) ? payload.length : "NULL") + ")");
+        Log.d(TAG, "Transfer Interest : " + faceId + " " + nonce + " " + name + " length (" + ((payload != null) ? payload.length : "NULL") + ")");
         String recipient = mOppFaceManager.getUuid(faceId);
         mPacketManager.onTransferInterest(mAssignedUuid, recipient, nonce, name, payload);
     }
@@ -313,11 +313,13 @@ public class OpportunisticDaemon extends Service implements PacketManager.Observ
 
     @Override
     public synchronized void onInterestPacketTransferred(String recipient, int nonce) {
+        Log.i(TAG, "onInterestPacketTransferred, " + recipient);
         jniOnInterestTransferred(mOppFaceManager.getFaceId(recipient), nonce);
     }
 
     @Override
     public synchronized void onDataPacketTransferred(String recipient, String name) {
+        Log.i(TAG, "onDataPacketTransferred, " + name);
         jniOnDataTransferred(mOppFaceManager.getFaceId(recipient), name);
     }
 
@@ -333,7 +335,7 @@ public class OpportunisticDaemon extends Service implements PacketManager.Observ
 
     @Override
     public synchronized void onSendOverConnectionLess(Packet packet) {
-        mConnectionLessManager.sendPacket(packet);
+        //mConnectionLessManager.sendPacket(packet);
     }
 
 

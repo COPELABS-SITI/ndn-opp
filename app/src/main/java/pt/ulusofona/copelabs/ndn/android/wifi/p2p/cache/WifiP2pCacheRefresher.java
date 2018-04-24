@@ -25,7 +25,7 @@ public class WifiP2pCacheRefresher implements Runnable {
     private static final int INTERVAL_BETWEEN_REFRESH = 60 * 1000;
 
     /** This variable stores the time that classifies an outdated device in cache */
-    private static final int CACHE_VALIDITY = 20 * 60 * 1000;
+    private static final int CACHE_VALIDITY = 48 * 60 * 1000;
 
     /** This object is used to schedule a new cache verification */
     private Handler mHandler = new Handler();

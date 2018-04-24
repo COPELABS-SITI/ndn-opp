@@ -72,7 +72,7 @@ public class OpportunisticChannelIn extends Thread implements WifiP2pListener.Wi
                 mBufferOut = new BufferOut(mPacketManagerObserver);
                 ServerSocket socket = new ServerSocket();
                 socket.bind(new InetSocketAddress(assignedIp, DEFAULT_PORT));
-                mTask = new OpportunisticChannelInTask(socket);
+                mTask = new OpportunisticChannelInTask(socket, mPacketManagerObserver);
                 mTask.start();
                 mEnabled = true;
             } catch (IOException e) {

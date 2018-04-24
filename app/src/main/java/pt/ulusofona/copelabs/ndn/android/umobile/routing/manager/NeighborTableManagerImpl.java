@@ -21,7 +21,6 @@ import pt.ulusofona.copelabs.ndn.android.umobile.routing.exceptions.ContextualMa
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.exceptions.NeighborNotFoundException;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.Neighbor;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.NeighborTable;
-import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2p;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.cache.WifiP2pCache;
@@ -153,6 +152,11 @@ public class NeighborTableManagerImpl implements NeighborTableManager, AidlManag
     @Override
     public Neighbor getNeighbor(String neighborUuid) throws NeighborNotFoundException {
         return mNeighborTable.getNeighbor(neighborUuid);
+    }
+
+    @Override
+    public Neighbor getNeighborByFaceUri(String faceUri) throws NeighborNotFoundException {
+        return mNeighborTable.getNeighborByFaceUri(faceUri);
     }
 
     @Override

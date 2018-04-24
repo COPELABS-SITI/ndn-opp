@@ -9,6 +9,8 @@ package pt.ulusofona.copelabs.ndn.android.umobile.routing.models;
 
 import android.support.annotation.NonNull;
 
+import net.named_data.jndn.Name;
+
 
 public class RoutingEntry implements Comparable<RoutingEntry> {
 

@@ -56,7 +56,7 @@ public class ServiceLeader implements DiscovererListener.PeerDiscoverer, Service
      * @param nsdInfo detected device
      */
     @Override
-    public synchronized void onPeerDetected(NsdInfo nsdInfo) {
+    public void onPeerDetected(NsdInfo nsdInfo) {
         mServiceFailureDetector.deviceDetected(nsdInfo);
         if(!mPeers.contains(nsdInfo)) {
             Log.i(TAG, "New peer detected " + nsdInfo.toString());
@@ -73,7 +73,7 @@ public class ServiceLeader implements DiscovererListener.PeerDiscoverer, Service
      * @param lostPeer disconnected device
      */
     @Override
-    public synchronized void onPeerLost(NsdInfo lostPeer) {
+    public void onPeerLost(NsdInfo lostPeer) {
         Log.i(TAG, "Lost peer " + lostPeer.toString());
         mPeers.remove(lostPeer);
         broadcastUpdatedPeerList();

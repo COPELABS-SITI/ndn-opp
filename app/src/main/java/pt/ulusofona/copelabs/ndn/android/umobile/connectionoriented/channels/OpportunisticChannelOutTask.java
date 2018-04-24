@@ -19,9 +19,10 @@ import java.net.Socket;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.buffering.BufferIn;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.HostInfo;
 
-public class OpportunisticChannelOutTask extends AsyncTask<Void, Void, Boolean> {
+public class OpportunisticChannelOutTask extends Thread/*extends AsyncTask<Void, Void, Boolean>*/ {
 
     /** This variable is used to debug OpportunisticChannelOutTask class */
     private static final String TAG = OpportunisticChannelOutTask.class.getSimpleName();
@@ -47,6 +48,28 @@ public class OpportunisticChannelOutTask extends AsyncTask<Void, Void, Boolean> 
      * @param voids no parameters
      * @return boolean value reflecting whether the transfer is a success or not
      */
+
+    @Override
+    public void run() {
+        try {
+            Socket connection = new Socket();
+            connection.connect(new InetSocketAddress(mHost.getIpAddress(), mHost.getPort()));
+            Log.d(TAG, "Connection established to " + connection.toString() + " ? " + connection.isConnected());
+            ObjectOutputStream oos = new ObjectOutputStream(connection.getOutputStream());
+            oos.writeObject(mPacket);
+            oos.flush();
+            oos.close();
+            connection.close();
+            mPacketManagerObserver.onPacketTransferred(mPacket.getRecipient(), mPacket.getId());
+            //transferSucceeded = true;
+        } catch (IOException e) {
+            Log.d(TAG, "Transfer failed.");
+            e.printStackTrace();
+            //transferSucceeded = false;
+        }
+    }
+
+    /*
     @Override
     protected Boolean doInBackground(Void... voids) {
         boolean transferSucceeded;
@@ -67,6 +90,7 @@ public class OpportunisticChannelOutTask extends AsyncTask<Void, Void, Boolean> 
         }
         return transferSucceeded;
     }
+    */
 
     /**
      * After the task completes, used to callback into the NDN Opportunistic Daemon to notify the
@@ -74,10 +98,12 @@ public class OpportunisticChannelOutTask extends AsyncTask<Void, Void, Boolean> 
      *
      * @param transferSucceeded success result of the transfer
      */
+    /*
     @Override
     protected void onPostExecute(Boolean transferSucceeded) {
         if (transferSucceeded)
             mPacketManagerObserver.onPacketTransferred(mPacket.getRecipient(), mPacket.getId());
     }
+    */
 
 }

@@ -19,11 +19,13 @@ import pt.ulusofona.copelabs.ndn.android.wifi.regular.WifiRegularListenerManager
 
 public class WifiFaceManagerImpl implements WifiFaceManager, Runnable, WifiRegularListener {
 
+    public static boolean sWifiFaceCreated = false;
+
     /** This variable is used to debug WifiFaceManagerImpl class */
     private static final String TAG = WifiFaceManagerImpl.class.getSimpleName();
 
     /** This time interval in order to create the route right after the creation of Wi-Fi's face */
-    private static final int WAIT_TIME = 1000;
+    private static final int WAIT_TIME = 5000;
 
     /** This interface is used to communicate with the binder */
     private OpportunisticDaemon.Binder mBinder;
@@ -78,6 +80,7 @@ public class WifiFaceManagerImpl implements WifiFaceManager, Runnable, WifiRegul
     @Override
     public void onDisconnected() {
         Log.i(TAG, "I'm disconnected");
+        sWifiFaceCreated = false;
     }
 
     /**
@@ -99,6 +102,7 @@ public class WifiFaceManagerImpl implements WifiFaceManager, Runnable, WifiRegul
             Log.i(TAG, "Face " + faceUri + " created");
             mBinder.addRoute("/", mBinder.getFaceId(nodeIp), 0L, 0L, 1L);
             Log.i(TAG, "Route for face " + mBinder.getFaceId(nodeIp) + " created");
+            sWifiFaceCreated = true;
             mHandler.removeCallbacks(this);
         }
     }

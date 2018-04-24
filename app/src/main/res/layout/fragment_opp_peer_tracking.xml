@@ -65,6 +65,19 @@
             android:id="@+id/list_pending_interests"
             style="@style/piece"/>
 
+        <TextView
+            android:text="@string/next_hop"
+            android:layout_height="wrap_content"
+            android:textColor="@color/black"
+            android:layout_width="wrap_content"
+            android:textAllCaps="true"/>
+
+        <TextView
+            android:id="@+id/next_hop"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            style="@style/piece" />
+
     </LinearLayout>
 
 </layout>

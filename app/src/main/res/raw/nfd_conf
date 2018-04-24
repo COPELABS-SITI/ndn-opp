@@ -14,7 +14,6 @@ tables {
     cs_max_packets 100
     strategy_choice {
         /               /localhost/nfd/strategy/multicast
-        /ndn            /localhost/nfd/strategy/best-route
         /localhost      /localhost/nfd/strategy/multicast
         /localhost/nfd  /localhost/nfd/strategy/best-route
         /ndn/broadcast  /localhost/nfd/strategy/multicast

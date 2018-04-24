@@ -12,14 +12,20 @@ package pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.channels;
 import android.util.Log;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.ServerSocket;
+import java.net.Socket;
 
-import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.buffering.BufferIn;
+import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketManager;
+import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
 
 public class OpportunisticChannelInTask extends Thread {
 
     /** This variable is used to debug OpportunisticChannelInTask class */
     private static final String TAG = OpportunisticChannelInTask.class.getSimpleName();
+
+    /** This interface is used to notify the packet reception */
+    private PacketManager.Observer mPacketManagerObserver;
 
     /** This socket is used to receive connections requests from other devices */
     private ServerSocket mServerSocket;
@@ -27,8 +33,9 @@ public class OpportunisticChannelInTask extends Thread {
     /** This variable holds the state of this class, if is running or not */
     private boolean mEnabled;
 
-    OpportunisticChannelInTask(ServerSocket socket) {
+    OpportunisticChannelInTask(ServerSocket socket, PacketManager.Observer packetManagerObserver) {
         mServerSocket = socket;
+        mPacketManagerObserver = packetManagerObserver;
     }
 
     @Override
@@ -39,11 +46,26 @@ public class OpportunisticChannelInTask extends Thread {
         while (mEnabled) {
             try {
                 // Accept the next connection.
-                new BufferIn(mServerSocket.accept()).start();
+                Socket socket = mServerSocket.accept();
+
+
+                Log.d(TAG, "Connection from " + socket.toString());
+                ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+                Packet packet = (Packet) in.readObject();
+                in.close();
+                if (packet != null) {
+                    Log.i(TAG, "Packet received from " + packet.getSender() + " with size of " + packet.getPayloadSize());
+                    mPacketManagerObserver.onPacketReceived(packet.getSender(), packet.getPayload());
+
+                    //BufferData.push(packet);
+                }
+
+                //new BufferIn(mServerSocket.accept()).start();
             } catch (IOException e) {
                 Log.e(TAG, "Connection went WRONG.");
                 e.printStackTrace();
-
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
             }
         }
         Log.i(TAG, "Exiting thread");

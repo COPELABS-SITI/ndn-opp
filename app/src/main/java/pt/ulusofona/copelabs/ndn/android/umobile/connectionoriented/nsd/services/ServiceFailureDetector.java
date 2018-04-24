@@ -22,10 +22,10 @@ public class ServiceFailureDetector implements Runnable {
     private static final String TAG = ServiceFailureDetector.class.getSimpleName();
 
     /** This variable holds the value between disconnected verifications. */
-    private static final int TIME_BETWEEN_FAILURES_CHECK = 3000;
+    private static final int TIME_BETWEEN_FAILURES_CHECK = 4000;
 
     /** This variable holds how many times a device could be verified without be considered disconnected */
-    private static final int MAX_FAILURES = 3;
+    private static final int MAX_FAILURES = 5;
 
     /** This object stores all data related with all devices */
     private FailureData mFailureData = new FailureData();

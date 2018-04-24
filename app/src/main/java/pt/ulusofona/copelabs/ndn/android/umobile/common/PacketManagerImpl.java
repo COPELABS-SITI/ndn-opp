@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import pt.ulusofona.copelabs.ndn.android.preferences.Configuration;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
@@ -45,19 +46,19 @@ public class PacketManagerImpl implements Runnable, PacketManager.Manager, WifiP
     private static ArrayList<PacketManager.Listener> sListeners = new ArrayList<>();
 
     /** Maps Packet ID -> Name (WifiP2pCache) */
-    private Map<String, Packet> mPendingPackets = new HashMap<>();
+    private ConcurrentHashMap<String, Packet> mPendingPackets = new ConcurrentHashMap<>();
 
     /** Maps Nonce -> Packet ID */
-    private Map<Integer, String> mPendingInterestIdsFromNonces = new HashMap<>();
+    private ConcurrentHashMap<Integer, String> mPendingInterestIdsFromNonces = new ConcurrentHashMap<>();
 
     /** Maps Packet ID -> Nonce */
-    private Map<String, Integer> mPendingInterestNoncesFromIds = new HashMap<>();
+    private ConcurrentHashMap<String, Integer> mPendingInterestNoncesFromIds = new ConcurrentHashMap<>();
 
     /** Maps Name -> Packet ID (WifiP2pCache) */
-    private Map<String, String> mPendingDataIdsFromNames = new HashMap<>();
+    private ConcurrentHashMap<String, String> mPendingDataIdsFromNames = new ConcurrentHashMap<>();
 
     /** Maps Packet ID -> Name (WifiP2pCache) */
-    private Map<String, String> mPendingDataNamesFromIds = new HashMap<>();
+    private ConcurrentHashMap<String, String> mPendingDataNamesFromIds = new ConcurrentHashMap<>();
 
     /** This object is need to check if there is a connection oriented connection for an uuid */
     private OpportunisticFaceManager mOppFaceManager;
@@ -308,16 +309,18 @@ public class PacketManagerImpl implements Runnable, PacketManager.Manager, WifiP
      * @param packet packet to be sent
      */
     private void backupOption(Packet packet) {
-        Log.i(TAG, "Using backup option");
-        Log.i(TAG, "Sending packet with id " + packet.getId() + " and size " + packet.getPayloadSize());
-        if(mConnectionEstablished && mOppFaceManager.isSocketAvailable(packet.getRecipient())) {
-            mRequester.onSendOverConnectionOriented(packet);
-            Log.i(TAG, "Packet with id " + packet.getId() + " sent over connection oriented");
-        } else if(packet.getPayloadSize() < getMaxPayloadByAndroidApi()) {
-            mRequester.onSendOverConnectionLess(packet);
-            Log.i(TAG, "Packet with id " + packet.getId() + " sent over connection less");
-        } else {
-            Log.e(TAG, "Packet not sent with id " + packet.getId() + " and size " + packet.getPayloadSize());
+        if(packet != null) {
+            Log.i(TAG, "Using backup option");
+            Log.i(TAG, "Sending packet with id " + packet.getId() + " and size " + packet.getPayloadSize());
+            if (mConnectionEstablished && mOppFaceManager.isSocketAvailable(packet.getRecipient())) {
+                mRequester.onSendOverConnectionOriented(packet);
+                Log.i(TAG, "Packet with id " + packet.getId() + " sent over connection oriented");
+            } else if (packet.getPayloadSize() < getMaxPayloadByAndroidApi()) {
+                mRequester.onSendOverConnectionLess(packet);
+                Log.i(TAG, "Packet with id " + packet.getId() + " sent over connection less");
+            } else {
+                Log.e(TAG, "Packet not sent with id " + packet.getId() + " and size " + packet.getPayloadSize());
+            }
         }
     }
 

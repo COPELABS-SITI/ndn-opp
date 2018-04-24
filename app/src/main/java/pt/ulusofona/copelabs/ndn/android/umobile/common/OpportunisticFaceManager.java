@@ -15,8 +15,8 @@ import android.util.LongSparseArray;
 import com.intel.jndn.management.ManagementException;
 
 import net.named_data.jndn.ControlParameters;
+import net.named_data.jndn.ForwardingFlags;
 import net.named_data.jndn.Name;
-import net.named_data.jndn.OnRegisterSuccess;
 import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.security.SecurityException;
 
@@ -29,9 +29,8 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.ConcurrentHashMap;
 
-import pt.ulusofona.copelabs.ndn.android.Nfdc;
+import pt.ulusofona.copelabs.ndn.android.utilities.Nfdc;
 import pt.ulusofona.copelabs.ndn.android.models.Face;
-import pt.ulusofona.copelabs.ndn.android.models.FibEntry;
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
@@ -80,6 +79,7 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
      * @param binder Binder to the ForwardingDaemon
      */
 	public void enable(OpportunisticDaemon.Binder binder, Context context) {
+        mControlFaceRegistered = false;
         setupControlFace();
         mDaemonBinder = binder;
         mContext = context;
@@ -95,6 +95,7 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
                     mControlFace.setCommandSigningInfo(keyChain, keyChain.getDefaultCertificateName());
                     mControlFace.registerPrefix(new Name("/localhost/controlface"), null, null);
                     mControlFaceRegistered = true;
+                    Log.i(TAG, "Control face registered");
                 } catch (SecurityException | IOException e) {
                     e.printStackTrace();
                 }
@@ -118,12 +119,13 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
 
             mUuidToFaceId.put(peerUuid, faceId);
             mFaceIdToUuid.put(faceId, peerUuid);
+
             addRoute(new RoutingEntry("/", faceId, 0));
 
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    mDaemonBinder.passInterests(faceId, "/ndn/multicast/opp");
+                    mDaemonBinder.passInterests(faceId, "/ndn/oi");
                 }
             }, 500);
 
@@ -132,19 +134,21 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
     }
 
     public void addRoute(final RoutingEntry routingEntry) {
-        new Thread() {
-            public void run() {
-                try {
-                    ControlParameters controlParameters = new ControlParameters();
-                    controlParameters.setFaceId((int) routingEntry.getFace());
-                    controlParameters.setCost((int) routingEntry.getCost());
-                    controlParameters.setName(new Name(routingEntry.getPrefix()));
-                    Nfdc.register(mControlFace, controlParameters);
-                } catch (ManagementException e) {
-                    e.printStackTrace();
+        if(!mControlFaceRegistered) {
+            new Thread() {
+                public void run() {
+                    try {
+                        ControlParameters controlParameters = new ControlParameters();
+                        controlParameters.setFaceId((int) routingEntry.getFace());
+                        //controlParameters.setCost(0);
+                        controlParameters.setName(new Name(routingEntry.getPrefix()));
+                        Nfdc.register(mControlFace, controlParameters);
+                    } catch (ManagementException e) {
+                        e.printStackTrace();
+                    }
                 }
-            }
-        }.start();
+            }.start();
+        }
     }
 
     /** Used to handle when a UMobile peer is detected to bring up its corresponding Face.

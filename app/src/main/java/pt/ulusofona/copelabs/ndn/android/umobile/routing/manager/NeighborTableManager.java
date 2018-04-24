@@ -16,4 +16,5 @@ public interface NeighborTableManager {
     void start();
     void stop();
     Neighbor getNeighbor(String neighborUuid) throws NeighborNotFoundException;
+    Neighbor getNeighborByFaceUri(String faceUri) throws NeighborNotFoundException;
 }

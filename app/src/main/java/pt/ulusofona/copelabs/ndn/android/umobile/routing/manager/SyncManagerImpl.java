@@ -168,7 +168,7 @@ public class SyncManagerImpl implements ChronoSync2013.OnInitialized,
                 Log.d(TAG, syncPrefix);
                 Log.d(TAG, syncSeq + "");
                 if (!mInterestExpresed.contains(syncPrefix + "/" + syncSeq)) {
-                    new ExpressInterestTask(mFace, new Interest(new Name(syncPrefix + "/" + syncSeq), 60000), this, this).execute();
+                    new ExpressInterestTask(mFace, new Interest(new Name(syncPrefix + "/" + syncSeq), 43200000), this, this).execute();
                     mInterestExpresed.add(syncPrefix + "/" + syncSeq);
                 }
             }

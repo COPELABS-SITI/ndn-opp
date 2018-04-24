@@ -229,33 +229,39 @@ public class OpportunisticConnectionLessTransferManager implements Observer, Wif
      * @param pendingPacketsForRecipient the packets to be sent (PKT:ID, <payload>)
      */
     private synchronized void registerTransferDescriptor(final String recipient, Map<String, String> pendingPacketsForRecipient) {
-    final WifiP2pDnsSdServiceInfo descriptor = Identity.getTransferDescriptorWithTxtRecord(recipient, pendingPacketsForRecipient);
-        Log.v(TAG, "ServiceRegisterResult Descriptor : " + recipient + " = " + pendingPacketsForRecipient.toString());
+        try {
 
-        mWifiP2pManager.clearLocalServices(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
+            final WifiP2pDnsSdServiceInfo descriptor = Identity.getTransferDescriptorWithTxtRecord(recipient, pendingPacketsForRecipient);
+            Log.v(TAG, "ServiceRegisterResult Descriptor : " + recipient + " = " + pendingPacketsForRecipient.toString());
 
-            @Override
-            public void onSuccess() {
-                Log.i(TAG, "Service announced with success");
-                mWifiP2pManager.addLocalService(mWifiP2pChannel, descriptor, new WifiP2pManager.ActionListener() {
+            mWifiP2pManager.clearLocalServices(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
 
-                    @Override
-                    public void onSuccess() {
-                        Log.i(TAG,"Added Local Service");
-                    }
+                @Override
+                public void onSuccess() {
+                    Log.i(TAG, "Service announced with success");
+                    mWifiP2pManager.addLocalService(mWifiP2pChannel, descriptor, new WifiP2pManager.ActionListener() {
 
-                    @Override
-                    public void onFailure(int error) {
-                        Log.i(TAG,"Failed to add a mWifiP2pDnsSdServiceInfo " + error);
-                    }
-                });
-            }
+                        @Override
+                        public void onSuccess() {
+                            Log.i(TAG, "Added Local Service");
+                        }
 
-            @Override
-            public void onFailure(int reason) {
-                Log.e(TAG, "Service was not announced with success. Error "  + reason);
-            }
-        });
+                        @Override
+                        public void onFailure(int error) {
+                            Log.i(TAG, "Failed to add a mWifiP2pDnsSdServiceInfo " + error);
+                        }
+                    });
+                }
+
+                @Override
+                public void onFailure(int reason) {
+                    Log.e(TAG, "Service was not announced with success. Error " + reason);
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.e(TAG, "255 bytes exceeded");
+        }
     }
 
     /**

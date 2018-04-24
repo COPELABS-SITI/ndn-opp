@@ -1,4 +1,4 @@
-package pt.ulusofona.copelabs.ndn.android;
+package pt.ulusofona.copelabs.ndn.android.utilities;
 
 /*
  * jndn-management

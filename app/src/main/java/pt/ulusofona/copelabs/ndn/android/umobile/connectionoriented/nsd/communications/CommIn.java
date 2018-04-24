@@ -13,6 +13,7 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -21,7 +22,7 @@ import java.util.ArrayList;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.HostInfo;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.NsdInfo;
 
-public class CommIn extends AsyncTask<Void, Void, Void> {
+public class CommIn {
 
     /** This variable is used to debug CommIn class */
     private static final String TAG = CommIn.class.getSimpleName();
@@ -53,7 +54,7 @@ public class CommIn extends AsyncTask<Void, Void, Void> {
                 mServerSocket = new ServerSocket();
                 mServerSocket.bind(new InetSocketAddress(mMyInfo.getIpAddress(), mMyInfo.getPort()));
                 mEnabled = true;
-                executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                new ReceiverTask().start();
                 mListener.onStartDiscoveringSuccess();
             } catch (IOException e) {
                 Log.e(TAG, "Failed to open listening socket");
@@ -63,38 +64,57 @@ public class CommIn extends AsyncTask<Void, Void, Void> {
         }
     }
 
-    @Override
-    protected Void doInBackground(Void... voids) {
-        Log.d(TAG, "Accepting on " + mServerSocket.toString());
-        while (mEnabled) {
-            try {
-                // @TODO: multi-threaded receiver.
-                // Accept the next connection.
-                Socket connection = mServerSocket.accept();
-                Log.d(TAG, "Connection from " + connection.toString());
-                ObjectInputStream in = new ObjectInputStream(connection.getInputStream());
-                Object object = in.readObject();
-                if(object instanceof NsdInfo) {
-                    NsdInfo nsdInfo = (NsdInfo) object;
-                    Log.i(TAG, "Detected " + nsdInfo.toString());
-                    mListener.onPeerDetected(nsdInfo);
-                } else if (object instanceof ArrayList) {
-                    Log.i(TAG, "Detected updated list");
-                    ArrayList<NsdInfo> updatedPeerList = (ArrayList<NsdInfo>) object;
-                    mListener.onReceivePeerList(updatedPeerList);
+    /**
+     * SenderTask is used to perform a transfer
+     */
+    private class ReceiverTask extends Thread {
+
+        /**
+         * Performs the actual transfer of the packet.
+         */
+        @Override
+        public void run() {
+            Log.d(TAG, "Accepting on " + mServerSocket.toString());
+            while (mEnabled) {
+                try {
+                    // @TODO: multi-threaded receiver.
+                    // Accept the next connection.
+                    Socket socket = mServerSocket.accept();
+                    processRequest(socket);
+
+                } catch (IOException e) {
+                    Log.e(TAG, "Connection went WRONG.");
+                    e.printStackTrace();
                 }
-                // Cleanup
-                in.close();
-                // Close connection
-                connection.close();
-            } catch (IOException e) {
-                Log.e(TAG, "Connection went WRONG.");
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
             }
         }
-        return null;
+    }
+
+    private void processRequest(final Socket socket) {
+        new Thread() {
+            public void run() {
+                try {
+                    Log.d(TAG, "Connection from " + socket.toString());
+                    ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+                    Object object = in.readObject();
+                    if(object instanceof NsdInfo) {
+                        NsdInfo nsdInfo = (NsdInfo) object;
+                        Log.i(TAG, "Detected " + nsdInfo.toString());
+                        mListener.onPeerDetected(nsdInfo);
+                    } else if (object instanceof ArrayList) {
+                        Log.i(TAG, "Detected updated list");
+                        ArrayList<NsdInfo> updatedPeerList = (ArrayList<NsdInfo>) object;
+                        mListener.onReceivePeerList(updatedPeerList);
+                    }
+                    // Cleanup
+                    in.close();
+                    // Close connection
+                    socket.close();
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
     }
 
     /**

@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.List;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.common.OpportunisticDaemon;
+import pt.ulusofona.copelabs.ndn.android.umobile.multihoming.WifiFaceManagerImpl;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.dao.LsdbDao;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.dao.LsdbDaoImpl;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.dao.RoutingEntryDao;
@@ -30,11 +31,13 @@ import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.RoutingEntry;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.utilities.CostModels;
 
 
-
 public class RibUpdaterImpl implements Runnable, RibUpdater {
 
     /** This variable is used to debug RibUpdaterImpl class */
     private static final String TAG = RibUpdaterImpl.class.getSimpleName();
+
+    /** This list contains all registered listeners */
+    private static List<NextHopListener> sListeners = new ArrayList<>();
 
     /** This variable is used to set the time between RIB updates */
     private static final int SCHEDULING_TIME = 60 * 1000;
@@ -57,6 +60,7 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
     /** This variable holds the state of this class */
     private boolean mStarted;
 
+
     /**
      * This method is the constructor of RibUpdaterImpl class
      * @param context Application context
@@ -69,6 +73,15 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
         mRoutingEntryDao = new RoutingEntryDaoImpl(context);
         mLsdbDao = new LsdbDaoImpl(context);
     }
+
+    public static void registerListener(NextHopListener listener) {
+        sListeners.add(listener);
+    }
+
+    public static void unregisterListener(NextHopListener listener) {
+        sListeners.remove(listener);
+    }
+
 
     /**
      * This method starts the RibUpdater
@@ -89,6 +102,7 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
     public void stop() {
         if(mStarted) {
             mHandler.removeCallbacks(this);
+            notifyNextHop("");
             mNeighborTableManager.stop();
             Log.i(TAG, "RibUpdater stopped");
             mStarted = false;
@@ -155,6 +169,30 @@ public class RibUpdaterImpl implements Runnable, RibUpdater {
         for(RoutingEntry entry : mRoutingTable) {
             Log.i(TAG, "Face, " + entry.getFace() + " name, " + entry.getPrefix() + " cost: " + entry.getCost());
             mBinder.addRoute(entry.getPrefix(), entry.getFace(), entry.getOrigin(), entry.getCost(), entry.getFlag());
+        }
+        String nextHop = getNextHop();
+        notifyNextHop(nextHop);
+    }
+
+    private String getNextHop() {
+        List<RoutingEntry> mRoutingTable = mRoutingEntryDao.getAllEntries();
+        Collections.sort(mRoutingTable);
+        String nextHop = "NA";
+        for(RoutingEntry entry : mRoutingTable) {
+            String temp = mBinder.getFaceUri(entry.getFace());
+            if(temp != null) {
+                if (temp.contains("opp")) {
+                    nextHop = temp;
+                    break;
+                }
+            }
+        }
+        return WifiFaceManagerImpl.sWifiFaceCreated ? "Wi-Fi" : nextHop;
+    }
+
+    private void notifyNextHop(String nextHop) {
+        for(NextHopListener listener : sListeners) {
+            listener.onReceiveNextHop(nextHop);
         }
     }
 

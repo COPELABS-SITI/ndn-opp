@@ -26,6 +26,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.TextView;
 
 import net.named_data.jndn1.Data;
 import net.named_data.jndn1.Face;
@@ -58,6 +59,9 @@ import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Opportunisti
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.NsdInfo;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.services.ServiceDiscoverer;
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.RoutingEntry;
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.tasks.NextHopListener;
+import pt.ulusofona.copelabs.ndn.android.umobile.routing.tasks.RibUpdaterImpl;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 import pt.ulusofona.copelabs.ndn.databinding.FragmentOppPeerTrackingBinding;
@@ -74,12 +78,12 @@ import pt.ulusofona.copelabs.ndn.databinding.ItemNdnOppPeerBinding;
  */
 public class OpportunisticPeerTracking extends Fragment implements Observer, View.OnClickListener,
         AdapterView.OnItemClickListener, OnInterestCallback, OnData, OnRegisterSuccess, OnPushedDataCallback,
-        ServiceDiscoverer.PeerListDiscoverer, WifiP2pListener.WifiP2pConnectionStatus {
+        ServiceDiscoverer.PeerListDiscoverer, WifiP2pListener.WifiP2pConnectionStatus, NextHopListener {
 
 
     public static final String PREFIX = "/ndn/multicast/opp";
     public static final String EMERGENCY = PREFIX + "/emergency";
-    public static double INTEREST_LIFETIME = 600000;
+    public static double INTEREST_LIFETIME = 43200000;
 
     private static final String TAG = OpportunisticPeerTracking.class.getSimpleName();
     private static int PROCESS_INTERVAL = 1000;
@@ -126,6 +130,7 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         mBinding = FragmentOppPeerTrackingBinding.inflate(getActivity().getLayoutInflater());
 
         WifiP2pListenerManager.registerListener(this);
+        RibUpdaterImpl.registerListener(this);
 
     }
 
@@ -136,6 +141,7 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         mPeerTracker.deleteObserver(this);
         mContext.unregisterReceiver(mBr);
         WifiP2pListenerManager.unregisterListener(this);
+        RibUpdaterImpl.unregisterListener(this);
         super.onDetach();
     }
 
@@ -161,7 +167,7 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.button_group_formation:
-                mWifiP2pConnectivityManager.join(/*mPeerTracker.getPeers()*/ mPeers);
+                mWifiP2pConnectivityManager.join(mPeers);
                 break;
             case R.id.button_group_leave:
                 mWifiP2pConnectivityManager.leave();
@@ -242,6 +248,12 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
 
     public Face getFace() {
         return mFace;
+    }
+
+    @Override
+    public void onReceiveNextHop(String uuid) {
+        mBinding.nextHop.setText(uuid);
+        mBinding.nextHop.setBackgroundColor(getResources().getColor(R.color.lightgray));
     }
 
     // jNDN requires a regular polling otherwise nothing happens. This handler takes care of it.
@@ -356,6 +368,7 @@ public class OpportunisticPeerTracking extends Fragment implements Observer, Vie
         DialogFragment dialog = RespondToInterestDialog.create(OpportunisticPeerTracking.this, mFace, si);
         dialog.show(getChildFragmentManager(), dialog.getTag());
     }
+
 
     /** Used to nicely display the Peers in a ListView */
     private class OpportunisticPeerAdapter extends ArrayAdapter<OpportunisticPeer> {

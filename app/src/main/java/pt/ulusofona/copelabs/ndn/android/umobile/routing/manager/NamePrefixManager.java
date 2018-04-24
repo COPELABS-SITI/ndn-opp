@@ -98,10 +98,10 @@ public class NamePrefixManager implements SyncManagerImpl.SyncManagerInterface{
                                 if(!fibEntry.getPrefix().contains("localhost") && !fibEntry.getPrefix().contains("dabber") && !fibEntry.getPrefix().equals("/")){
                                     Log.d(TAG, "Prefix: " + fibEntry.getPrefix());
                                     Log.d(TAG, "Exists: " + mLsdbImpl.existsName(fibEntry.getPrefix(), mBinder.getUmobileUuid()));
-                                        if(!mLsdbImpl.existsName(fibEntry.getPrefix(),mBinder.getUmobileUuid())) {
+                                        if(!mLsdbImpl.existsName(fibEntry.getPrefix(), mBinder.getUmobileUuid())) {
                                             Plsa plsa = new Plsa(fibEntry.getPrefix(), Utilities.getTimestampInSeconds(), mBinder.getUmobileUuid());
                                             mLsdbImpl.insertPlsa(plsa);
-                                            Log.i(TAG, "PACKET SENT");
+                                            Log.d(TAG, "PACKET SENT");
                                             sendData(plsa);
                                         }
                                     }

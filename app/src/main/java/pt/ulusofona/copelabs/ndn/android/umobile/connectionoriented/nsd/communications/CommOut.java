@@ -8,7 +8,6 @@
 package pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.communications;
 
 
-import android.os.AsyncTask;
 import android.util.Log;
 
 import java.io.IOException;
@@ -32,7 +31,7 @@ public class CommOut {
      */
     public void sendData(HostInfo host, Object object) {
         Log.i(TAG, "Attempting to send to " + host.toString());
-        new SenderTask(host, object).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        new SenderTask(host, object).start();
     }
 
     /**
@@ -47,9 +46,10 @@ public class CommOut {
         }
     }
 
-    /** SenderTask is used to perform a transfer
+    /**
+     * SenderTask is used to perform a transfer
      */
-    private class SenderTask extends AsyncTask<Void, Void, Boolean> {
+    private class SenderTask extends Thread {
 
         private HostInfo mSender;
         private Object mPayload;
@@ -60,12 +60,11 @@ public class CommOut {
             mPayload = payload;
         }
 
-        /** Performs the actual transfer of the packet.
-         * @param voids no parameters
-         * @return boolean value reflecting whether the transfer is a success or not
+        /**
+         * Performs the actual transfer of the packet.
          */
         @Override
-        protected Boolean doInBackground(Void... voids) {
+        public void run() {
             try {
                 Socket connection = new Socket();
                 connection.connect(new InetSocketAddress(mSender.getIpAddress(), mSender.getPort()));
@@ -80,7 +79,6 @@ public class CommOut {
                 Log.e(TAG, "Transfer failed.");
                 e.printStackTrace();
             }
-            return null;
         }
 
     }
