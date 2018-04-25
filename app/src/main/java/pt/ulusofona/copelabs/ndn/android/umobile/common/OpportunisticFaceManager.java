@@ -134,13 +134,12 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
     }
 
     public void addRoute(final RoutingEntry routingEntry) {
-        if(!mControlFaceRegistered) {
+        //if(!mControlFaceRegistered) {
             new Thread() {
                 public void run() {
                     try {
                         ControlParameters controlParameters = new ControlParameters();
                         controlParameters.setFaceId((int) routingEntry.getFace());
-                        //controlParameters.setCost(0);
                         controlParameters.setName(new Name(routingEntry.getPrefix()));
                         Nfdc.register(mControlFace, controlParameters);
                     } catch (ManagementException e) {
@@ -148,7 +147,7 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
                     }
                 }
             }.start();
-        }
+       // }
     }
 
     /** Used to handle when a UMobile peer is detected to bring up its corresponding Face.

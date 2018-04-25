@@ -247,7 +247,11 @@ public class SyncManagerImpl implements ChronoSync2013.OnInitialized,
     public void senData(Data data) {
         Log.d(TAG, "Putting data on hashmap: " + data.getName().toString());
         mDataGeneratedMap.put(data.getName().toString(), data);
-        increaseSequenceNos();
+        try {
+            increaseSequenceNos();
+        }catch (Exception e){
+            Log.d(TAG, "Error generating next sequence");
+        }
     }
 
     /**
