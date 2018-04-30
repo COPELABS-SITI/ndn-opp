@@ -1,6 +1,5 @@
 package pt.ulusofona.copelabs.ndn.android.umobile.routing.tasks;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;

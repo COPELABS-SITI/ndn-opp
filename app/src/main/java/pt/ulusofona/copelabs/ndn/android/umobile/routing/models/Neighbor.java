@@ -9,8 +9,6 @@ package pt.ulusofona.copelabs.ndn.android.umobile.routing.models;
 
 
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,7 +24,7 @@ public class Neighbor {
     private String mUuid;
 
     /** These attributes are metrics which is described on dabber's draft */
-    private double mC, mA, mI;
+    private double mC, mCmax, mA, mI, mImax;
 
     /** This attribute is a metric which is described on dabber's draft */
     private ConcurrentHashMap<String, Double> mTs = new ConcurrentHashMap<>();
@@ -79,6 +77,14 @@ public class Neighbor {
     }
 
     /**
+     * This method is a getter to mCmax
+     * @return mCmax
+     */
+    public double getCmax() {
+        return mCmax;
+    }
+
+    /**
      * This method is a getter to mC
      * @return mC
      */
@@ -92,6 +98,7 @@ public class Neighbor {
      */
     public void setC(double c) {
         mC = c;
+        mCmax = Math.max(mC, mCmax);
     }
 
     /**
@@ -129,6 +136,14 @@ public class Neighbor {
     }
 
     /**
+     * This method is a getter to mImax
+     * @return mImax
+     */
+    public double getImax() {
+        return mImax;
+    }
+
+    /**
      * This method is a getter to mI
      * @return mI
      */
@@ -142,6 +157,7 @@ public class Neighbor {
      */
     public void setI(double i) {
         mI = i;
+        mImax = Math.max(mI, mImax);
     }
 
     @Override

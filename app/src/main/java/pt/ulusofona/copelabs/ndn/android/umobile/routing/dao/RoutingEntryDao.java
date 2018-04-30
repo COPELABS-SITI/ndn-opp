@@ -20,6 +20,7 @@ public interface RoutingEntryDao {
     void updateRoutingEntry(RoutingEntry routingEntry);
     void deleteRoutingEntry(RoutingEntry routingEntry);
     boolean isRoutingEntryExists(RoutingEntry routingEntry) throws NeighborNotFoundException;
-    RoutingEntry getRoutingEntry(String prefix, long faceid) throws NeighborNotFoundException;
+    boolean isRoutingEntryExists(String prefix, String neighborUuid) throws NeighborNotFoundException;
+    RoutingEntry getRoutingEntry(String prefix, String neighbor) throws NeighborNotFoundException;
 
 }

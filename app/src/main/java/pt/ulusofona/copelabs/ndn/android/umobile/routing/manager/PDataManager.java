@@ -14,7 +14,6 @@ import net.named_data.jndn1.OnRegisterSuccess;
 import org.apache.commons.lang3.SerializationUtils;
 
 import pt.ulusofona.copelabs.ndn.android.ui.tasks.JndnProcessEventTask;
-
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.Plsa;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.tasks.RegisterPrefixForPushedDataTask;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.tasks.SendPDataTask;

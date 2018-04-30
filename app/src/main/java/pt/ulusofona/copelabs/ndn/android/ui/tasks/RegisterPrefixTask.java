@@ -13,13 +13,13 @@ import android.util.Log;
 import net.named_data.jndn.security.identity1.IdentityManager;
 import net.named_data.jndn.security.identity1.MemoryIdentityStorage;
 import net.named_data.jndn.security.identity1.MemoryPrivateKeyStorage;
+import net.named_data.jndn.security1.KeyChain;
+import net.named_data.jndn.security1.SecurityException;
 import net.named_data.jndn1.Face;
 import net.named_data.jndn1.Name;
 import net.named_data.jndn1.OnInterestCallback;
 import net.named_data.jndn1.OnRegisterFailed;
 import net.named_data.jndn1.OnRegisterSuccess;
-import net.named_data.jndn.security1.KeyChain;
-import net.named_data.jndn.security1.SecurityException;
 
 import java.io.IOException;
 

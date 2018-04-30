@@ -9,7 +9,6 @@
 package pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.channels;
 
 
-import android.os.AsyncTask;
 import android.util.Log;
 
 import java.io.IOException;
@@ -19,7 +18,6 @@ import java.net.Socket;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketManager;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Packet;
-import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.buffering.BufferIn;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.HostInfo;
 
 public class OpportunisticChannelOutTask extends Thread/*extends AsyncTask<Void, Void, Boolean>*/ {

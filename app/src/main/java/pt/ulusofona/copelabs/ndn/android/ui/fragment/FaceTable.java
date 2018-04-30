@@ -86,9 +86,11 @@ public class FaceTable extends Fragment implements Refreshable {
 		@Override
 		public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
 			ItemFaceBinding ifb = ItemFaceBinding.inflate(mInflater, parent, false);
-			if(mFaceTable.get(position) != null) {
-				Log.i(TAG, "Binding position: " + position + " to: " + mFaceTable.get(position).getRemoteUri());
-				ifb.setFace(mFaceTable.get(position));
+			if(!mFaceTable.isEmpty()) {
+				if (mFaceTable.get(position) != null) {
+					Log.i(TAG, "Binding position: " + position + " to: " + mFaceTable.get(position).getRemoteUri());
+					ifb.setFace(mFaceTable.get(position));
+				}
 			}
 			return ifb.getRoot();
 		}

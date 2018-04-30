@@ -55,7 +55,7 @@ public class FibEntry implements Comparable<FibEntry> {
     public String getNextHops() {
         StringBuilder builder = new StringBuilder();
         for(long key : mFaceIds.keySet()) {
-            builder.append(" ").append(Long.toString(key)).append("=").append(mFaceIds.get(key));
+            builder.append(" ").append(Long.toString(key));
         }
         return builder.toString();
     }

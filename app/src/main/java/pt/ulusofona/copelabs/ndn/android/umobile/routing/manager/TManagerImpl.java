@@ -34,6 +34,8 @@ public class TManagerImpl implements TManager.Manager, PacketManager.Listener {
     private boolean mStarted;
 
 
+
+
     /**
      * This method registers a listener
      * @param listener listener to be registered
@@ -101,7 +103,9 @@ public class TManagerImpl implements TManager.Manager, PacketManager.Listener {
         if(mInterestsSent.get(id) != null) {
             Log.i(TAG, "Sender is, " + sender);
             long currentTime = Utilities.getTimestampInSeconds();
+
             long t = (currentTime - mInterestsSent.remove(id));
+
             Log.i(TAG, "For " + name + " its T is " + t + " seconds");
             notify(sender, name, t);
         }

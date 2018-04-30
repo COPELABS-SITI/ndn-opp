@@ -16,7 +16,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class RoutingDatabase extends SQLiteOpenHelper {
 
     /** This variable holds the database version */
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     /** This variable holds the database name */
     private static final String DATABASE_NAME = "dabber_db";

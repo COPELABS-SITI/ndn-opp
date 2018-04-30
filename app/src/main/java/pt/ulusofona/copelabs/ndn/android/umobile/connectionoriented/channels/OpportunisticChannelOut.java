@@ -10,7 +10,6 @@
 package pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.channels;
 
 import android.content.Context;
-import android.os.AsyncTask;
 import android.util.Log;
 
 import pt.ulusofona.copelabs.ndn.android.umobile.common.PacketManager;

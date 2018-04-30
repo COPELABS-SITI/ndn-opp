@@ -67,6 +67,7 @@ public class NeighborTableManagerImpl implements NeighborTableManager, AidlManag
     @Override
     public void start() {
         if(!mEnable) {
+            fetchCache();
             mTManager.start();
             mAidlManager.start();
             WifiP2pListenerManager.registerListener(this);

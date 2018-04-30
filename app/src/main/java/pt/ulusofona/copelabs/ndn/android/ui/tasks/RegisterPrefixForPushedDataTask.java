@@ -21,7 +21,6 @@ import net.named_data.jndn1.OnPushedDataCallback;
 import net.named_data.jndn1.OnRegisterFailed;
 import net.named_data.jndn1.OnRegisterSuccess;
 
-
 import java.io.IOException;
 
 public class RegisterPrefixForPushedDataTask extends AsyncTask<Void, Void, Integer> {

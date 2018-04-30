@@ -41,7 +41,7 @@ public class ServiceFailureDetector implements Runnable {
     }
 
     /**
-     * This method is used to start the this detector
+     * This method is used to startCheckFib the this detector
      */
     public void start() {
         mHandler.postDelayed(this, TIME_BETWEEN_FAILURES_CHECK);

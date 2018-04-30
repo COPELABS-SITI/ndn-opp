@@ -16,10 +16,10 @@ import android.support.v7.app.AlertDialog;
 import android.util.Base64;
 import android.util.Log;
 
+import net.named_data.jndn.util1.Blob;
 import net.named_data.jndn1.Data;
 import net.named_data.jndn1.Face;
 import net.named_data.jndn1.Name;
-import net.named_data.jndn.util1.Blob;
 
 import pt.ulusofona.copelabs.ndn.R;
 import pt.ulusofona.copelabs.ndn.android.ui.fragment.OpportunisticPeerTracking;

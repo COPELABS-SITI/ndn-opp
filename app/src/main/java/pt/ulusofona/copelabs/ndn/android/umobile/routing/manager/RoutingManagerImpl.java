@@ -40,7 +40,7 @@ public class RoutingManagerImpl implements RoutingManager, WifiP2pListener.WifiP
     /** This variable holds the application context */
     private Context mContext;
 
-    private NamePrefixManager mPrefixMngr;
+    private NamePrefixManagerImpl mPrefixMngr;
 
     private SyncManagerImpl mSyncMangr;
 
@@ -94,7 +94,8 @@ public class RoutingManagerImpl implements RoutingManager, WifiP2pListener.WifiP
             mRibUpdater = new RibUpdaterImpl(mContext, mNeighborTableManager, mBinder);
             mNeighborTableManager.start();mRibUpdater.start();
             mSyncMangr = new SyncManagerImpl(mBinder.getUmobileUuid(),mContext);
-            mPrefixMngr = new NamePrefixManager(mBinder, mContext,mRibUpdater,mSyncMangr);
+            mPrefixMngr = new NamePrefixManagerImpl(mBinder, mContext,mRibUpdater,mSyncMangr);
+            mPrefixMngr.start();
             mStarted = true;
             Log.i(TAG, "Routing Manager started");
         }
@@ -117,6 +118,7 @@ public class RoutingManagerImpl implements RoutingManager, WifiP2pListener.WifiP
         if(mRegistered && mStarted) {
             mNeighborTableManager.stop();
             mRibUpdater.stop();
+            mPrefixMngr.stop();
             mStarted = false;
             Log.i(TAG, "Routing Manager stopped");
         }

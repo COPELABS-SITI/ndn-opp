@@ -15,7 +15,6 @@ import android.util.LongSparseArray;
 import com.intel.jndn.management.ManagementException;
 
 import net.named_data.jndn.ControlParameters;
-import net.named_data.jndn.ForwardingFlags;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.security.SecurityException;
@@ -29,7 +28,6 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.ConcurrentHashMap;
 
-import pt.ulusofona.copelabs.ndn.android.utilities.Nfdc;
 import pt.ulusofona.copelabs.ndn.android.models.Face;
 import pt.ulusofona.copelabs.ndn.android.models.NsdService;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticPeer;
@@ -39,6 +37,7 @@ import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.N
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.services.ServiceDiscoverer;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.RoutingEntry;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.utilities.Utilities;
+import pt.ulusofona.copelabs.ndn.android.utilities.Nfdc;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListenerManager;
 
@@ -134,20 +133,19 @@ public class OpportunisticFaceManager implements Observer, ServiceDiscoverer.Pee
     }
 
     public void addRoute(final RoutingEntry routingEntry) {
-        //if(!mControlFaceRegistered) {
-            new Thread() {
-                public void run() {
+        new Thread() {
+            public void run() {
                     try {
                         ControlParameters controlParameters = new ControlParameters();
                         controlParameters.setFaceId((int) routingEntry.getFace());
                         controlParameters.setName(new Name(routingEntry.getPrefix()));
+                        controlParameters.setCost((int) routingEntry.getCost());
                         Nfdc.register(mControlFace, controlParameters);
                     } catch (ManagementException e) {
                         e.printStackTrace();
                     }
                 }
             }.start();
-       // }
     }
 
     /** Used to handle when a UMobile peer is detected to bring up its corresponding Face.

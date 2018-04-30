@@ -13,6 +13,9 @@ public abstract class RoutingEntryTable {
     /** This variable holds the table name */
     public static final String TABLE_NAME = "routing_table";
 
+    /** This variable holds the neighbor uuid */
+    public static final String COLUMN_NEIGHBOR = "neighbor";
+
     /** This variable holds the attribute name prefix */
     public static final String COLUMN_PREFIX = "prefix";
 
@@ -25,6 +28,7 @@ public abstract class RoutingEntryTable {
     /** This variable holds the SQL string used to create this database table */
     public static final String CREATE_TABLE =
             "CREATE TABLE " + TABLE_NAME + "("
+                    + COLUMN_NEIGHBOR + " TEXT, "
                     + COLUMN_PREFIX + " TEXT, "
                     + COLUMN_FACE + " TEXT, "
                     + COLUMN_COST + " INTEGER, "
@@ -32,8 +36,8 @@ public abstract class RoutingEntryTable {
                     + ");";
 
     /** This method returns SQL command used to find an entry on this table */
-    public static String getWhereByPrimaryKey(String prefix, long faceId) {
-        return COLUMN_PREFIX + "='" + prefix + "'" + "AND " + COLUMN_FACE + "='" + faceId + "'";
+    public static String getWhereByPrimaryKey(String prefix, String neighbor) {
+        return COLUMN_PREFIX + "='" + prefix + "'" + "AND " + COLUMN_NEIGHBOR + "='" + neighbor + "'";
     }
 
 }

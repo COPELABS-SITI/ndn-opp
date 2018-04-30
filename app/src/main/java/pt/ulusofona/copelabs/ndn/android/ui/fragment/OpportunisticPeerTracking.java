@@ -26,7 +26,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.TextView;
 
 import net.named_data.jndn1.Data;
 import net.named_data.jndn1.Face;
@@ -39,7 +38,6 @@ import net.named_data.jndn1.OnPushedDataCallback;
 import net.named_data.jndn1.OnRegisterSuccess;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
@@ -59,7 +57,6 @@ import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.Opportunisti
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.OpportunisticPeer;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.models.NsdInfo;
 import pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.services.ServiceDiscoverer;
-import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.RoutingEntry;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.tasks.NextHopListener;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.tasks.RibUpdaterImpl;
 import pt.ulusofona.copelabs.ndn.android.wifi.p2p.WifiP2pListener;

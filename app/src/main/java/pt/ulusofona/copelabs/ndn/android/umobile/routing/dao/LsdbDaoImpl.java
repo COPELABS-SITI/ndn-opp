@@ -5,12 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import net.named_data.jndn.Data;
-import net.named_data.jndn.Name;
-import net.named_data.jndn.util.Blob;
-
-import org.apache.commons.lang3.SerializationUtils;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,10 +12,7 @@ import pt.ulusofona.copelabs.ndn.android.umobile.routing.database.LsTable;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.database.RoutingDatabase;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.database.RoutingEntryTable;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.exceptions.NeighborNotFoundException;
-import pt.ulusofona.copelabs.ndn.android.umobile.routing.manager.SyncManagerImpl;
-import pt.ulusofona.copelabs.ndn.android.umobile.routing.manager.SyncManagerListeners;
 import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.Plsa;
-import pt.ulusofona.copelabs.ndn.android.umobile.routing.models.RoutingEntry;
 
 /**
  * @version 1.0
@@ -111,6 +102,7 @@ public class LsdbDaoImpl implements LsdbDao {
                     cursor.getString(cursor.getColumnIndex(LsTable.COLUMN_NEIGHBOR))
             );
         } else {
+            cursor.close();
             throw new NeighborNotFoundException();
         }
         cursor.close();

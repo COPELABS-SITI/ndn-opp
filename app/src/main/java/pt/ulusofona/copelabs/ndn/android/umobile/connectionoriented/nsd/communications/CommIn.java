@@ -8,12 +8,10 @@
 package pt.ulusofona.copelabs.ndn.android.umobile.connectionoriented.nsd.communications;
 
 
-import android.os.AsyncTask;
 import android.util.Log;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -45,7 +43,7 @@ public class CommIn {
     }
 
     /**
-     * This method is used to start receiving communications
+     * This method is used to startCheckFib receiving communications
      */
     public synchronized void start() {
         if(!mEnabled) {

@@ -10,8 +10,8 @@ package pt.ulusofona.copelabs.ndn.android.ui.tasks;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import net.named_data.jndn1.Face;
 import net.named_data.jndn.encoding1.EncodingException;
+import net.named_data.jndn1.Face;
 
 import java.io.IOException;
 

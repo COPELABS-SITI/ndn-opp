@@ -9,8 +9,6 @@ package pt.ulusofona.copelabs.ndn.android.umobile.routing.models;
 
 import android.support.annotation.NonNull;
 
-import net.named_data.jndn.Name;
-
 
 public class RoutingEntry implements Comparable<RoutingEntry> {
 
@@ -20,8 +18,14 @@ public class RoutingEntry implements Comparable<RoutingEntry> {
     /** This attribute is described on NFD Developer's Guide */
     private static final long DEFAULT_FLAG = 1L;
 
+    /** This attribute holds the neighbor uuid */
+    private String mNeighbor;
+
     /** This attribute is described on NFD Developer's Guide */
     private String mPrefix;
+
+    /** This attribute stores which strategy will be used */
+    private String mStrategy;
 
     /** This attribute is described on NFD Developer's Guide */
     private long mFace;
@@ -37,7 +41,7 @@ public class RoutingEntry implements Comparable<RoutingEntry> {
 
 
     /**
-     * This method is the constructor of RoutingEntry class
+     * This method a constructor of RoutingEntry class
      * @param prefix name prefix
      * @param face face id
      * @param cost face cost
@@ -48,6 +52,38 @@ public class RoutingEntry implements Comparable<RoutingEntry> {
         mCost = cost;
         mOrigin = DEFAULT_ORIGIN;
         mFlag = DEFAULT_FLAG;
+    }
+
+    /**
+     * This method a constructor of RoutingEntry class
+     * @param neighbor neighbor uuid
+     * @param prefix name prefix
+     * @param face face id
+     * @param cost face cost
+     */
+    public RoutingEntry(String neighbor, String prefix, long face, long cost) {
+        mNeighbor = neighbor;
+        mPrefix = prefix;
+        mFace = face;
+        mCost = cost;
+        mOrigin = DEFAULT_ORIGIN;
+        mFlag = DEFAULT_FLAG;
+    }
+
+    /**
+     * This method is a getter to mNeighbor
+     * @return mNeighbor
+     */
+    public String getNeighbor() {
+        return mNeighbor;
+    }
+
+    /**
+     * This method is a setter to mNeighbor
+     * @param neighbor new mNeighbor
+     */
+    public void setNeighbor(String neighbor) {
+        mNeighbor = neighbor;
     }
 
     /**
@@ -64,6 +100,30 @@ public class RoutingEntry implements Comparable<RoutingEntry> {
      */
     public void setPrefix(String prefix) {
         mPrefix = prefix;
+    }
+
+    /**
+     * This method is a getter to mStrategy
+     * @return mStrategy
+     */
+    public String getStrategy() {
+        return mStrategy;
+    }
+
+    /**
+     * This method is a setter to strategy
+     * @param strategy new mStrategy
+     */
+    public void setStrategy(String strategy) {
+        mStrategy = strategy;
+    }
+
+    /**
+     * This method checks if there is any strategy defined
+     * @return true if yes, false if not
+     */
+    public boolean isStrategyDefined() {
+        return mStrategy != null;
     }
 
     /**
@@ -133,5 +193,10 @@ public class RoutingEntry implements Comparable<RoutingEntry> {
     @Override
     public int compareTo(@NonNull RoutingEntry routingEntry) {
         return Double.compare(routingEntry.getCost(), mCost);
+    }
+
+    @Override
+    public String toString() {
+        return "Neighbor, " + mNeighbor + " face, " + mFace + " name, " + mPrefix + " cost: " + mCost;
     }
 }
